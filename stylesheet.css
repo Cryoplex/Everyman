@@ -1,0 +1,119 @@
+.jumbotron {
+	background-image: url(jum.png);
+	height: 500px;
+}
+.jumbotron .container {
+	position: absolute;
+	top: 60px;
+	color: hsl(60, 40%, 80%);
+}
+.jumbotron a {
+	color: #fff;
+}
+.jumbotron h1 {
+	padding: 8px;
+	font-size: 48px;
+}
+ul li {
+	display: inline;
+}
+.navbar a {
+	position: relative;
+	font-weight: bold;
+	color: #dfdfdf;
+	text-transform: uppercase;
+	padding: 8px;
+	top: 16px;
+}
+.rdm, .navbar a.rdm {
+	color: hsl(0, 40%, 60%);
+}
+sup {
+	color: hsla(0, 40%, 40%, 0.5);
+	font-size: 50%;
+	font-style: italic;
+	font-size: 10px;
+}
+.ourgames h2 {
+	font-size: 24px;
+}
+
+.layer {
+	background-image: url(img/road.png);
+	height: 32px;
+	width: 100%;
+	position: absolute;
+
+	image-rendering: pixelated;
+}
+.build {
+	background-image: url(img/building.png);
+}
+.distant {
+	width: 100%;
+}
+
+.frontlayer_1 {
+	transform: scale(8.0);
+	opacity: 1;
+}
+.frontlayer_2 {
+	transform: scale(4.0);
+	opacity: 0.8;
+}
+.frontlayer_3 {
+	transform: scale(2.0);
+	opacity: 0.64;
+}
+.frontlayer_4 {
+	transform: scale(1.0);
+	opacity: 0.512;
+}
+
+.gaem {
+	position: relative;
+	top: 8px;
+	left: 25%;
+
+	width: 640px;
+	height: 480px;
+
+	background-color: #fea;
+}
+
+.tile {
+	width: 30px;
+	height: 60px;
+	position: absolute;
+	image-rendering: pixelated;
+}
+.tile_building {
+	background-image: url(img/building.png);
+}
+.tile_window {
+	background-image: url(img/building_window.png);
+}
+.tile_someguy {
+	background-image: url(img/someguy.png);
+}
+.tile_building2 {
+	background-image: url(img/building2.png);
+}
+.tile_building3 {
+	background-image: url(img/building3.png);
+}
+.tile_road {
+	background-image: url(img/road.png);
+}
+.tile_stone {
+	background-image: url(img/stone.png);
+}
+.tile_grass {
+	background-image: url(img/grass.png);
+}
+.loading {
+	position: fixed;
+	opacity: 0.5;
+	top: 0px;
+	right: 0px;
+}
