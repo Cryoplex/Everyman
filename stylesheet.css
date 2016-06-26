@@ -70,15 +70,21 @@ sup {
 	opacity: 0.512;
 }
 
-.gaem {
-	position: relative;
-	top: 8px;
-	left: 25%;
+.gaem, .gaem_overlay, person_holder {
+	position: absolute;
+	top: 0px;
+	left: 384px;
 
-	width: 640px;
-	height: 480px;
+	background-color: rgba(128, 255, 64, 0.2);
+	width: 64px;
+	height: 48px;
 
-	background-color: #fea;
+	zoom: 100%;
+}
+.debuttons {
+	position: fixed;
+	right: 0px;
+	top: 0px;
 }
 
 .tile {
@@ -87,6 +93,71 @@ sup {
 	position: absolute;
 	image-rendering: pixelated;
 }
+.guy_layer {
+	position: absolute;
+	width: 30px;
+	height: 60px;
+	top: 0px;
+	left: 0px;
+}
+.myGuy {
+	animation: high 1s infinite;
+}
+@keyframes high {
+	0%, 50%, 100% {
+		box-shadow: 0 0 1px rgba(0, 0, 0, 0.8);
+	}
+	25% {
+		box-shadow: 0 0 8px rgba(0, 0, 0, 0.2);
+	}
+}
+.walking_0 {
+	animation: walk_north 0.3s steps(1) infinite;
+}
+.walking_2 {
+	animation: walk_south 0.3s steps(1) infinite;
+}
+.walking_1 {
+	animation: walk_east 0.3s steps(1) infinite;
+}
+.walking_3 {
+	animation: walk_west 0.3s steps(1) infinite;
+}
+
+@keyframes walk_south {
+	50% {
+		background-position: 0px 0px;
+	}
+	0% {
+		background-position: -30px 0px;
+	}
+}
+@keyframes walk_east {
+	50% {
+		background-position: 0px -60px;
+	}
+	0% {
+		background-position: -30px -60px;
+	}
+}
+@keyframes walk_north {
+	50% {
+		background-position: 0px -120px;
+	}
+	0% {
+		background-position: -30px -120px;
+	}
+}
+@keyframes walk_west {
+	
+	50% {
+		background-position: 0px -180px;
+	}
+	0% {
+		background-position: -30px -180px;
+	}
+}
+
 .tile_building {
 	background-image: url(img/building.png);
 }
@@ -96,6 +167,16 @@ sup {
 .tile_someguy {
 	background-image: url(img/someguy.png);
 }
+.tile_somekid {
+	background-image: url(img/somekid.png);
+}
+.tile_someadult {
+	background-image: url(img/someadult.png);
+}
+.tile_someelder {
+	background-image: url(img/someelder.png);
+}
+
 .tile_building2 {
 	background-image: url(img/building2.png);
 }

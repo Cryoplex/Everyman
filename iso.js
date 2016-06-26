@@ -1,4 +1,4 @@
-function drawTile(tileClass, size, position, layer) {
+function drawTile(tileClass, size, position, layer, inner) {
 	var width = size.width;
 	var height = size.height;
 
@@ -7,14 +7,19 @@ function drawTile(tileClass, size, position, layer) {
 
 	var rot = 0;
 
-	if (tileClass == 'tile tile_someguy') rot = rand(0, 360);
-
 	var displayX = (x - y) * ((width - 2) / 2);
 	var displayY = (x + y) * ((height - 4) / 8);
 
-	return '<div class="'+tileClass+'" style="top: '+displayY+'px; left: '+displayX+'px; -webkit-filter: hue-rotate('+rot+'deg)"></div>';
+	var zindex = 0;
+	zindex = (layer * 2) + x + y;
+
+	if (tileClass == 'tile tile_empty') return '';
+
+	if (!inner) inner = '';
+
+	return '<div title="'+tileClass+' x:'+position.x+' y:'+position.y+' z:'+layer+';" class="'+tileClass+'" style="top: '+displayY+'px; left: '+displayX+'px; z-index: '+zindex+';">'+inner+'</div>';
 }
-function drawLayer(mapSize, tileSize, tileClass, tiles, replacement) {
+function drawLayer(mapSize, tileSize, tileClass, tiles) {
 	var l = '<div style="position: absolute; left: 50%; top: '+(tileSize.height * (mapSize.z / 8))+'px">';
 	for (var y = 0; y < mapSize.y; y++) {
 		for (var x = 0; x < mapSize.x; x++) {
@@ -42,6 +47,13 @@ function placeBuilding(map, start, size, tiles) {
 	for (var zz = sz; zz < mxz; zz++) {
 		for (var xx = sx; xx < mxx; xx++) {
 			for (var yy = sy; yy < mxy; yy++) {
+				//Check if tile is invisible
+				if (zz != lastz) {
+					if (xx < lastx && yy < lasty) {
+						continue;
+					}
+				}
+
 				var variation = 'middle_';
 				if (zz == sz) variation = 'bottom_';
 				if (zz == lastz) variation = 'top_';
