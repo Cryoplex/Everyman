@@ -64,9 +64,6 @@ function placeBuilding(map, start, size, tiles) {
 					variation = 'deco_8';
 				}
 
-
-				console.log('Variation: '+variation);
-
 				map[zz][yy][xx] = tiles + ' ' + variation;
 			}
 		}
