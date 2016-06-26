@@ -1,5 +1,9 @@
 var changelog = [
 '-- Alpha',
+'--- Isometric engine: Added buildings',
+'---- The spritesheet for a building should have 9 tiles for roof, 5 for sides and 5 for bottom layer.',
+'---- Added decoration for buildings, 8 special tiles with 8 roof decorations, 4 side deco and 4 floor deco.',
+'---- The special decoration for doors only appears in the middle of the building floor.',
 ];
 
 function resetVariables() {
@@ -89,53 +93,21 @@ function newMap(width, height, layers) {
 		tiles[lay] = newLayer(width, height, defaultTile);
 	}
 
-	//People test
-	do {
-		tiles[2][rand(0, width)][rand(0, height)] = 'tile_someguy';
-	}
-	while (rand(0, 10));
+	placeBuilding(tiles, size(1, 1, 2), size(5, rand(4, 6), rand(4, 20)), 'tile_proto');
+	placeBuilding(tiles, size(8, 1, 2), size(5, rand(4, 6), rand(4, 20)), 'tile_proto');
+	placeBuilding(tiles, size(15, 1, 2), size(5, rand(4, 6), rand(4, 20)), 'tile_proto');
 
-	//Building test
-	do {
-		var sz = 2;
-		var sx = rand(3, 10);
-		var sy = rand(3, 10);
+	placeBuilding(tiles, size(1, 9, 2), size(5, rand(4, 6), rand(4, 20)), 'tile_proto');
 
-		var mxz = rand(5, 22) + sz;
-		var mxx = rand(5, 8) + sx;
-		var mxy = rand(5, 8) + sy;
-		for (var zz = sz; zz < mxz; zz++) {
-			for (var xx = sx; xx < mxx; xx++) {
-				for (var yy = sy; yy < mxy; yy++) {
-					tiles[zz][yy][xx] = 'tile_building2';
-					if (zz > 3) tiles[zz][yy][xx] = 'tile_window';
+	placeBuilding(tiles, size(15, 9, 2), size(5, rand(4, 6), rand(4, 20)), 'tile_proto');
 
-				}
-			}
-		}
-	}
-	while (rand(0,1));
+	placeBuilding(tiles, size(1, 17, 2), size(5, rand(4, 6), rand(4, 20)), 'tile_proto');
+	placeBuilding(tiles, size(8, 17, 2), size(5, rand(4, 6), rand(4, 20)), 'tile_proto');
+	placeBuilding(tiles, size(15, 17, 2), size(5, rand(4, 6), rand(4, 20)), 'tile_proto');
 
 	return tiles;
 }
 var DEBUG_MAP = newMap(22, 24, 24);
-function moveGuys(map) {
-	var z = 2;
-	for (var y in map[z]) for (var x in map[z][y]) {
-		var mappy = map[z][y][x];
-		if (mappy == 'tile_someguy') {
-			console.log('Is a guy!');
-			var movex = parseInt(x) + rand(-1, 1);
-			var movey = parseInt(y) + rand(-1, 1);
-			if (map[z][movey] && map[z][movey][movex]) {
-				map[z][y][x] = 'tile_empty';
-				map[z][movey][movex] = 'tile_someguy';
-			}
-		}
-	}
-
-	displayMap();
-}
 function displayMap(width, height, layers) {
 	var tiles = DEBUG_MAP;
 	var width = 22;
@@ -145,9 +117,6 @@ function displayMap(width, height, layers) {
 	gaem.innerHTML = drawLayer(size(width, height, layers), size(30, 60), 'tile tile_road', tiles);
 }
 displayMap(DEBUG_MAP);
-setInterval(function() {
-	moveGuys(DEBUG_MAP)
-}, 1500);
 
 var every = {};
 var gameInfo = {

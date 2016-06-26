@@ -111,6 +111,101 @@ sup {
 .tile_grass {
 	background-image: url(img/grass.png);
 }
+
+.tile_proto {
+	background-image: url(img/proto.png);
+	width: 30px;
+	height: 60px;
+}
+.top_left_left {
+	background-position: 0px 0px;
+}
+.top_left_middle {
+	background-position: -30px 0px;
+}
+.top_left_right {
+	background-position: -60px 0px;
+}
+
+.top_middle_left {
+	background-position: -90px 0px;
+}
+.top_middle_middle {
+	background-position: -120px 0px;
+}
+.top_middle_right {
+	background-position: -150px 0px;
+}
+
+.top_right_left {
+	background-position: -180px 0px;
+}
+.top_right_middle {
+	background-position: -210px 0px;
+}
+.top_right_right {
+	background-position: -240px 0px;
+}
+
+.middle_right_left {
+	background-position: -180px -60px;
+}
+.middle_right_middle {
+	background-position: -210px -60px;
+}
+.middle_right_right {
+	background-position: -240px -60px;
+}
+.middle_left_right {
+	background-position: -60px -60px;
+}
+.middle_middle_right {
+	background-position: -150px -60px;
+}
+
+.bottom_right_left {
+	background-position: -180px -120px;
+}
+.bottom_right_middle {
+	background-position: -210px -120px;
+}
+.bottom_right_right {
+	background-position: -240px -120px;
+}
+.bottom_left_right {
+	background-position: -60px -120px;
+}
+.bottom_middle_right {
+	background-position: -150px -120px;
+}
+
+.deco_1 {
+	background-position: 0px -60px;
+}
+.deco_2 {
+	background-position: -30px -60px;
+}
+.deco_3 {
+	background-position: -90px -60px;
+}
+.deco_4 {
+	background-position: -120px -60px;
+}
+
+.deco_5 {
+	background-position: 0px -120px;
+}
+.deco_6 {
+	background-position: -30px -120px;
+}
+.deco_7 {
+	background-position: -90px -120px;
+}
+.deco_8 {
+	background-position: -120px -120px;
+}
+
+
 .loading {
 	position: fixed;
 	opacity: 0.5;
