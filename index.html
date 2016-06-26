@@ -2,6 +2,8 @@
 <html lang="en">
   <head>
     <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, 
+    user-scalable=no, initial-scale=1, maximum-scale=1, user-scalable=0" />
     <link rel="icon" href="../../favicon.ico">
 
     <title>Game</title>
@@ -17,8 +19,20 @@
     <div class="gaem" id="gaem_overlay"></div>
 
     <div class="debuttons">
-      <input type="button" onclick="addPerson()" value="(+) NPC">
+      Godmode options<br>
+      <input type="button" onclick="addPerson()" value="Add NPC"><br>
+      <input type="button" onclick="expandCity(CITY)" value="Expand City Limits"><br>
+      <input type="button" onclick="addBuildingHere(0)" value="Build Building (Top Left)"><br>
+      <input type="button" onclick="addBuildingHere(1)" value="Build Building (Top Right)"><br>
+      <input type="button" onclick="addBuildingHere(2)" value="Build Building (Bottom Left)"><br>
+      <input type="button" onclick="addBuildingHere(3)" value="Build Building (Bottom Right)"><br>
     </div>
+
+    <citymap id="cMap"></citymap>
+    <div id="info"></div>
+
+
+    <div id="playerOutline"></div>
 
     <script src="../common.js"></script>
   	<script src="../jquery-2.1.4.min.js"></script>
