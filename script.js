@@ -4,6 +4,7 @@ var changelog = [
 '---- The spritesheet for a building should have 9 tiles for roof, 5 for sides and 5 for bottom layer.',
 '---- Added decoration for buildings, 8 special tiles with 8 roof decorations, 4 side deco and 4 floor deco.',
 '---- The special decoration for doors only appears in the middle of the building floor.',
+'----- WTH',
 ];
 
 function resetVariables() {
