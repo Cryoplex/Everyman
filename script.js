@@ -8,6 +8,7 @@ var changelog = [
 '--- Added people and the player.',
 '--- You can control the player using WASD. The top right corner represents "North".',
 '--- Added clothes, skin tones and hair. Each of them is colored at random at first.',
+'--- Added loads of (unfinished) stuff.',
 ];
 
 var MAX_LAYERS = 23;
