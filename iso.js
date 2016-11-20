@@ -1,4 +1,4 @@
-function drawTile(tileClass, size, position, layer, inner, opacity) {
+function drawTile(tileClass, size, position, layer, inner, opacity, bpos) {
 	var width = size.width;
 	var height = size.height;
 
@@ -17,7 +17,7 @@ function drawTile(tileClass, size, position, layer, inner, opacity) {
 
 	if (!inner) inner = '';
 
-	return '<div title="'+tileClass+' x:'+position.x+' y:'+position.y+' z:'+layer+';" class="'+tileClass+'" style="opacity: '+opacity+'; top: '+displayY+'px; left: '+displayX+'px; z-index: '+zindex+';">'+inner+'</div>';
+	return '<div class="'+tileClass+'" style="opacity: '+opacity+'; '+bpos+'; top: '+displayY+'px; left: '+displayX+'px; z-index: '+zindex+';">'+inner+'</div>';
 }
 
 function getIsoTilePosition(size, position) {
@@ -42,6 +42,9 @@ function drawLayer(mapSize, tileSize, tileClass, tiles) {
 	for (var y = 0; y < mapSize.y; y++) {
 		for (var x = 0; x < mapSize.x; x++) {
 			for (var z = 0; z < mapSize.z; z++) {
+				if (tiles[z] == undefined) tiles[z] = [];
+				if (tiles[z][y] == undefined) tiles[z][y] = [];
+				if (tiles[z][y][x] == undefined) continue;
 				var tile = tiles[z][y][x];
 				var opacity = 1;
 				l += drawTile('tile '+tile, tileSize, size(x, y), z, '', opacity);
@@ -142,8 +145,10 @@ function placeBuilding(map, start, size, tiles) {
 
 				var isMiddleTop = ((xx > sx && xx < lastx) && (yy > sy && yy < lasty)) ? true : false;
 				var isMiddle = ((xx > sx && xx < lastx) || (yy > sy && yy < lasty)) ? true : false;
+				var decomode = true;
+				if (tiles == 'tile_agro') decomode = false;
 
-				if (zz == lastz && isMiddleTop && rand(1,5) == 1) variation = 'deco_'+rand(1,8);
+				if (zz == lastz && isMiddleTop && rand(1,5) == 1 && decomode) variation = 'deco_'+rand(1,8);
 				if (zz > sz && zz < lastz && isMiddle && rand(1,5) == 1) variation = 'deco_'+rand(1,4);
 				if (zz == sz && isMiddle && rand(1,5) == 1) variation = 'deco_'+rand(5,7);
 				if (zz == sz && xx == (sx + 1) && yy == lasty) {

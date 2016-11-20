@@ -18,17 +18,34 @@
     </div>
     <div class="gaem" id="gaem_overlay"></div>
 
+    <div style="width: 192px" class="display_holder">
+      <div style="text-align: center; display: inline-block; width: 50%">$</div><div id="money_display" style="text-align: center; width: 50%; display: inline-block">0</div>
+      <div id="time_display"></div>
+
+      <br>
+      <citymap id="cMap"></citymap>
+    </div>
+
+    <div id="notice_closer" class="notice" style="z-index: 99998" onclick="closeNotice()"></div>
+    <div id="notice" class="notice_message">
+      <h3 id="notice_header"></h3>
+      <p id="notice_msg"></p>
+    </div>
+
     <div class="debuttons">
       Godmode options<br>
       <input type="button" onclick="addPerson()" value="Add NPC"><br>
-      <input type="button" onclick="expandCity(CITY)" value="Expand City Limits"><br>
+      <input type="button" onclick="expandCity(city)" value="Expand City Limits"><br>
       <input type="button" onclick="addBuildingHere(0)" value="Build Building (Top Left)"><br>
       <input type="button" onclick="addBuildingHere(1)" value="Build Building (Top Right)"><br>
       <input type="button" onclick="addBuildingHere(2)" value="Build Building (Bottom Left)"><br>
       <input type="button" onclick="addBuildingHere(3)" value="Build Building (Bottom Right)"><br>
+      <input type="button" onclick="redrawInside()" value="Reset Inside of This Building"><br>
+
+      <div id="debug_interns"></div>
+      <div id="debug_warehouse"></div>
     </div>
 
-    <citymap id="cMap"></citymap>
     <div id="info"></div>
 
 

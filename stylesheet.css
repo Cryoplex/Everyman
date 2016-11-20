@@ -70,7 +70,7 @@ sup {
 	opacity: 0.512;
 }
 
-.gaem, .gaem_overlay, person_holder {
+.gaem, .gaem_overlay, person_holder, item_holder {
 	position: absolute;
 	top: 0px;
 	left: 384px;
@@ -84,8 +84,8 @@ sup {
 .debuttons {
 	position: fixed;
 	right: 0px;
-	top: 0px;
-	font-size: 8px;
+	top: 64px;
+	font-size: 10px;
 	width: 20%;
 }
 .hidden {
@@ -106,10 +106,17 @@ outline {
 
 	background: url(img/tiles.png);
 }
+.titem {
+	width: 30px;
+	height: 60px;
+	position: absolute;
+	image-rendering: pixelated;
+	background: url(img/items.png);
+}
 .tiles {
 	background: url(img/tiles.png);
 }
-.t_road { background-position: -240px 0px; }
+.t_road, .tile_tra { background-position: -240px 0px; }
 .t_road_ns { background-position: -210px 0px; }
 .t_road_walk { background-position: -30px 0px; }
 .t_alley { background-position: -60px 0px; }
@@ -125,6 +132,7 @@ outline {
 	height: 60px;
 	top: 0px;
 	left: 0px;
+	font-size: 8px;
 }
 .myGuy {
 	animation: high 1s infinite;
@@ -218,9 +226,86 @@ outline {
 .tile_grass {
 	background-image: url(img/grass.png);
 }
+.tile_hidden {
+	background-image: url(img/bigtiles.png);
+	opacity: 0.5;
+}
+.tile_door {
+	background-image: url(img/bigtiles.png);
+	background-position: -30px 0px;
+}
+.tile_fridge {
+	background-image: url(img/bigtiles.png);
+	background-position: -60px 0px;
+}
+.tile_cabinet {
+	background-image: url(img/bigtiles.png);
+	background-position: -90px 0px;
+}
+.tile_cooker {
+	background-image: url(img/bigtiles.png);
+	background-position: -120px 0px;
+}
+.tile_sink {
+	background-image: url(img/bigtiles.png);
+	background-position: -150px 0px;
+}
+.tile_toilet {
+	background-image: url(img/bigtiles.png);
+	background-position: -180px 0px;
+}
+.tile_sink2 {
+	background-image: url(img/bigtiles.png);
+	background-position: -210px 0px;
+}
+.tile_closet {
+	background-image: url(img/bigtiles.png);
+	background-position: -240px 0px;
+}
+.tile_table {
+	background-image: url(img/bigtiles.png);
+	background-position: -270px 0px;
+}
+.tile_bed1 {
+	background-image: url(img/bigtiles.png);
+	background-position: -300px 0px;
+}
+.tile_bed2 {
+	background-image: url(img/bigtiles.png);
+	background-position: -330px 0px;
+}
+.tile_woodwall {
+	background-image: url(img/bigtiles.png);
+	background-position: -360px 0px;
+}
+.tile_fence_ns {
+	background-image: url(img/bigtiles.png);
+	background-position: -390px 0px;
+}
+.tile_fence_ew {
+	background-image: url(img/bigtiles.png);
+	background-position: -420px 0px;
+}
+.tile_fence_door {
+	background-image: url(img/bigtiles.png);
+	background-position: -450px 0px;
+}
+.tile_work_door {
+	background-image: url(img/bigtiles.png);
+	background-position: -480px 0px;
+}
+.tile_outerwall {
+	background-image: url(img/bigtiles.png);
+	background-position: -510px 0px;
+}
 
 .tile_proto {
 	background-image: url(img/proto.png);
+	width: 30px;
+	height: 60px;
+}
+.tile_agro {
+	background-image: url(img/agro.png);
 	width: 30px;
 	height: 60px;
 }
@@ -321,11 +406,13 @@ outline {
 }
 
 .cityMap {
-	width: 100px;
-	height: 100px;
 	background-color: rgba(128, 255, 64, 0.2);
-}
-#cMap {
+
+	position: relative;
+	top: 0px;
+	left: 0px;
+
+	margin: auto;
 }
 .breaker {
 	clear: both;
@@ -337,47 +424,166 @@ outline {
 @keyframes blink {
 	0% {
 		-webkit-filter: hue-rotate(180deg);
+		filter: hue-rotate(180deg);
 		transform: scale(2.0);
 		opacity: 1;
 	}
 	50% {
 		-webkit-filter: hue-rotate(0deg);
+		filter: hue-rotate(0deg);
 		transform: scale(1.0);
 		opacity: 0.5;
 	}
 }
 
 .cityMapTile {
-	position: fixed;
+	position: absolute;
 	width: 8px;
 	height: 8px;
 	float: left;
 
 	display: inline-block;
 }
-.wil {
-	background-color: rgba(128, 128, 128, 0.5);
-}
-.fir {
-	background-color: rgba(0, 192, 64, 0.5);
-}
-.sec {
-	background-color: rgba(0, 64, 255, 0.5);
-}
-.thi {
-	background-color: rgba(128, 0, 0, 0.5);
-}
-.mix {
-	background-color: rgba(0, 128, 255, 0.5);
-}
 #info {
 	position: fixed;
 	bottom: 0px;
 	left: 0px;
 }
+.display_holder {
+	border-radius: 2px;
+	background-color: rgba(0, 0, 0, 0.8);
+	color: rgba(255, 255, 255, 0.8);
+	text-align: center;
+	position: fixed;
+	top: 2px;
+	right: 2px;
+	z-index: 99;
+}
+#time_display, #money_display {
+	padding: 1%;
+	width: 98%;
+	height: 32px;
+}
+.notice {
+	width: 100vw;
+	height: 100vh;
+	background-color: rgba(0, 0, 0, 0.8);
+	display: none;
+	position: fixed;
+	top: 0;
+	left: 0;
+	z-index: 9999;
+}
+.illegal {
+	color: rgb(128, 32, 32);
+	animation: illeg 1s infinite;
+}
+@keyframes illeg {
+	0%, 100% {
+		color: rgb(128, 32, 32);
+	}
+	50% {
+		color: rgb(255, 64, 64);
+	}
+}
+.itemButton {
+	width: 96%;
+	padding: 2%;
+	font-size: 12px;
+
+	border: 2px solid rgba(0, 0, 0, 0.5);
+	background-color: rgba(255, 255, 255, 0.2);
+	-moz-user-select: none;
+	-webkit-user-select: none;
+	cursor: pointer;
+}
+.itemButton:hover {
+	background-color: rgba(255, 255, 255, 0.5);
+}
+.itemButton:active {
+	background-color: rgba(200, 255, 255, 0.8);
+}
+.notice2 {
+	width: 100vw;
+	height: 100vh;
+
+	display: none;
+	position: fixed;
+	top: 0;
+	left: 0;
+	z-index: 999;
+}
+.notice_message {
+	display: none;
+	position: fixed;
+	top: 5%;
+	left: 20%;
+	padding: 1% 5%;
+	width: 50%;
+	height: 88%;
+	overflow-y: scroll;
+	background-color: rgba(255, 255, 255, 0.8);
+	color: rgba(0, 0, 0, 0.8);
+	z-index: 99999;
+}
+#notice_header {
+	text-align: center;
+}
+
+.wil {
+	background-color: rgba(128, 128, 128, 0.9);
+}
+.tile_wil {
+	background-position: -510px 0px;
+}
+.tile_woodfloor {
+	background-position: -540px 0px;
+}
+.fir {
+	background-color: rgba(0, 192, 64, 0.9);
+}
+.tile_fir {
+	background-position: -330px 0px;
+}
+.sec {
+	background-color: rgba(0, 64, 255, 0.9);
+}
+.tile_sec {
+	background-position: -360px 0px;
+}
+.thi {
+	background-color: rgba(128, 0, 0, 0.9);
+}
+.tile_thi {
+	background-position: -390px 0px;
+}
+.mix {
+	background-color: rgba(0, 128, 255, 0.9);
+}
+.tile_mix {
+	background-position: -420px 0px;
+}
 .res {
-	background-color: rgba(255, 128, 0, 0.5);
+	background-color: rgba(255, 128, 0, 0.9);
+}
+.slum {
+	background-color: rgba(64, 64, 64, 0.9);
+}
+.tile_res {
+	background-position: -450px 0px;
 }
 .par {
-	background-color: rgba(0, 255, 0, 0.5);
+	background-color: rgba(0, 255, 0, 0.9);
+}
+.tile_par {
+	background-position: -480px 0px;
+}
+.tra {
+	background-color: rgb(0, 0, 0);
+}
+.sea {
+	background-color: rgb(0, 192, 255);
+}
+.tile_sea {
+	background-position: -300px 0px;
 }
