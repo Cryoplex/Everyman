@@ -2,6 +2,11 @@
 	background-image: url(jum.png);
 	height: 500px;
 }
+body {
+	width: 100vw;
+	height: 100vh;
+	display: inline-block;
+}
 .jumbotron .container {
 	position: absolute;
 	top: 60px;
@@ -69,6 +74,32 @@ sup {
 	transform: scale(1.0);
 	opacity: 0.512;
 }
+tho {
+	font-style: italic;
+	color: rgba(128, 128, 128, 0.8);
+}
+.coordNotification {
+	font-size: 10px;
+	background-color: rgba(255, 255, 255, 0.8);
+	color: rgba(0, 0, 0, 0.8);
+	padding: 4px;
+	border-radius: 4px;
+	box-shadow: 0 0 4px black;
+
+
+	position: absolute;
+}
+.collectible {
+	animation: collec 2s infinite;
+}
+@keyframes collec {
+	0%, 100% {
+		filter: brightness(1);
+	}
+	80% {
+		filter: brightness(2);
+	}
+}
 
 .gaem, .gaem_overlay, person_holder, item_holder {
 	position: absolute;
@@ -81,10 +112,30 @@ sup {
 
 	zoom: 100%;
 }
+.wanted {
+	animation: want 2s infinite;
+}
+.outlined {
+	/*filter: sepia(1) hue-rotate(80deg) saturate(200);*/
+	opacity: 0.5;
+}
+#wrapper {
+	width: 100vw;
+	height: 100vh;
+	display: block;
+}
+@keyframes want {
+	0%, 100% {
+		background-color: rgba(255, 64, 64, 0.5);
+	}
+	50% {
+		background-color: rgba(64, 64, 255, 0.5);
+	}
+}
 .debuttons {
 	position: fixed;
-	right: 0px;
-	top: 64px;
+	right: 128px;
+	top: 0px;
 	font-size: 10px;
 	width: 20%;
 }
@@ -294,9 +345,75 @@ outline {
 	background-image: url(img/bigtiles.png);
 	background-position: -480px 0px;
 }
+.get {
+	background-color: rgba(128, 192, 128, 0.8);
+}
+.throw {
+	background-color: rgba(128, 128, 128, 0.8);
+}
 .tile_outerwall {
 	background-image: url(img/bigtiles.png);
 	background-position: -510px 0px;
+}
+.tile_bin {
+	background-image: url(img/bigtiles.png);
+	background-position: -540px 0px;
+}
+.tile_belt {
+	background-image: url(img/bigtiles.png);
+	background-position: -570px 0px;
+}
+.tile_belt_machinel {
+	background-image: url(img/bigtiles.png);
+	background-position: -600px 0px;
+}
+.tile_belt_machiner {
+	background-image: url(img/bigtiles.png);
+	background-position: -630px 0px;
+}
+.tile_crystalwall {
+	background-image: url(img/bigtiles.png);
+	background-position: -660px 0px;
+}
+.tile_cfence {
+	background-image: url(img/bigtiles.png);
+	background-position: -690px 0px;
+}
+.tile_metal_post {
+	background-image: url(img/bigtiles.png);
+	background-position: -720px 0px;
+}
+.tile_metal_frame {
+	background-image: url(img/bigtiles.png);
+	background-position: -750px 0px;
+}
+.tile_shop_desk {
+	background-image: url(img/bigtiles.png);
+	background-position: -780px 0px;
+}
+.tile_shop_desk_machine {
+	background-image: url(img/bigtiles.png);
+	background-position: -810px 0px;
+}
+.tile_shop_fridge {
+	background-image: url(img/bigtiles.png);
+	background-position: -840px 0px;
+}
+.tile_shop_counter {
+	background-image: url(img/bigtiles.png);
+	background-position: -870px 0px;
+}
+.tile_shop_shelf {
+	background-image: url(img/bigtiles.png);
+	background-position: -900px 0px;
+}
+.tile_shop_work_door {
+	background-image: url(img/bigtiles.png);
+	background-position: -930px 0px;
+}
+.tile_shop_vendor {
+	background-image: url(img/bigtiles.png);
+	background-position: -960px 0px;
 }
 
 .tile_proto {
@@ -409,7 +526,7 @@ outline {
 	background-color: rgba(128, 255, 64, 0.2);
 
 	position: relative;
-	top: 0px;
+	top: 96px;
 	left: 0px;
 
 	margin: auto;
@@ -538,6 +655,12 @@ outline {
 }
 .tile_woodfloor {
 	background-position: -540px 0px;
+}
+.tile_ironfloor {
+	background-position: -570px 0px;
+}
+.tile_clearfloor {
+	background-position: -600px 0px;
 }
 .fir {
 	background-color: rgba(0, 192, 64, 0.9);

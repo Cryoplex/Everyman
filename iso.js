@@ -11,7 +11,7 @@ function drawTile(tileClass, size, position, layer, inner, opacity, bpos) {
 	var displayY = (x + y) * ((height - 4) / 8);
 
 	var zindex = 0;
-	zindex = (layer * 4) + x + y;
+	zindex = (layer * 4) + position.x + position.y;
 
 	if (tileClass == 'tile tile_empty') return '';
 
@@ -86,7 +86,7 @@ function checkDiagonals(map, fromPosition) {
 	while (!isOutOfBoundaries(map, diagonalFrom(fromPosition))) {
 		var diag = diagonalFrom(fromPosition);
 		var bcheck = isOutOfBoundaries(map, diag);
-		if (bcheck) break;
+		if (bcheck) continue;
 		var tile = map[diag.z][diag.y][diag.x];
 
 		if (tile != 'tile_empty' && tile != 'tile tile_empty') diagonals.push(size(diag.x, diag.y, diag.z));

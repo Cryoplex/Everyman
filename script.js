@@ -10,6 +10,11 @@ var changelog = [
 '--- Added clothes, skin tones and hair. Each of them is colored at random at first.',
 '--- Added loads of (unfinished) stuff.',
 'ab Fixed a buggy bug with loading the game',
+'af Added lost items. Spawned each hour in the ground. Press SPACE to collect them.',
+'af Added trash bins. They generate random items each hour. Press SPACE to interact with them. You can also throw items inside them.',
+'af Buildings now update each day, and city expands each month.',
+'af You can now talk to NPCs and even steal them.',
+'af Added policemen. They roam the city around. If you do crimes, they will chase you. Once chased, you go into arrest and a fee is deducted from your account.',
 ];
 
 var MAX_LAYERS = 23;
@@ -18,6 +23,8 @@ var MAP_WIDTH = 23;
 var MAP_HEIGHT = 23;
 var BASE_HOUSE_VALUE = 100000;
 var ENTRY_PRICE_MOD = 1.5;
+
+var wantedOfficers = {};
 
 var YEAR_MONTHS = 4;
 var MONTH_DAYS = 20;
@@ -70,8 +77,22 @@ var itemList = [
 	//Every item must be obtainable.
 	new Item(0, {}), //Default item
 	new Item(1, {'name': 'Tomato', 'desc': 'Edible. Harvested by farmers.', 'food': true, 'hunger': 5, 'price': 1}), //Harvested by farmers
-	new Item(2, {'name': 'Ketchup', 'desc': 'Edible. Made with real tomatoes.', 'food': true, 'hunger': 1, 'price': 2}), //Made by ketchup makers
-	new Item(3, {'name': 'Ketchupaine', 'desc': 'Drug. Increases energy and reduces health.', 'food': true, 'health': -5, 'energy': 10, 'illegal': true, 'price': 10}), //Made by ketchupaine brewers
+	new Item(2, {'name': 'Ketchup', 'desc': 'Edible. Made with real tomatoes.', 'food': true, 'hunger': 1, 'price': 2, 'byproduct': 4}), //Made by ketchup makers
+	new Item(3, {'name': 'Ketchupaine', 'desc': 'Drug. Increases energy and reduces health.', 'food': true, 'drug': true, 'health': -5, 'energy': 10, 'illegal': true, 'price': 10}), //Made by ketchupaine brewers
+	new Item(4, {'name': 'Ketchup Wrapper', 'desc': 'Trash item result after eating Ketchup.', 'tile': 2, 'price': 0.05}), //Produced after consuming Ketchup
+];
+
+var crimes = [
+	{'name': 'Assault and theft', 'tier': 5},
+	{'name': 'In-shop theft', 'tier': 4},
+	{'name': 'Theft attempt', 'tier': 3},
+
+	{'name': 'Illegal jobs', 'tier': 1},
+	{'name': 'Drug possesion', 'tier': 3},
+
+	{'name': 'Illegal item possesion', 'tier': 2},
+
+	{'name': 'Resistance to authority', 'tier': 1},
 ];
 var furniturePrices = {
 	'tile_closet': 180,
@@ -84,11 +105,13 @@ var furniturePrices = {
 	'tile_cooker': 680,
 	'tile_woodwall': 5,
 	'tile_hidden': 5,
+	'tile_bin': 40,
 }
 var furnitureNames = {
 	'tile_closet': 'Closet', 'tile_table': 'Table', 'tile_sink': 'Sink', 'tile_sink2': 'Sink', 'tile_toilet': 'Toilet', 'tile_cabinet': 'Cabinet', 'tile_fridge': 'Fridge', 'tile_cooker': 'Oven',
 	'tile_woodwall': 'Wood Wall',
 	'tile_hidden': 'Stone Wall',
+	'tile_bin': 'Trash Bin',
 }
 var furnitureStatus = {
 	'tile_hidden': 'build',
@@ -102,6 +125,7 @@ var furnitureStatus = {
 	'tile_fridge': 'buy',
 	'tile_cabinet': 'buy',
 	'tile_cooker': 'buy',
+	'tile_bin': 'buy',
 }
 
 var skinTones = [
@@ -165,19 +189,6 @@ function afterLoad() {
 	makeHolder(player);
 	drawPerson(player);
 }
-function drawInterns() {
-	var l = '';
-	for (var e in everyman.interns) {
-		var interns = everyman.interns[e];
-		if (interns.length > 0) l += 'Intern NPC at sector '+e+'<br>';
-		for (var i in interns) {
-			l += interns[i]+' '+jobList[e][i].name+'s<br>';
-		}
-	}
-	if (l == '') l = 'There are no interns.';
-	debug_interns.innerHTML = l;
-	return l;
-}
 function drawWarehouse() {
 	var wh = '<br><b>Items in City Warehouse</b><br>';
 	for (var e in everyman.warehouse) {
@@ -191,6 +202,8 @@ function drawWarehouse() {
 	debug_warehouse.innerHTML = wh;
 }
 function makeIntern(id) {
+	var guy = everyman.people[id];
+	if (guy.type == 'police' || guy.type == 'police_extra') return;
 	var randomSector = read(['fir', 'sec', 'thi', 'slave', 'slum']);
 	var randomJobs = jobList[randomSector];
 	var r = rand(1, randomJobs.length) - 1;
@@ -235,8 +248,9 @@ function update(step) {
 
 	updateInterns();
 }
-function zeroPad(number, fixed, dec) {
+function zeroPad(number, fixed, dec, trim) {
 	if (!number) number = 0;
+	if (trim) number = Math.floor(number)
 	var base = (dec) ? 10 : 36;
 	number = number % Math.pow(10, fixed);
 
@@ -263,6 +277,12 @@ function generateID(last, type, zoneX, zoneY) {
 	return newID;
 
 }
+function isCriminal(guy) {
+	if (guy.crime == undefined) guy.crime = [];
+	var level = 0;
+	for (var c in guy.crime) level += guy.crime[c];
+	return level;
+}
 function Person(id, type) {
 	this.id = id;
 
@@ -276,14 +296,26 @@ function Person(id, type) {
 
 	this.homes = [];
 
-	this.health = 100; //If it reaches 0, this person dies.
+	this.health = 100; //If it reaches 0, this person dies
 	this.hunger = 100; //If it reaches 0, drains hunger
 	this.energy = 100; //If it reaches 0, forces sleep and disables movement
+	this.hygiene = 100; //Reduced by dirty actions
+
+	this.crime = [];
+
+	this.friendship = 0;
+
+	this.lastMove = 0;
 
 
-	this.money = (type == 'player') ? 3000 : rand(1,1000);
+	this.money = (type == 'player') ? 3000 : 0;
 
 	this.gender = rand(0,1);
+
+	this.name = 'Random Guy';
+	if (this.gender == 1) this.name = getFemaleName();
+	if (this.gender == 0) this.name = getMaleName();
+
 	this.variation = rand(0,1);
 
 	this.mapID = {'x': 2, 'y': 2};
@@ -291,20 +323,67 @@ function Person(id, type) {
 	makeHolder(this);
 }
 function lostItem(mapx, mapy) {
-	var sp = new SpawnPoint();
+	var sp = new SpawnPoint('item');
 	var iid = rand(1, itemList.length) - 1;
 	if (city.map[mapx][mapy].lostItems == undefined) city.map[mapx][mapy].lostItems = [];
+	var litems = city.map[mapx][mapy].lostItems;
+	for (var li in litems) {
+		if (litems[li].x == sp.x && litems[li].y == sp.y) {
+			return;
+		}
+	}
+
 	city.map[mapx][mapy].lostItems.push({'x': sp.x, 'y': sp.y, 'id': iid});
+
+	if (mapx == player.mapID.x && mapy == player.mapID.y) drawLostItems();
 }
 function drawLostItems() {
+	var ibtn = document.getElementsByTagName('item_holder');
+	for (var i in ibtn) {
+		var it = ibtn[i];
+		if (!it || !it.parentNode) continue;
+		document.body.removeChild(ibtn[i]);
+	}
 	var li = city.map[player.mapID.x][player.mapID.y].lostItems;
 	if (li && li.length > 0) {
 		for (var it in li) {
 			var litem = li[it];
-			var isoPos = getIsoTilePosition(size(30, 60), size(litem.x - 1, litem.y - 3, -1));
-			gaem.innerHTML += '<item_holder class="titem" style="background-position: '+getItemTile(litem.id)+'" style="top: '+isoPos.top+'; left: '+isoPos.left+'"></item_holder>';
+			drawObject(litem.x, litem.y, 'items', getItemTile(litem.id));
 		}
 	}
+}
+function onPlayerNotification(text) {
+	onCoordinateNotification(player.x, player.y, text);
+}
+function onCoordinateNotification(x, y, text) {
+	var isoPos = getIsoTilePosition(size(30, 60), size(x-1, y-3, 2));
+	var el = document.createElement('person_holder');
+	el.style.width = 'auto';
+	el.style.height = 'auto';
+	el.className = 'tile whatever';
+	el.style.top = (TILE_HEIGHT * (MAX_LAYERS / 8))+'px';
+
+	var tl = (text.length > 50) ? 50 : text.length;
+	var wd = (tl * 5);
+
+
+	el.innerHTML = '<div style="top: '+isoPos.top+'; left: '+isoPos.left+'; z-index: 9999; width: '+wd+'px" class="coordNotification">'+text+'</div>';
+	var time = 100 * text.length;
+
+	document.body.appendChild(el);
+	setTimeout(function() {
+		document.body.removeChild(el);
+	}, time);
+}
+function drawObject(x, y, tileset, bpos) {
+	var isoPos = getIsoTilePosition(size(30, 60), size(x-1, y-3, 2));
+	var el = document.createElement('item_holder');
+	el.className = 'tile whatever';
+	el.style.top = (TILE_HEIGHT * (MAX_LAYERS / 8))+'px';
+
+	el.innerHTML = '<div style="top: '+isoPos.top+'; left: '+isoPos.left+'; background: url(img/'+tileset+'.png); z-index: 999; background-position: '+bpos+'; background: '+tileset+'" class="tile collectible"></div>';
+
+	document.body.appendChild(el);
 }
 
 
@@ -337,10 +416,32 @@ function drawPerson(guy) {
 		doc(hname).style.left = isoPos.left;
 	}
 
+	var zindex = 0;
+	zindex = (guy.z * 4) + guy.x + guy.y;
+
+	var bk = getBlocker(guy);
+	if (!bk) doc(hname).className = 'guy_layer';
+	if (bk) {
+		doc(hname).className = 'guy_layer outlined';
+		zindex = 9999;
+	}
+
+	doc(hname).style.zIndex = zindex;
+
 	var picname = 'npcpic_'+guy.id;
 	if (doc(picname)) {
 		doc(picname).style.backgroundPosition = getBackgroundPosition(guy, 0, guy.walking);
 	}
+}
+function getBlocker(guy) {
+	var map = city.map[guy.mapID.x][guy.mapID.y].map;
+	if (guy.inside != undefined) map = city.map[guy.mapID.x][guy.mapID.y].inside.map;
+	var h = false;
+	for (var xx = 0; xx < MAP_HEIGHT; xx++) {
+		if (whatsHere(map, size((guy.x + xx), (guy.y + xx), (guy.z + xx)))) return true;
+	}
+	if (whatsHere(map, size((guy.x), (guy.y + 1), (guy.z)))) return true;
+	return false;
 }
 function editActiveMap(x, y, z, newTile) {
 	var pos = player.mapID;
@@ -379,6 +480,15 @@ function drawGuy(guy) {
 	var walking = (guy.walking) ? 'walking_'+guy.facing : '';
 	var isMyGuy = (guy == player) ? 'myGuy' : '';
 
+	if (guy.type == 'police') {
+		guy.gender = '1s';
+		guy.variation = '0';
+	}
+	if (guy.type == 'police_extra') {
+		guy.gender = '1s';
+		guy.variation = '1';
+	}
+
 	var g = '<div class="guy_layer" id="npcpic_'+guy.id+'" style="background: url(img/npc_'+guy.gender+'_'+guy.variation+'.png) '+getBackgroundPosition(guy, 0, guy.walking)+'">';
 
 	g += '</div>';
@@ -389,14 +499,33 @@ function getPeopleLength() {
 	for (var e in everyman.people) n++;
 	return n;
 }
+function getStealChance(guy) {
+	var base = 0;
+	var time = everyman.time.hours + (everyman.time.minutes / 60);
+	if (time < 8) base = 90;
+	if (time >= 8) base = 45;
+	if (time >= 10) base = 20;
+	if (time >= 12) base = 10;
+	if (time >= 15 && time < 18) base = 2;
+	if (time >= 18) base = 75;
+
+	return base;
+}
+function addCrime(player, c, amt, set) {
+	if (player.crime[c] == undefined) player.crime[c] = 0;
+	player.crime[c] += amt;
+	if (set) player.crime[c] = amt;
+}
 function addPerson(type, mapx, mapy) {
 	var last = getPeopleLength();
 	var id = generateID(last, type, 1, 1);
 
-	if (mapx == undefined) mapx = player.mapID.x;
-	if (mapy == undefined) mapy = player.mapID.y;
+	if (mapx == undefined) mapx = rand(2, city.map.length) - 1;
+	if (mapy == undefined) mapy = rand(2, city.map[0].length) - 1;
 
 	var p = new Person(id, type);
+	if (rand(1, 10) == 1) p.type = 'police';
+	if (rand(1, 10) == 1) p.type = 'police_extra';
 	var sp = new SpawnPoint();
 	p.mapID.x = mapx;
 	p.mapID.y = mapy;
@@ -564,12 +693,24 @@ function EMDate(add_days, add_months, add_years) {
 		this.year++;
 	}
 }
-function SpawnPoint() {
+function SpawnPoint(item) {
 	this.x = red(3, 18)
 	this.y = red(3, 18);
 
 	this.x += rand(0, 1);
 	this.y += rand(0, 1);
+
+	if (item) {
+		var type = rand(0,1);
+		if (type == 0) {
+			this.x = rand(18, 22);
+			this.y = rand(0, 22);
+		}
+		if (type == 1) {
+			this.y = rand(18,22);
+			this.x = rand(0, 22);
+		}
+	}
 }
 function loadv(text, min, max) {
 	loading.style.opacity = 0.5;
@@ -621,7 +762,50 @@ function newLayer(width, height, empty, lay, type, variation) {
 			}
 			if (lay == 1 && type == 'dung') {
 				toadd = 't_road';
-				if (w > 0 && h > 0 && w < (width - 1) && h < (height - 1)) toadd = 'tile_woodfloor';
+				if (w > 0 && h > 0 && w < (width - 1) && h < (height - 1)) {
+					toadd = 'tile_woodfloor';
+					if (variation == 'sec') toadd = 'tile_ironfloor';
+					if (variation == 'thi' || variation == 'mix') toadd = 'tile_clearfloor';
+				}
+			}
+			if (lay == 2 && type == 'dung') {
+				if (w == 0 || h == 0 || w == (width - 1) || h == (height - 1)) toadd = 'tile_outerwall';
+				if (w == 2 && h == 22) toadd = 'tile_empty';
+
+				if (variation == 'sec') {
+					if (w > 1 && w < (width - 1) && (h == 1 || h == 6)) {
+						toadd = 'tile_belt';
+						if (w == 2) toadd = 'tile_belt_machiner';
+					}
+					if (w == 1 && (h == 2 || h == 7)) toadd = 'tile_belt_machinel';
+					if (w > 0 && w < 8 && h == 14) toadd = 'tile_crystalwall';
+					if (w == 8 && h >= 14) toadd = 'tile_outerwall';
+
+					if (w == 8 && h == 18) toadd = 'tile_work_door';
+
+					if (w > 0 && w < 18 && w % 2 == 0 && h == 10) toadd = 'tile_cfence';
+					if (w > 16 && w < (width - 1) && h == 10 && w % 2 == 0) toadd = 'tile_metal_post';
+					if (w > 10 && w < (width - 1) && h > 12 && h < (height - 1) && h % 3 == 0 && w % 2 == 0) toadd = 'tile_metal_frame';
+				}
+				if (variation == 'thi') {
+					if ((w > 0 && w < 5 || w > (width - 6) && w < (width - 1)) && h == 1) toadd = 'tile_shop_fridge';
+					if (w > 5 && w < (width - 6) && (h == 1 || h == 6 || h == 11)) {
+						toadd = 'tile_shop_shelf';
+						if (h > 1) toadd = 'tile_shop_counter';
+					}
+					if (h == 15 && w >= 6 && w < (width - 1)) {
+						toadd = 'tile_shop_desk';
+						if (w == 11 || w == 19) toadd = 'tile_shop_work_door';
+					}
+					if ((w == 6 || w == 13) && h < (height - 1) && h > 15) {
+						if (h < 18) toadd = 'tile_shop_desk'; 
+						if (w == 6 && h > 17) toadd = 'tile_outerwall';
+						if (h == 16) toadd = 'tile_shop_desk_machine';
+						if (h == 19 && w == 6) toadd = 'tile_work_door';
+					}
+					if ((w == 7 || w == 14) && h == 16) toadd = 'tile_shop_vendor';
+				}
+
 			}
 
 			if (lay == 2 && type == 'dung' && (variation == 'fir' || variation == 'res' || variation == 'mix' || variation == 'slum')) {
@@ -663,7 +847,7 @@ function newLayer(width, height, empty, lay, type, variation) {
 
 				if (variation == 'fir' && w == 0 && h == 10) toadd = 'tile_work_door';
 			}
-			if (lay == 2) if ((variation == 'mix' || variation == 'slum' || variation == 'thi' || variation == 'sec') && w == 0 && h == 18) toadd = 'tile_work_door';
+			if (lay == 2) if ((variation == 'mix' || variation == 'slum') && w == 0 && h == 18) toadd = 'tile_work_door';
 
 
 			if (toadd) layer[h][w] = toadd;
@@ -740,10 +924,23 @@ function decorateMap(mapobject, mapx, mapy) {
 				if (x == 11 && y == 17) toadd = 'tile_fence_door';
 			}
 
+			if (maptype != 'sea' && maptype != 'par') {
+				if (x == 19 && y == 19) toadd = 'tile_bin';
+			}
+
 			if (toadd) layer[y][x] = toadd;
 		}
 	}
 
+}
+function updateBuilding(wherex, wherey) {
+	if (isHome(player, wherex, wherey)) return;
+	city.map[wherex][wherey].building = undefined;
+	var buildingType = city.map[wherex][wherey].type;
+	city.map[wherex][wherey].inside = new Inside(buildingType);
+	decorateMap(city, wherex, wherey);
+
+	if (wherex == player.mapID.x && wherey == player.mapID.y) displayMap();
 }
 function buildBuilding(wherex, wherey) {
 	var here = city.map[wherex][wherey].map;
@@ -950,9 +1147,23 @@ function testBuildings() {
 	placeBuilding(tiles, size(13, 13, 2), size(5, 5, 5), 'tile_proto');
 
 }
+function getMyJobName() {
+	return jobList[player.job.type][player.job.id].name;
+}
+function getRandomFoodItem() {
+	var items = [];
+	for (var i in itemList) if (itemList[i].food) items.push(itemList[i].name);
+	return read(items);
+}
 
 function movePlayer(direction) {
 	moveGuy(player, direction, true);
+
+	info.innerHTML = debugInfo(player);
+
+	if (drawWanted(1) > 0) {
+		addCrime(player, 6, drawWanted(1));
+	}
 }
 function getRandomEmptySpace(city) {
 	var map = city.map;
@@ -1143,7 +1354,6 @@ function EmptyMap(type, sector, dname, surr) {
 function pickFurniture() {
 	var infront = whatsInFrontOf(player);
 	if (everyman.held) {
-		console.log('Actual held item: ', everyman.held, 'infront', infront);
 		if (!infront.upfront || infront.upfront == 'tile_empty') {
 			editActiveMap(infront.frontcoords.x, infront.frontcoords.y, 2, everyman.held);
 			everyman.held = undefined;
@@ -1151,7 +1361,6 @@ function pickFurniture() {
 		}
 	}
 	else {
-		console.log('Check in front', infront);
 		if (infront.upfront) {
 			var checkItem = furnitureStatus[infront.upfront];
 			var mode = isHome(player, player.mapID.x, player.mapID.y);
@@ -1160,7 +1369,6 @@ function pickFurniture() {
 			if (!checkItem) exitStatus = 'forbidden_item';
 			if (checkItem == 'build' && !mode.bought) exitStatus = 'not_on_build_mode';
 			if (exitStatus) {
-				console.log('Exit status', exitStatus);
 				return;
 			}
 			everyman.held = infront.upfront;
@@ -1204,7 +1412,7 @@ function newCityMap(width, height) {
 function whatsHere(array, pos) {
 	if (array[pos.z]) {
 		if (array[pos.z][pos.y]) {
-			var hier = array[pos.z][pos.y][pos.x]
+			var hier = array[pos.z][pos.y][pos.x];
 			if (hier) {
 				if (hier == 'tile_empty' || hier == 'tile tile_empty') return false;
 				return hier;
@@ -1241,18 +1449,27 @@ function moveGuy(guyObject, direction, isPlayer, force) {
 	var directionID = directionNames.indexOf(direction);
 	guyObject.facing = directionID;
 
+	var guyMap = city.map[guyObject.mapID.x][guyObject.mapID.y];
+	if (guyObject.inside != undefined) {
+		guyMap = guyMap.inside.map;
+	}
+	else {
+		guyMap = guyMap.map;
+	}
+
 	direction = directions[direction];
 
 	var nextx = guyObject.x + direction.x;
 	var nexty = guyObject.y + direction.y;
 
-	var wh = whatsHere(getActiveMap(), size(nextx, nexty, guyObject.z));
-	var wh2 = (whatsHere(getActiveMap(), size(nextx, nexty, guyObject.z-1)) == 'tile_sea') ? true : false;
+	var wh = whatsHere(guyMap, size(nextx, nexty, guyObject.z));
+	var wh2 = (whatsHere(guyMap, size(nextx, nexty, guyObject.z-1)) == 'tile_sea') ? true : false;
+
 	if (force) {
 		wh = false;
 		wh2 = false;
 	}
-	if ((wh || wh2)) return;
+	if ((wh || wh2)) return 'thump';
 
 
 	guyObject.x += direction.x;
@@ -1287,7 +1504,7 @@ function moveGuy(guyObject, direction, isPlayer, force) {
 }
 function redrawInside() {
 	var thismap = getActiveMap();
-	city.map[player.mapID.x][player.mapID.y].inside = new Inside('res');
+	city.map[player.mapID.x][player.mapID.y].inside = new Inside(getTypeOfMap(city.map, player.mapID.x, player.mapID.y));
 
 	displayMap();
 }
@@ -1324,7 +1541,6 @@ function displaceThere(guy, direction) {
 	if (guy == player) {
 		recheckGuys();
 	}
-	if (guy != player) guy.facing = rand(0,3);
 }
 function recheckGuys() {
 	for (var g in everyman.peopleList) {
@@ -1351,6 +1567,8 @@ function displayMap(width, height, layers, worldmap) {
 	gaem.innerHTML = drawLayer(size(width, height, layers), size(30, 60), 'tile tile_road', tiles);
 
 	cMap.innerHTML = drawCityMap(city);
+
+	drawLostItems();
 
 	drawPerson(player);
 }
@@ -1424,15 +1642,74 @@ function internWork() {
 	}
 }
 function updateInterns() {
-	var max = Math.floor(everyman.peopleList.length / 10);
+	var max = Math.floor(everyman.peopleList.length / 50);
 	var rn = rand(0, max);
 	for (var i = 0; i < rn; i++) {
 		var r = read(everyman.peopleList);
 		makeIntern(r);
 	}
 	internWork();
-	drawInterns();
 	drawWarehouse();
+}
+function newDayEvents() {
+	var rx = rand(1, city.map.length) - 1;
+	var ry = rand(1, city.map[0].length) - 1;
+	updateBuilding(rx, ry);
+
+	for (var w in city.map) for (var h in city.map[w]) {
+		var map = city.map[w][h];
+		if (map.lostItems) {
+			var total = map.lostItems.length - 1;
+			var r = rand(0, total);
+			map.lostItems.splice(0, r);
+		}
+		if (map.trash == undefined) map.trash = [];
+		if (map.trash && rand(0,1)) {
+			map.trash = [];
+			console.log('Emptying trash at ('+w+', '+h+')');
+		}
+	}
+}
+function immigrantPack(type) {
+	var immigrantsPerMonth = Math.floor((getPopulation() / 10) + 1);
+	var immigrantsPerDay = Math.floor(immigrantsPerMonth / MONTH_DAYS);
+
+	console.log('Immigrants incoming! Pack type', type, 'max immigrants (month)', immigrantsPerMonth, 'max immigrants (day)', immigrantsPerDay);
+	var r = 0;
+	if (type == 'day') r = rand(0, immigrantsPerDay);
+	if (type == 'month') r = rand(0, immigrantsPerMonth);
+	console.log('Will add', r, 'immigrants');
+	for (var im = 0; im < r; im++) addPerson();
+}
+function displayCrime(guy, peek) {
+	var l = '';
+	var totalvalue = 0;
+	for (var e in guy.crime) {
+		var c = guy.crime[e];
+		if (c > 0) {
+			var fee = round(c * crimes[e].tier);
+			l += crimes[e].name+' (Severity: '+crimes[e].tier+') $'+fee+' fee.<br>';
+			totalvalue += fee;
+		}
+	}
+	var punishment = (totalvalue * 5);
+	var wanted = Math.floor(totalvalue / 10);
+
+	if (peek == 'fee') return totalvalue;
+	if (peek == 'time') return punishment;
+	if (peek == 'wanted') return wanted;
+
+	l += '<hr>Total fees: $'+totalvalue.toFixed(2)+'<br>...or '+duration(punishment * 1000)+' in jail.<br>Wanted radius: '+wanted;
+	return l;
+}
+function tickCrime(guy) {
+	for (var c in guy.crime) {
+		var crimeTier = crimes[c].tier;
+		var amt = 1 / crimeTier;
+		guy.crime[c] -= amt;
+		guy.crime[c] = round(guy.crime[c]);
+		if (guy.crime[c] <= 0) guy.crime[c] = 0;
+	}
 }
 function timePass(type) {
 	if (everyman.time == undefined) {
@@ -1444,6 +1721,11 @@ function timePass(type) {
 	if (type == 'fast') amt = 2;
 	if (type == 'ultrafast') amt = 3;
 	everyman.time.minutes += amt;
+
+	if (player.crime == undefined) player.crime = [];
+	if (isCriminal(player)) {
+		tickCrime(player);
+	}
 
 	if (everyman.time.minutes >= 60) {
 		everyman.time.minutes = 0;
@@ -1458,6 +1740,12 @@ function timePass(type) {
 				lastDrops[rd]++;
 			}
 		}
+
+		var rx = rand(1, city.map.length) - 1;
+		var ry = rand(1, city.map[0].length) - 1;
+		if (rx > 0 && ry > 0) lostItem(rx, ry);
+
+		addRandomItemToTrash();
 	}
 	if (everyman.time.hours >= 24) {
 		everyman.time.hours = 0;
@@ -1468,32 +1756,48 @@ function timePass(type) {
 			player.job.end = false;
 		}
 
-		updateInterns();
+		immigrantPack('day');
 
-		var immigrantsPerMonth = (getPopulation() / 10);
-		var immigrantsPerDay = Math.floor(immigrantsPerMonth / MONTH_DAYS);
-		if (immigrantsPerDay > 0) {
-			var r = rand(0, immigrantsPerDay);
-			for (var im = 0; im < r; im++) addPerson();
-		}
+		newDayEvents();
 	}
 	if (everyman.time.day >= MONTH_DAYS) {
 		everyman.time.day = 1;
 		everyman.time.month++;
+
+		immigrantPack('month');
+
+		expandCity(city);
+		updateInterns();
 	}
 	if (everyman.time.month >= YEAR_MONTHS) {
 		everyman.time.month = 1;
 		everyman.time.year++;
 	}
 	if (player.working) {
+		if (player.job.type == 'slum') addCrime(player, 3, (amt / 2));
 		player.job.workedHours += (amt/60);
 		player.job.dueHours -= (amt/60);
 		updateWork();
+
+		info.innerHTML = debugInfo(player);
 	}
 	tickPeopleStats(type);
 
 	money_display.innerHTML = player.money.toFixed(2);
-	time_display.innerHTML = zeroPad(everyman.time.hours, 2, true)+':'+zeroPad(everyman.time.minutes, 2, true)+' '+displayDate(everyman.time)+'<br>'+getPopulation()+' population';
+	time_display.innerHTML = zeroPad(everyman.time.hours, 2, true)+':'+zeroPad(everyman.time.minutes, 2, true)+' '+displayDate(everyman.time)+'<br>'+getPopulation()+' population'+getPlayerStats();
+}
+function getPlayerStats() {
+	var sl = '';
+	if (drawWanted(1) > 0) {
+		sl = '<div>'+drawWanted(1)+' Police Officers looking for you.</div>';
+		if (doc('wrapper').className != 'wanted') doc('wrapper').className = 'wanted';
+	}
+	if (!sl) doc('wrapper').className = '';
+	if (player.hygiene == undefined) player.hygiene = 100;
+	return '<div>'+player.health.toFixed(0)+'/100 Health</div>'+
+	'<div>'+player.hunger.toFixed(0)+'/100 Food</div>'+
+	'<div>'+player.energy.toFixed(0)+'/100 Energy</div>'+
+	'<div>'+player.hygiene.toFixed(0)+'/100 Hygiene</div>'+sl;
 }
 function getPopulation() {
 	var npcs = everyman.peopleList.length;
@@ -1577,27 +1881,85 @@ function canAnNPCWalk(x, y, carmode) {
 
 	var lay2min = 18;
 	var lay2max = 19;
-	if ((y >= lay1min && y <= lay1max) || (x >= lay1min && x <= lay1max)) return true;
-	if ((y >= lay2min && y <= lay2max) || (x >= lay2min && x <= lay2max)) return true;
+	if (y == x) return 'turn';
+	if ((y >= lay1min && y <= lay1max) || (x >= lay1min && x <= lay1max)) return 'walk';
+	if ((y >= lay2min && y <= lay2max) || (x >= lay2min && x <= lay2max)) return 'walk';
 	return false;
+}
+function policeStrength(x, y) {
+
+}
+function getBestMove(from, to) {
+	var lowest = {'dir': 'center', 'dist': Infinity}
+	var dirs = ['north', 'east', 'south', 'west'];
+	for (var d in dirs) {
+		var dir = dirs[d];
+		var h = hypoToDirection(from, dir);
+		if (h.status == 'thump') continue;
+		var dist = distance(h, to);
+		if (dist < lowest.dist) lowest = {'dir': dir, 'dist': dist};
+	}
+
+	return lowest;
+}
+function hypoToDirection(from, dir) {
+	var pointer = {'x': from.x, 'y': from.y, 'z': from.z, 'mapID': {'x': from.mapID.x, 'y': from.mapID.y}};
+	pointer.status = moveGuy(pointer, dir);
+	return pointer;
+}
+function distance(from, to) {
+	var distancex = Math.abs(((from.mapID.x * MAP_WIDTH) + from.x) - ((to.mapID.x * MAP_WIDTH) + to.x));
+	var distancey = Math.abs(((from.mapID.y * MAP_HEIGHT) + from.y) - ((to.mapID.y * MAP_HEIGHT) + to.y));
+
+	return distancex + distancey;
 }
 function tickPeople() {
 	if (!everyman) return;
-	var id = everyman.peopleList[ticker];
+	if (player.hold) return;
+	
+	var id = read(availableGuys);
+	if (drawWanted(1) > 0) id = read(read([availableGuys, wantedOfficers]));
 	if (id == undefined) {
 		ticker = 0;
 		id = read(everyman.peopleList);
 	}
-	ticker++;
 	var person = everyman.people[id];
 	if (person == undefined) return;
+	var d = new Date();
+	if (d.valueOf() < person.lastMove) return;
+	person.lastMove = d.valueOf() + 250;
 
 	//Move guy
-	var dir = directionNames[person.facing];
 	var canwalk = canAnNPCWalk(person.x, person.y);
+	if (canwalk == 'turn' || person.forceTurn) {
+		person.facing = rand(0,3);
+		person.forceTurn = false;
+	}
+
+	var dir = directionNames[person.facing];
+	var lastx = person.x;
+	var lasty = person.y;
+
+	//Only for policemen
+	if (person.type == 'police' || person.type == 'police_extra') {
+		if (isCriminal(player) > 0) {
+			var wanted = displayCrime(player, 'wanted');
+			var dist = distance(person, player);
+			if (wanted >= dist) {
+				var bm = getBestMove(person, player);
+				dir = bm.dir;
+				wantedOfficers[person.id] = bm.dist;
+				if (bm.dist == 1 && person.inside == player.inside) arrest(player);
+			}
+			else {
+				if (wantedOfficers[person.id]) delete wantedOfficers[person.id];
+			}
+		}
+	}
 
 	moveGuy(person, dir);
-	if (!canwalk || rand(1,100) == 1) person.facing = rand(0,3);
+
+	if (lastx == person.x && lasty == person.y && rand(1, 10) == 1) person.forceTurn = true;
 
 	if (!person.mapID) person.mapID = {
 		'x': 2,
@@ -1631,8 +1993,13 @@ function whatsInFrontOf(guy) {
 		if (check.x == look.x && check.y == look.y) guyfront = guys[g];
 	}
 	var item;
+	var mappy = city.map[player.mapID.x][player.mapID.y];
+	for (var li in mappy.lostItems) {
+		var litem = mappy.lostItems[li];
+		if (litem.x == look.x && litem.y == look.y) item = litem;
+	}
 
-	return {'upfront': upfront, 'guyfront': guyfront, 'frontcoords': look};
+	return {'upfront': upfront, 'guyfront': guyfront, 'frontcoords': look, 'item': item};
 }
 function debugInfo(guy) {
 	var map = getActiveMap();
@@ -1654,7 +2021,8 @@ function debugInfo(guy) {
 		if (check.x == look.x && check.y == look.y) guyfront = guys[g];
 	}
 
-	return JSON.stringify({'stepon': stepon, 'facing': fac, 'stepfront': stepfront, 'upfront': upfront, 'guyfront': guyfront, 'x': guy.x, 'y': guy.y, 'wifo': whatsInFrontOf(player)});
+	debug_interns.innerHTML = displayCrime(guy)+'<br><br>'+drawWanted();
+	return JSON.stringify({'crime': guy.crime, 'blocker': getBlocker(player)});
 }
 function enterBuilding(guy) {
 	var map = city.map[guy.mapID.x][guy.mapID.y];
@@ -1700,7 +2068,6 @@ function applyJob(x, y) {
 function getDropsForJob(job, ret) {
 	var j = jobList[job.type][job.id];
 	var drops = [];
-	console.log('Job', j);
 	if (j.input != undefined) for (var i in j.input) drops.push(j.input[i]);
 	if (j.output != undefined) for (var i in j.output) drops.push(j.output[i]);
 	if (j.shop != undefined) for (var i in j.shop) drops.push(j.shop[i]);
@@ -1730,7 +2097,7 @@ function askWork(job) {
 }
 function quitJob() {
 	payCheck(player.job);
-	notification('You are fired!');
+	onPlayerNotification('You have been fired!');
 	closeNotice();
 	player.job = undefined;
 }
@@ -1862,33 +2229,179 @@ function closeNotice() {
 	$('#notice_closer').fadeOut(200);
 	switchTime('slow');
 	player.working = false;
+	player.hold = false;
 }
 function startWorking() {
 	switchTime('ultrafast');
 	player.working = true;
 	doWork();
 }
-function showInventory() {
+function getJobById(sector, id) {
+	return jobList[sector][id];
+}
+function getShop(mapx, mapy) {
+	var map = city.map[mapx][mapy];
+	if (map.jobID == undefined) getJobId(mapx, mapy);
+	var id = map.jobID;
+	var sec = getJobSalary(mapx, mapy, 'type');
+	var job = getJobById(sec, id);
+	var shop = job.shop;
+	var shoppy = [];
+	if (shop == undefined) return shoppy;
+	for (var s in shop) {
+		var shopid = shop[s];
+		shoppy[shopid] = everyman.warehouse[shopid];
+	}
+	return shoppy;
+}
+function whatJobHere(mapx, mapy) {
+	return getJobById(getJobSalary(mapx, mapy, 'type'), city.map[mapx][mapy].jobID);
+}
+function checkDrugs() {
+	//4 = drugs, 5 = illegal items
+	var drugValue = 0;
+	var illegalValue = 0;
+	for (var i in player.inventory) {
+		var amt = player.inventory[i];
+		var item = itemList[i];
+		if (item.drug) drugValue += (item.price * amt);
+		if (item.illegal) illegalValue += (item.price * amt);
+	}
+	if (drugValue > 0) addCrime(player, 4, drugValue, true);
+	if (illegalValue > 0) addCrime(player, 5, illegalValue, true);
+}
+function showInventory(variation) {
 	if (player.inventory == undefined) player.inventory = [];
+	checkDrugs();
 	var itory = '';
-	for (var i in player.inventory) if (player.inventory[i] > 0) itory += displayItem(i, player.inventory[i])+'<br>';
+	var inventoryObj = player.inventory;
+	if (variation == 'shop') {
+		inventoryObj = getShop(player.mapID.x, player.mapID.y);
+	}
+
+	for (var i in inventoryObj) if (inventoryObj[i] > 0 || variation == 'shop') itory += displayItem(i, inventoryObj[i], variation)+'<br>';
 	notice_header.innerHTML = 'Inventory';
-	notice_msg.innerHTML = itory;
+	var vendor = '';
+	if (variation == 'shop') vendor = whatJobHere(player.mapID.x, player.mapID.y).name;
+	if (variation == 'shop') notice_header.innerHTML = 'Shop ('+vendor+')';
+	var bef = '';
+	if (variation == 'throw') {
+		notice_header.innerHTML = 'Trash Bin';
+		bef = '<i>Click any item to delete it permanently.</i><br>';
+	}
+	notice_msg.innerHTML = bef+itory;
+
+	if (variation == 'throw') {
+		notice_msg.innerHTML += '<hr>Click any item to retrieve it.<br>'+getTrashItems(player.mapID.x, player.mapID.y)+'<br><br><br><br><br>';
+	}
+	if (variation == 'shop') {
+		notice_msg.innerHTML += '<hr><div class="btn btn-danger" onclick="stealShop()">Rob the '+vendor+'</div>';
+	}
 
 	sNotice();
 }
-function showNotice(title, text) {
+function getRandomShopItem(x, y) {
+	var shop = getShop(x, y);
+	var items = [];
+	for (var s in shop) if (shop[s] != undefined) items.push(s);
+	var id = read(items);
+	var amt = everyman.warehouse[id];
+	if (amt > 0) amt = rand(0, amt);
+	return {'id': id, 'amt': amt};
+}
+function stealShop() {
+	var stealChances = getStealChance(player);
+	var r = rand(0, 100);
+	if (r < stealChances) {
+		var ritem = getRandomShopItem(player.mapID.x, player.mapID.y);
+		addItemToInventory(ritem.id, ritem.amt);
+		addItemToWarehouse(ritem.id, -ritem.amt);
+
+		if (ritem.amt > 0) showNotice('Success', 'You stole '+ritem.amt+' '+itemList[ritem.id].name+' from the vendor without being caught. Good job!');
+		if (ritem.amt <= 0) showNotice('Well...', 'You failed at stealing anything, but at least the vendor did not notice. Better luck next time.');
+		var iprice = itemList[ritem.id].price;
+		var ivalue = iprice * ritem.amt;
+		addCrime(player, 1, ivalue);
+	}
+	else {
+		showNotice('Fail', 'What? Get out of here before I call the police! <br><br><small><i>Note from the programmer: Haha, there is no police you jerkass I\'m going to steal everything I want.</i></small>')
+		addCrime(player, 2, stealChances);
+	}
+}
+function getTrashItems(mapx, mapy) {
+	var map = city.map[mapx][mapy];
+	if (map.trash == undefined) map.trash = [];
+	var gti = '';
+	for (var t in map.trash) {
+		var amt = map.trash[t];
+		var id = t;
+		if (amt > 0) gti += displayItem(id, amt, 'get')+'<br>';
+	}
+	if (!gti) gti = 'There are no items inside this trash bin.';
+
+	return gti;
+}
+function addRandomItemToTrash() {
+	var rx = rand(1, city.map.length) - 1;
+	var ry = rand(1, city.map[0].length) - 1;
+
+	var ri = rand(1, itemList.length) - 1;
+
+	addItemToTrash(rx, ry, ri);
+}
+function addItemToTrash(mapx, mapy, id) {
+	var map = city.map[mapx][mapy];
+	if (map.trash == undefined) map.trash = [];
+	if (map.trash[id] == undefined) map.trash[id] = 0;
+	map.trash[id]++;
+}
+function showNotice(title, text, exit) {
 	notice_header.innerHTML = title;
 	notice_msg.innerHTML = text;
 
-	notice_msg.innerHTML += '<br><hr><br><div class="btn btn-default" onclick="closeNotice()">Dismiss This Message</div>';
+	var exitext = 'Dismiss This Message';
+	if (exit) exitext = exit;
+
+	notice_msg.innerHTML += '<br><hr><br><div class="btn btn-default" onclick="closeNotice()">'+exitext+'</div>';
 
 	sNotice();
 }
+function drawWanted(peek) {
+	var dw = ''
+	var v = 0;
+	for (var w in wantedOfficers) {
+		v++;
+		dw += 'Officer #'+w+' '+everyman.people[w].name+' (at '+wantedOfficers[w]+'m distance from you)';
+	}
+	if (peek) return v;
+	return dw;
+}
+function arrest(guy) {
+	var crime = guy.crime;
+	showNotice('You are under arrest!', 'Here are the crimes you have done: <hr>'+displayCrime(guy)+'<br>');
+	if (everyman.jail == undefined) everyman.jail = {
+		'fee': displayCrime(guy, 'fee'),
+		'time': displayCrime(guy, 'time'),
+	}
+	guy.money -= displayCrime(guy, 'fee');
+	guy.crime = [];
+}
 function addItemToInventory(id, amt) {
+	var item = itemList[id];
 	if (player.inventory == undefined) player.inventory = [];
 	if (player.inventory[id] == undefined) player.inventory[id] = 0;
+
 	player.inventory[id] += amt;
+
+	checkDrugs();
+}
+function throwItem(id) {
+	var amt = player.inventory[id];
+	if (amt > 0) var used = true;
+	if (used) player.inventory[id]--;
+	decreaseHygiene(player, 2);
+	addItemToTrash(player.mapID.x, player.mapID.y, id);
+	showInventory('throw');
 }
 function useItem(id) {
 	var amt = player.inventory[id];
@@ -1904,6 +2417,7 @@ function useItem(id) {
 
 			used = true;
 		}
+		if (item.byproduct) addItemToInventory(item.byproduct, 1);
 	}
 	if (used) player.inventory[id]--;
 	showInventory();
@@ -1930,7 +2444,6 @@ function displayFurniture(id) {
 	return '<div class="itemButton" style="height: 80px" onclick="buyFurniture(\''+id+'\')"><i class="tile '+id+'"></i><span style="position: relative; left: 60px"><b>'+furnitureNames[id]+'</b> $'+furniturePrices[id]+'</span></div>';
 }
 function buyFurniture(id) {
-	console.log('buyFurniture', id);
 	if (everyman.held) return;
 	var price = furniturePrices[id];
 	if (player.money < price) return;
@@ -1943,14 +2456,109 @@ function buyFurniture(id) {
 		furtuto = true;
 	}
 }
-function displayItem(id, amt) {
+function getTrashItem(id, amt) {
+	addItemToInventory(id, amt);
+	var thisTrash = getCurrentMap().trash;
+	thisTrash[id]--;
+	decreaseHygiene(player, 5);
+	showInventory('throw');
+}
+function decreaseHygiene(who, amt) {
+	who.hygiene -= amt;
+	if (who.hygiene < 0) who.hygiene = 0;
+}
+function buyItem(id, amt) {
+	if (amt == undefined) amt = 1;
+	var available = everyman.warehouse[id];
+	if (available <= 0) return;
+	var price = (itemList[id].price * amt);
+	if (player.money < price) return;
+	player.money -= price;
+	everyman.warehouse[id] -= amt;
+	player.inventory[id] += amt;
+
+	showInventory('shop');
+}
+function displayItem(id, amt, variation) {
 	var item = itemList[id];
 	var itemclass = '';
 	if (item.illegal) itemclass = 'illegal';
-	return '<div class="itemButton" onclick="useItem('+id+')">'+amt+' x <b class="'+itemclass+'">'+item.name+'</b> ($'+item.price+')<br>'+
-	'<i>'+item.desc+'</i><br>'+
+	var act = 'useItem';
+	if (variation == 'throw') act = 'throwItem';
+	if (variation == 'get') act = 'getTrashItem';
+	if (variation == 'shop') act = 'buyItem';
+	var act2 = '';
+	var desc = item.desc;
+	if (amt <= 0 && variation == 'shop') desc = '<b class="illegal">Out of stock!</b>';
+	return '<div class="'+variation+' itemButton" onclick="'+act+'('+id+', 1)">'+amt+' x <b class="'+itemclass+'">'+item.name+'</b> ($'+item.price+')<br>'+
+	'<i>'+desc+'</i><br>'+
 
 	'</div>';
+}
+function getLostItem(item) {
+	addItemToInventory(item.id, 1);
+	var map = getCurrentMap();
+	var iid = 0;
+	for (var li in map.lostItems) {
+		if (map.lostItems[li] == item) {
+			iid = li;
+			break;
+		}
+	}
+	onPlayerNotification('<tho>Found '+itemList[item.id].name+' in the ground.</tho>');
+	map.lostItems.splice(iid, 1);
+
+	setTimeout(drawLostItems, 100);
+}
+function getCurrentMap() {
+	return city.map[player.mapID.x][player.mapID.y];
+}
+function talkTo(id, act) {
+	var guy = everyman.people[id];
+	var tt = '';
+	if (act == undefined) tt += speech(guy, 'greet')+"<br>";
+	if (act == 'talk') {
+		tt += speech(guy, 'talk')+'<br>';
+		guy.friendship++;
+	}
+	if (guy.friendship < 0 && rand(0,1)) setTimeout(closeNotice, 500);
+	if (act == 'steal' || act == 'attack') if (guy.friendship > 0) guy.friendship = Math.floor(guy.friendship / 2);
+	if (act == 'steal') {
+		var chances = getStealChance(guy);
+		var r = rand(0, 100);
+		var success = (r < chances) ? true : false;
+
+		if (success) {
+			var m = round(Math.random()*guy.money);
+			tt += 'You stole $'+m.toFixed(2)+' from '+guy.name+'<br>';
+			if (m <= 0) tt += 'Better luck next time!';
+			if (m > 0) {
+				player.money += m;
+				guy.money -= m;
+				onPlayerNotification('+$'+m.toFixed(2));
+			}
+			addCrime(player, 0, m);
+		}
+		if (!success) {
+			tt += speech(guy, 'steal')+'<br>';
+			guy.friendship -= 5;
+			setTimeout(closeNotice, 500);
+		}
+		guy.friendship -= 5;
+		addCrime(player, 2, chances);
+	}
+	if (act == 'attack') {
+
+		tt += speech(guy, 'talk')+'<br>';
+		guy.friendship -= 25;
+	}
+
+	tt += '<br><br><div class="btn btn-primary" onclick="talkTo(\''+id+'\', \'talk\')">Talk</div><br>';
+	tt += '<div class="btn btn-warning" onclick="talkTo(\''+id+'\', \'steal\')">Steal</div><br>';
+	tt += '<div class="btn btn-danger" onclick="talkTo(\''+id+'\', \'attack\')">Attack</div><br>';
+
+
+	showNotice(guy.name, tt, 'Say Goodbye');
 }
 
 $('body').on('keypress', function(evt) {
@@ -1979,12 +2587,36 @@ $('body').on('keypress', function(evt) {
 
     if (key == 'i') showInventory();
     if (key == ' ') {
+    	//Press space
     	var infront = whatsInFrontOf(player);
+    	if (infront.item) {
+    		getLostItem(infront.item);
+    		return;
+    	}
+	    if (infront.guyfront) {
+	    	var guy = everyman.people[infront.guyfront];
+	    	if (player.inside && !guy.inside) return;
+	    	player.hold = true;
+	    	var f = guy.friendship;
+	    	if (f < 0 && rand(0,1)) {
+	    		onCoordinateNotification(guy.x, guy.y, speech(guy, 'talk'));
+	    		return;
+	    	}
+	    	talkTo(infront.guyfront);
+	    	return;
+	    }
     	if (infront.upfront != undefined) {
     		if (infront.upfront.match('deco_8')) {
 	    		enterBuilding(player);
 	    		recheckGuys();
 	    		displayMap();
+	    	}
+	    	if (infront.upfront == 'tile_bin') {
+	    		showInventory('throw');
+	    		decreaseHygiene(player, 1);
+	    	}
+	    	if (infront.upfront == 'tile_shop_desk_machine' || infront.upfront == 'tile_shop_desk' || infront.upfront == 'tile_shop_work_door') {
+	    		showInventory('shop');
 	    	}
 	    	if (infront.upfront == 'tile_fence_door' || infront.upfront == 'tile_door') {
 	    		var home = isHome(player, player.mapID.x, player.mapID.y);
