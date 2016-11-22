@@ -95,10 +95,16 @@ tho {
 @keyframes collec {
 	0%, 100% {
 		filter: brightness(1);
+		-webkit-filter: brightness(1);
 	}
 	80% {
 		filter: brightness(2);
+		-webkit-filter: brightness(2);
 	}
+}
+#gaem_overlay {
+	position: left: 384px;
+	top: 172.5px;
 }
 
 .gaem, .gaem_overlay, person_holder, item_holder {
@@ -112,10 +118,35 @@ tho {
 
 	zoom: 100%;
 }
-.wanted {
-	animation: want 2s infinite;
+#sleeper {
+	display: none;
+	position: fixed;
+	background-color: rgba(0, 0, 0, 0.8);
+	width: 100vw;
+	height: 100vh;
+	z-index: 9999999999;
 }
-.outlined {
+
+
+.ts_day {
+
+}
+.ts_dawn {
+	filter: sepia(0.5) saturate(0.5);
+	-webkit-filter: sepia(0.5) saturate(0.5);
+}
+.ts_dusk {
+	filter: sepia(0.5) saturate(2) brightness(0.9);
+	-webkit-filter: sepia(0.5) saturate(2) brightness(0.9);
+}
+.ts_night {
+	filter: sepia(0.8) saturate(3) brightness(0.8) hue-rotate(180deg);
+	-webkit-filter: sepia(0.8) saturate(3) brightness(0.8) hue-rotate(180deg);
+}
+.wanted {
+	animation: want 1s infinite;
+}
+.outlined, .unavailable {
 	/*filter: sepia(1) hue-rotate(80deg) saturate(200);*/
 	opacity: 0.5;
 }
@@ -124,12 +155,22 @@ tho {
 	height: 100vh;
 	display: block;
 }
+.guybtn {
+	width: 100%;
+	display: inline-block;
+}
+ind {
+	margin-left: 30px;
+}
 @keyframes want {
 	0%, 100% {
-		background-color: rgba(255, 64, 64, 0.5);
+		border-left: 4px solid rgb(255, 0, 0);
+		border-right: 4px solid rgb(0, 0, 0);
+		box-shadow: 
 	}
 	50% {
-		background-color: rgba(64, 64, 255, 0.5);
+		border-left: 4px solid rgb(0, 0, 0);
+		border-right: 4px solid rgb(0, 0, 255);
 	}
 }
 .debuttons {
@@ -149,7 +190,7 @@ outline {
 	height: 60px;
 }
 
-.tile {
+.tile, tile {
 	width: 30px;
 	height: 60px;
 	position: absolute;
@@ -359,6 +400,33 @@ outline {
 	background-image: url(img/bigtiles.png);
 	background-position: -540px 0px;
 }
+citychunk {
+	position: absolute;
+}
+.loader {
+	background-color: rgb(0, 0, 0);
+	color: white;
+	text-align: right;
+	position: fixed;
+	top: 0px;
+	left: 0px;
+	width: 100vw;
+	height: 100vh;
+	z-index: 999999;
+}
+.buildg {
+	background: url(img/buildings.png);
+	height: 300px;
+	width: 30px;
+	display: block;
+	image-rendering: pixelated;
+
+	position: absolute;
+}
+.tile_bin2 {
+	background-image: url(img/buildings.png);
+	background-position: -540px 0px;
+}
 .tile_belt {
 	background-image: url(img/bigtiles.png);
 	background-position: -570px 0px;
@@ -513,21 +581,31 @@ outline {
 .deco_8 {
 	background-position: -120px -120px;
 }
+.safe {
+	font-weight: bold;
+	color: rgb(0, 255, 96);
+}
+.danger1 {
+	font-weight: bold;
+	color: rgb(255, 255, 96);
+}
+.danger2 {
+	font-weight: bold;
+	color: rgb(255, 128, 64);
+}
 
 
 .loading {
-	position: fixed;
 	opacity: 0.5;
-	top: 0px;
-	right: 0px;
+	z-index: 9999999;
 }
 
 .cityMap {
 	background-color: rgba(128, 255, 64, 0.2);
 
-	position: relative;
-	top: 96px;
-	left: 0px;
+	position: fixed;
+	bottom: 256px;
+	right: 256px;
 
 	margin: auto;
 }
@@ -566,7 +644,7 @@ outline {
 	bottom: 0px;
 	left: 0px;
 }
-.display_holder {
+.display_holder, #display_holder {
 	border-radius: 2px;
 	background-color: rgba(0, 0, 0, 0.8);
 	color: rgba(255, 255, 255, 0.8);
@@ -575,6 +653,11 @@ outline {
 	top: 2px;
 	right: 2px;
 	z-index: 99;
+	border-left: 4px solid black;
+	border-right: 4px solid black;
+}
+.outlaw {
+	cursor: help;
 }
 #time_display, #money_display {
 	padding: 1%;
@@ -591,7 +674,7 @@ outline {
 	left: 0;
 	z-index: 9999;
 }
-.illegal {
+.illegal, .danger3 {
 	color: rgb(128, 32, 32);
 	animation: illeg 1s infinite;
 }
@@ -601,6 +684,43 @@ outline {
 	}
 	50% {
 		color: rgb(255, 64, 64);
+	}
+}
+.mostwanted {
+	animation: mw 1s infinite;
+}
+@keyframes mw {
+	0%, 100% {
+		color: rgb(64, 64, 64);
+		text-shadow: -1px -1px 0px rgb(255, 0, 255);
+	}
+	12% {
+		color: rgb(128, 64, 128);
+		text-shadow: 0px 1px 0px rgb(255, 0, 128);
+	}
+	25% {
+		color: rgb(255, 64, 255);
+		text-shadow: 1px -1px 0px rgb(255, 0, 64);
+	}
+	37% {
+		color: rgb(128, 64, 128);
+		text-shadow: -1px 0px 0px rgb(255, 0, 32);
+	}
+	50% {
+		color: rgb(64, 64, 64);
+		text-shadow: 1px 1px 0px rgb(255, 0, 32);
+	}
+	62% {
+		color: rgb(128, 64, 64);
+		text-shadow: 0px -1px 0px rgb(255, 0, 64);
+	}
+	75% {
+		color: rgb(255, 64, 64);
+		text-shadow: -1px 1px 0px rgb(255, 0, 128);
+	}
+	87% {
+		color: rgb(128, 64, 64);
+		text-shadow: 1px 0px 0px rgb(255, 0, 255);
 	}
 }
 .itemButton {

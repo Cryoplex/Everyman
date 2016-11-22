@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, 
     user-scalable=no, initial-scale=1, maximum-scale=1, user-scalable=0" />
-    <link rel="icon" href="../../favicon.ico">
+    <!--<link rel="icon" href="../../favicon.ico">-->
 
     <title>Game</title>
 
@@ -14,18 +14,22 @@
 
   <body>
     <div id="wrapper">
-    <div class="loading" id="loading"></div>
+    <div class="loader" id="loader">
+      <div style="position: fixed; bottom: 64px; right: 64px; display: inline-block; color: red" id="loading">Loading...</div>
+    </div>
     <div class="gaem" id="gaem">
     </div>
     <div class="gaem" id="gaem_overlay"></div>
 
-    <div style="width: 192px; height: 200px" class="display_holder">
+    <div style="width: 192px; height: 220px" id="display_holder">
       <div style="text-align: center; display: inline-block; width: 50%">$</div><div id="money_display" style="text-align: center; width: 50%; display: inline-block">0</div>
       <div id="time_display"></div>
 
       <br>
       <citymap id="cMap"></citymap>
     </div>
+
+    <div id="sleeper"></div>
 
     <div id="notice_closer" class="notice" style="z-index: 99998" onclick="closeNotice()"></div>
     <div id="notice" class="notice_message">
