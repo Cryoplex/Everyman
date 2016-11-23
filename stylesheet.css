@@ -6,6 +6,7 @@ body {
 	width: 100vw;
 	height: 100vh;
 	display: inline-block;
+	font-family: Droid Sans;
 }
 .jumbotron .container {
 	position: absolute;
@@ -93,11 +94,15 @@ tho {
 	animation: collec 2s infinite;
 }
 @keyframes collec {
-	0%, 100% {
+	0%, 85%, 100% {
 		filter: brightness(1);
 		-webkit-filter: brightness(1);
 	}
-	80% {
+	90% {
+		filter: brightness(0.5);
+		-webkit-filter: brightness(0.5);
+	}
+	95% {
 		filter: brightness(2);
 		-webkit-filter: brightness(2);
 	}
@@ -117,6 +122,12 @@ tho {
 	height: 48px;
 
 	zoom: 100%;
+}
+item_holder {
+	background: url(building.png);
+	width: 30px;
+	height: 60px;
+	display: inline-block;
 }
 #sleeper {
 	display: none;
@@ -144,7 +155,7 @@ tho {
 	-webkit-filter: sepia(0.8) saturate(3) brightness(0.8) hue-rotate(180deg);
 }
 .wanted {
-	animation: want 1s infinite;
+	animation: want 0.5s infinite;
 }
 .outlined, .unavailable {
 	/*filter: sepia(1) hue-rotate(80deg) saturate(200);*/
@@ -164,13 +175,14 @@ ind {
 }
 @keyframes want {
 	0%, 100% {
-		border-left: 4px solid rgb(255, 0, 0);
-		border-right: 4px solid rgb(0, 0, 0);
-		box-shadow: 
+		border-top: 3px solid rgb(255, 64, 64);
+		border-bottom: 3px solid rgb(0, 0, 0);
+		background: linear-gradient(rgba(255, 64, 64, 0.8), rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.8));
 	}
 	50% {
-		border-left: 4px solid rgb(0, 0, 0);
-		border-right: 4px solid rgb(0, 0, 255);
+		border-top: 3px solid rgb(0, 0, 0);
+		border-bottom: 3px solid rgb(64, 64, 255);
+		background: linear-gradient(rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.8), rgba(64, 64, 255, 0.8));
 	}
 }
 .debuttons {
@@ -204,6 +216,12 @@ outline {
 	position: absolute;
 	image-rendering: pixelated;
 	background: url(img/items.png);
+}
+.item {
+	width: 30px;
+	height: 15px;
+	background: url(img/items.png);
+	display: inline-block;
 }
 .tiles {
 	background: url(img/tiles.png);
@@ -483,6 +501,23 @@ citychunk {
 	background-image: url(img/bigtiles.png);
 	background-position: -960px 0px;
 }
+.tile_hospital_wall {
+	background-image: url(img/bigtiles.png);
+	background-position: -990px 0px;
+}
+.tile_hospital_desk {
+	background-image: url(img/bigtiles.png);
+	background-position: -1020px 0px;
+}
+.tile_hospital_blood {
+	background-image: url(img/bigtiles.png);
+	background-position: -1050px 0px;
+}
+.tile_hospital_healthmeter {
+	background-image: url(img/bigtiles.png);
+	background-position: -1080px 0px;
+}
+
 
 .tile_proto {
 	background-image: url(img/proto.png);
@@ -587,11 +622,7 @@ citychunk {
 }
 .danger1 {
 	font-weight: bold;
-	color: rgb(255, 255, 96);
-}
-.danger2 {
-	font-weight: bold;
-	color: rgb(255, 128, 64);
+	color: rgb(255, 192, 96);
 }
 
 
@@ -648,21 +679,61 @@ citychunk {
 	border-radius: 2px;
 	background-color: rgba(0, 0, 0, 0.8);
 	color: rgba(255, 255, 255, 0.8);
-	text-align: center;
 	position: fixed;
-	top: 2px;
-	right: 2px;
-	z-index: 99;
-	border-left: 4px solid black;
-	border-right: 4px solid black;
+	bottom: 0px;
+	left: 0px;
+	z-index: 99999999999;
+	border-top: 3px solid black;
+	border-bottom: 3px solid black;
 }
 .outlaw {
 	cursor: help;
 }
-#time_display, #money_display {
-	padding: 1%;
-	width: 98%;
-	height: 32px;
+#money_display {
+	float: left;
+	background-color: rgba(0, 0, 0, 0.8);
+	margin: 0.25em;
+	width: 200px;
+	padding: 0.5em;
+	text-align: right;
+	border-radius: 8px;
+
+	font-size: 16px;
+}
+.danger2 {
+	font-weight: bold;
+	color: rgb(255, 16, 16);
+}
+#date_display {
+	float: left;
+
+	width: 10em;
+	padding: 0.2em 1em;
+	margin: 0.55em;
+	text-align: center;
+
+	font-size: 16px;
+	font-weight: bolder;
+}
+.dd_day {
+	background: linear-gradient(rgb(128, 192, 255), rgb(64, 128, 255));
+	color: rgba(0, 0, 0, 0.8);
+	box-shadow: 0 0 8px rgba(255, 255, 0, 0.5);
+}
+.dd_dusk {
+	background: linear-gradient(rgb(255, 128, 0), rgb(128, 160, 192));
+	color: rgba(0, 0, 0, 0.8);
+	box-shadow: 0 0 8px rgba(255, 160, 0, 0.5);
+}
+.dd_dawn {
+	background: linear-gradient(rgb(128, 192, 255), rgb(255, 255, 255));
+	color: rgba(0, 0, 0, 0.8);
+	box-shadow: 0 0 8px rgba(255, 255, 128, 0.5);
+}
+.dd_night {
+	background: linear-gradient(rgb(0, 0, 0), rgb(0, 64, 128));
+	color: rgba(255, 255, 255, 0.8);
+	box-shadow: 0 0 8px rgba(200, 200, 255, 0.5);
 }
 .notice {
 	width: 100vw;
@@ -754,14 +825,17 @@ citychunk {
 	display: none;
 	position: fixed;
 	top: 5%;
-	left: 20%;
+	left: 10%;
 	padding: 1% 5%;
-	width: 50%;
-	height: 88%;
+	width: 80%;
+	height: 80%;
 	overflow-y: scroll;
 	background-color: rgba(255, 255, 255, 0.8);
 	color: rgba(0, 0, 0, 0.8);
 	z-index: 99999;
+}
+meter {
+	transition: 2s all;
 }
 #notice_header {
 	text-align: center;

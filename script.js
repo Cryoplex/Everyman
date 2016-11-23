@@ -34,6 +34,12 @@ var changelog = [
 'ab Fixed how cities are expanded upon city creation.',
 'af Added the hospital. You can enter comma or faint if your health/energy is low. After comma, you can prevent death up to 3 times.',
 'ax Fixed a lot of performance issues',
+'af You can now attack other NPCs, you can get arrested for doing so, with high, lifetime, fees.',
+'ax Some changes in the HUD',
+'ab Fixed many bugs',
+'ax Pressing F you can see your family, also the deceased ones.',
+'ax Using a sink increases your Hygiene stat.',
+'af Added Karma. Karma is increased by talking with NPCs and recycling. Karma is reduced by damaging other npcs, stealing and commiting crimes.',
 ];
 
 var MAX_LAYERS = 3;
@@ -45,7 +51,7 @@ var ENTRY_PRICE_MOD = 1.5;
 var MAX_NPC = 100;
 var VISION_RANGE = 0;
 
-var TICK_PEOPLE_INTERVAL = 5;
+var TICK_PEOPLE_INTERVAL = 40;
 
 var wantedOfficers = {};
 var policemenCount = 0;
@@ -74,7 +80,7 @@ var wantedLevels = [
 'Public Enemy',
 'Serial Killer',
 'Most Wanted',
-'Criminal Against Nation',
+'Worldwide Criminal',
 ];
 
 //TODO - Dentro del juego, poder crear trabajos, al crear una nueva empresa, crear un nuevo trabajo, con su nombre, sector y drops
@@ -116,7 +122,7 @@ var everyman, city, player, furtuto;
 //TODO Dentro del juego, poder construir objetos, dedicándose a la investigación. Crear objetos con su nombre, descripción, propiedades, etc, guardar todos esos objetos en una variable "extra items" que se añadirá a la lista actual al cargar el juego
 var itemList = [
 	//Every item must be obtainable.
-	new Item(0, {}), //Default item
+	new Item(0, {'test': true}), //Default item
 	new Item(1, {'name': 'Tomato', 'desc': 'Edible. Harvested by farmers.', 'food': true, 'hunger': 5, 'price': 1}), //Harvested by farmers
 	new Item(2, {'name': 'Ketchup', 'desc': 'Edible. Made with real tomatoes.', 'food': true, 'hunger': 1, 'price': 2, 'byproduct': 4}), //Made by ketchup makers
 	new Item(3, {'name': 'Ketchupaine', 'desc': 'Drug. Increases energy and reduces health.', 'drug': true, 'health': -5, 'energy': 10, 'illegal': true, 'price': 10}), //Made by ketchupaine brewers
@@ -134,6 +140,17 @@ var crimes = [
 	{'name': 'Illegal item possesion', 'tier': 2},
 
 	{'name': 'Resistance to authority', 'tier': 1},
+
+	{'name': 'Threatening', 'tier': 4},
+	{'name': 'Violence against Others', 'tier': 5},
+	{'name': 'Murder', 'tier': 6},
+
+	{'name': 'Violence against Police', 'tier': 7},
+	{'name': 'Murder of a Policeman', 'tier': 8},
+
+	{'name': 'Violence against minors', 'tier': 9},
+	{'name': 'Murder of a minor', 'tier': 10},
+
 ];
 var furniturePrices = {
 	'tile_closet': 180,
@@ -178,6 +195,7 @@ var furnitureStatus = {
 	'tile_bin2': 'buy',
 }
 var NPCTurns = [];
+var CarTurns = [];
 
 var skinTones = [
 	toHSL(0, 1, 1.5),
@@ -235,6 +253,7 @@ function resetVariables() {
 		buildCity(city);
 	}
 	NPCTurns = canAnNPCWalk(0, 0, 1);
+	CarTurns = canAnNPCWalk(0, 0, 1, 1);
 }
 function afterLoad() {
 	everyman.peopleList = [];
@@ -271,15 +290,19 @@ function makeIntern(id) {
 
 	if (everyman.interns[randomSector][r] == undefined) everyman.interns[randomSector][r] = 0;
 	everyman.interns[randomSector][r]++;
-	killPerson(id, 'made intern');
+	killPerson(id, 'sold their soul');
+}
+function isEmpty(arr) {
+	for (var e in arr) if (arr[e]) return false;
+	return true;
 }
 function saveGame() {
-	localStorage.setItem('everyman', JSON.stringify(everyman));
-	localStorage.setItem('everymanPlayer', JSON.stringify(player));
-	localStorage.setItem('everymanCity', JSON.stringify(city));
+	localStorage.setItem('everymanPlayer', compress(player));
+	localStorage.setItem('everyman', compress(everyman));
+	localStorage.setItem('everymanCity', tcompress(city));
 }
 function Item(id, config) {
-	this.name = 'Item';
+	this.name;
 	this.price = 0;
 	this.food = false;
 	this.id = id;
@@ -296,13 +319,22 @@ function resetGame() {
 }
 function loadGame() {
 	var losto = localStorage.getItem('everyman');
-	if (losto) everyman = JSON.parse(losto);
+	if (losto) {
+		everyman = decompress(losto);
+		console.log('Loaded everyman', decompress(losto));
+	}
 
 	var losto = localStorage.getItem('everymanPlayer');
-	if (losto) player = JSON.parse(losto);
+	if (losto) {
+		player = decompress(losto);
+		console.log('Loaded player', decompress(losto));
+	}
 
 	var losto = localStorage.getItem('everymanCity');
-	if (losto) city = JSON.parse(losto);
+	if (losto) {
+		city = tdecompress(losto);
+		console.log('Loaded city', tdecompress(losto));
+	}
 }
 function update(step) {
 	document.title = gameInfo.name+' '+gameInfo.version;
@@ -331,6 +363,7 @@ function generateID(last, type, zoneX, zoneY) {
 		'npc': 'N',
 		'player': 'P',
 		'default': 'U',
+		'car': 'C',
 	}[type];
 
 	newID = let + '-' + zeroPad(last, 3) + zeroPad(rand(1, 1296), 1);
@@ -344,7 +377,7 @@ function isCriminal(guy) {
 	for (var c in guy.crime) level += guy.crime[c];
 	return level;
 }
-function Person(id, type) {
+function Person(id, type, isCar) {
 	this.id = id;
 
 	this.type = type;
@@ -356,7 +389,7 @@ function Person(id, type) {
 	this.walking = false;
 	this.sleeping = false;
 
-	this.age = rand(0,100);
+	this.age = rand(10,50);
 
 	this.homes = [];
 
@@ -392,8 +425,15 @@ function Person(id, type) {
 	this.marry;
 
 	this.variation = rand(0,1);
+	if (isCar) {
+		this.gender = 0;
+		this.variation = 'car_0';
+		this.name = zeroPad(rand(0, 99999), 5, 1);
+	}
 
 	this.mapID = {'x': 2, 'y': 2};
+
+	this.karma = 0;
 
 	makeHolder(this);
 }
@@ -413,12 +453,10 @@ function lostItem(mapx, mapy) {
 	if (mapx == player.mapID.x && mapy == player.mapID.y) drawLostItems();
 }
 function drawLostItems() {
-	var ibtn = document.getElementsByTagName('item_holder');
-	for (var i in ibtn) {
-		var it = ibtn[i];
-		if (!it || !it.parentNode) continue;
-		document.body.removeChild(ibtn[i]);
-	}
+	$('item_holder').each(function() {
+		$(this).remove();
+	});
+
 	var li = city.map[player.mapID.x][player.mapID.y].lostItems;
 	if (li && li.length > 0) {
 		for (var it in li) {
@@ -456,7 +494,9 @@ function drawObject(x, y, tileset, bpos) {
 	el.className = 'tile whatever';
 	el.style.top = (TILE_HEIGHT * (MAX_LAYERS / 8))+'px';
 
-	el.innerHTML = '<div style="top: '+isoPos.top+'; left: '+isoPos.left+'; background: url(img/'+tileset+'.png); z-index: 999; background-position: '+bpos+'; background: '+tileset+'" class="tile collectible"></div>';
+	el.style.opacity = (player.insideStatic || player.inside) ? 0 : 1;
+
+	el.innerHTML = '<div style="top: '+isoPos.top+'; left: '+isoPos.left+'; background: url(img/'+tileset+'.png); z-index: '+(x+y)+'; background-position: '+bpos+'; background: '+tileset+'" class="tile collectible"></div>';
 
 	document.body.appendChild(el);
 }
@@ -468,7 +508,9 @@ function makeHolder(guy) {
 	guy.element.className = 'tile whatever';
 	guy.element.style.top = (TILE_HEIGHT * (MAX_LAYERS / 8))+'px';
 
-	if (guy.element.childNodes.length <= 0) guy.element.appendChild(getInsideHolder(guy));
+	var n = 'npch_'+guy.id;
+
+	if (!doc(n)) guy.element.appendChild(getInsideHolder(guy));
 
 	if (guy.element.parentNode != document.body) document.body.appendChild(guy.element);
 }
@@ -477,7 +519,7 @@ function getInsideHolder(guy) {
 
 	var gih = document.createElement('div');
 	gih.id = 'npch_'+guy.id;
-	gih.title = guy.name+' '+guy.family;
+	gih.title = guy.name+' '+guy.family+' '+guy.id;
 	gih.className = 'guy_layer';
 	gih.style.top = isoPos.top;
 	gih.style.left = isoPos.left;
@@ -503,13 +545,17 @@ function isGuyVisibleByPlayer(guy) {
 	return true;
 }
 function drawPerson(guy) {
+	if (!guy) return;
 	if (!guy.id && guy != player) return;
 	if (!guy.element) makeHolder(guy);
 
 	var relpos = getRelativePos(guy);
 
+	var hname = 'npch_'+guy.id;
+
 	if (!isGuyVisibleByPlayer(guy)) {
 		guy.element.style.display = 'none';
+		if (doc(hname)) doc(hname).style.display = 'none';
 		return;
 	}
 	if (!guy.facing) guy.facing = 0;
@@ -518,8 +564,8 @@ function drawPerson(guy) {
 	var opac = 1;
 	if (guy.element.style.opacity != opac) guy.element.style.opacity = opac;
 
-	var hname = 'npch_'+guy.id;
 	if (doc(hname)) {
+		doc(hname).style.display = 'inline-block';
 		var isoPos = getIsoTilePosition(size(30, 60), size((relpos.x - 1), (relpos.y - 3), guy.z));
 		if (doc(hname).style.top != isoPos.top) doc(hname).style.top = isoPos.top;
 		if (doc(hname).style.left != isoPos.left) doc(hname).style.left = isoPos.left;
@@ -550,7 +596,7 @@ function getActiveMap() {
 	var pos = player.mapID;
 	var mappy = city.map[pos.x][pos.y];
 	var map = mappy.map;
-	loadv('Is player inside a building '+player.inside, 0, 0);
+	loadv('Is player inside a building '+player.inside, 1, 1);
 	if (player.inside != undefined) {
 		map = mappy.inside.map;
 	}
@@ -602,6 +648,11 @@ function drawGuy(guy) {
 			guy.variation = guy.job.type+'_'+guy.job.id;
 		}
 	}
+	if (guy.car || guy.type == 'car') {
+		guy.gender = 0;
+		guy.variation = 'car_0';
+	}
+	if (isPolice(guy)) guy.variation = 'com_0';
 
 
 	//Anatomy of an NPC image
@@ -631,8 +682,39 @@ function getStealChance(guy) {
 }
 function addCrime(player, c, amt, set) {
 	if (player.crime[c] == undefined) player.crime[c] = 0;
+	var crimeStrength = crimes[c].tier;
+	if (!set) changeKarma(player, -(crimeStrength/10));
 	player.crime[c] += amt;
 	if (set) player.crime[c] = amt;
+}
+function addCar(type, mapx, mapy) {
+	//TODO
+	return;
+	var last = getPeopleLength();
+	var id = generateID(last, type, 1, 1);
+
+	if (mapx == undefined) mapx = rand(2, city.map.length) - 1;
+	if (mapy == undefined) mapy = rand(2, city.map[0].length) - 1;
+
+	var p = new Person(id, type, 'car');
+
+	var sp = new SpawnPoint('car');
+	p.mapID.x = mapx;
+	p.mapID.y = mapy;
+
+	p.x = sp.x;
+	p.y = sp.y;
+
+	p.type = 'car';
+	p.car = true;
+
+	p.job = new Job(p.mapID.x, p.mapID.y);
+	p.homes = [];
+
+	everyman.people[id] = p;
+	everyman.peopleList.push(id);
+
+	console.log('new Car at mapx:', mapx, 'mapy', mapy, 'x', p.x, 'y', p.y, p);
 }
 function addPerson(type, mapx, mapy, mother) {
 	var last = getPeopleLength();
@@ -670,7 +752,6 @@ function addPerson(type, mapx, mapy, mother) {
 	everyman.peopleList.push(id);
 
 	if (everyman.peopleList.length > MAX_NPC) updateInterns();
-	if (mother) console.log('New baby: ', p);
 
 	getPolicemen();
 }
@@ -839,7 +920,23 @@ function SpawnPoint(item) {
 	this.x += rand(0, 1);
 	this.y += rand(0, 1);
 
-	if (item) {
+	if (item == 'car') {
+		var type = rand(0,1);
+		if (type == 0) {
+			this.x = rand(0, 22);
+			this.y = red(1, 21);
+			if (this.y == 1) this.facing = 3;
+			if (this.y == 21) this.facing = 1;
+		}
+		if (type == 1) {
+			this.y = rand(0, 22);
+			this.x = red(1, 21);
+			if (this.x == 1) this.facing = 2;
+			if (this.x == 21) this.facing = 0;
+		}
+	}
+
+	if (item && item != 'car') {
 
 		var type = rand(0,1);
 		if (type == 0) {
@@ -915,8 +1012,25 @@ function newLayer(width, height, empty, lay, type, variation) {
 				}
 			}
 			if (lay == 2 && type == 'dung') {
-				if (w == 0 || h == 0 || w == (width - 1) || h == (height - 1)) toadd = 'tile_outerwall';
+				if (w == 0 || h == 0 || w == (width - 1) || h == (height - 1)) {
+					toadd = 'tile_outerwall';
+					if (variation == 'hospital') toadd = 'tile_hospital_wall';
+				}
 				if (w == 2 && h == 22) toadd = 'tile_empty';
+
+				if (variation == 'hospital') {
+					if ((w >= 6 && h == 16) || (w == 6 && h >= 16)) toadd = 'tile_hospital_desk';
+					if (h == 11 || ((w == 7 || w == 15) && h <= 11)) toadd = 'tile_hospital_wall';
+					if (h == 11 && (w == 2 || w == 9 || w == 17)) toadd = 'tile_empty';
+
+					if ((w == 1 || w == 8 || w == 16 || w == 4 || w == 19 || w == 12) && h > 0 && h < 3) {
+						toadd = (h == 1) ? 'tile_bed2' : 'tile_bed1';
+					}
+					if (h == 1) {
+						if (w == 2 || w == 9 || w == 17 || w == 5 || w == 20 || w == 13) toadd = 'tile_hospital_blood';
+						if (w == 3 || w == 10 || w == 18) toadd = 'tile_hospital_healthmeter';
+					}
+				}
 
 				if (variation == 'sec') {
 					if (w > 1 && w < (width - 1) && (h == 1 || h == 6)) {
@@ -996,7 +1110,7 @@ function newLayer(width, height, empty, lay, type, variation) {
 			if (lay == 2) if ((variation == 'mix' || variation == 'slum') && w == 0 && h == 18) toadd = 'tile_work_door';
 
 
-			if (toadd) layer[h][w] = toadd;
+			if (toadd && toadd != 'tile_empty') layer[h][w] = toadd;
 		}
 	}
 	return layer;
@@ -1113,24 +1227,32 @@ function buildBuilding(wherex, wherey) {
 
 	placeBuilding(here, size(7, 7, 2), block, tileset);
 
-	var r = rand(1, floors);
-	for (var x = 0; x <= r; x++) addPerson('npc', wherex, wherey); 
+	addPerson('npc', wherex, wherey); 
 }
-function getFamilyOf(guy) {
-	var l = '<b>Family of '+guy.name+' '+guy.family+'</b><br><br>';
+function getFamilyOf(guy, all) {
+	if (!all) var l = '<b>Family of '+guy.name+' '+guy.family+'</b><br><br>';
+	if (everyman.graveyard == undefined) everyman.graveyard = [];
+	if (all) var l = '<b>Total population</b> '+everyman.peopleList.length+' alive, '+everyman.graveyard.length+' deceased.<br>';
 	for (var p in everyman.people) {
 		var g = everyman.people[p];
-		if (g.family != guy.family) continue;
-		l += displayFamilyGuy(g)
+		if (g.family != guy.family && !all) continue;
+		l += displayFamilyGuy(g)+'<br>'
 	}
-	if (player.family == guy.family) {
-		l += displayFamilyGuy(player, 'you');
+	for (var p in everyman.graveyard) {
+		var g = everyman.graveyard[p];
+		if (g.family != guy.family && !all) continue;
+		l += displayFamilyGuy(g)+'<br>'
+	}
+	if (player.family == guy.family || all) {
+		l += displayFamilyGuy(player, 'you')+'<br>';
 	}
 	return l;
 }
 function displayFamilyGuy(g, you) {
-	var y = (you) ? ' (You)' : '';
-	return g.name+' '+g.family+y+' Age: '+g.age+' years. Works as a '+getMyJobName(g)+'<br>';
+	var y = (you == 'you') ? ' (You)' : '';
+	var ex1 = (g.causeOfDeath) ? ' '+g.causeOfDeath+' at' : '';
+	var prefix = (g.causeOfDeath) ? '&dagger;' : '';
+	return prefix+''+g.name+' '+g.family+y+' the '+getMyJobName(g)+ex1+' '+g.age+' years';
 }
 function getBluePrint(sector, id) {
 	var blueprints = {
@@ -1322,11 +1444,18 @@ function getBoundLimit(map, mapx, mapy) {
 	if (mapx >= map.length) return 'east';
 	if (mapy >= map[0].length) return 'south';
 }
-function getTypeOfMap(mapobject, mapx, mapy) {
+function getTypeOfMap(mapobject, mapx, mapy, exists) {
 	var m = mapobject[mapx];
-	if (!m) return 'void';
+	if (!m) {
+		if (exists) return false;
+		return 'void';
+	}
 	m = m[mapy];
-	if (!m) return 'void';
+	if (!m) {
+		if (exists) return false;
+		return 'void';
+	}
+	if (m.type == 'sea') return false;
 	return m.type;
 }
 
@@ -1408,7 +1537,6 @@ function getRandomEmptySpace(city) {
 	var rt = red('w', 'h');
 	var rw = (rt == 'w') ? map.length : rand(0, map.length);
 	var rh = (rt == 'h') ? map[0].length : rand(0, map[0].length);
-	console.log('hello');
 	emptySpaces.push({'w': rw, 'h': rh});
 	return read(emptySpaces);
 }
@@ -1493,8 +1621,9 @@ function isDestinationOutOfLimits(city, pointerz, direction) {
 	var maxy = city.map[0].length;
 
 	pointerz = JSON.parse(JSON.stringify(pointerz));
-
-	var newPointer = movePointer(pointerz, direction);
+	var newPointer = (direction == undefined) ? pointerz : movePointer(pointerz, direction);
+	if (newPointer.x) newPointer.w = newPointer.x;
+	if (newPointer.y) newPointer.h = newPointer.y;
 
 	if (newPointer.h < miny || newPointer.w < minx) return true;
 	if (newPointer.h >= maxy || newPointer.w >= maxx) return true;
@@ -1503,12 +1632,10 @@ function expandCityLimits(city, pointer) {
 	if (city.map.length >= 23 && city.map[0].length >= 23) return;
 	var typof = getTypeOfMap(city, pointer.w, pointer.h);
 	if (typof != 'void') return;
-	console.log('Type is void!');
 	var direction = getBoundLimit(city.map, pointer.w, pointer.h);
 
 	var dname = newDistrictName();
 
-	console.log('Will expand to the', direction, 'daily reminder that this city has a height of', city.map[0].length, 'and a width of', city.map.length);
 	if (direction == 'west') {
 		var arr = [];
 		for (var e in city.map[0]) arr.push(new EmptyMap('wil', 4, dname));
@@ -1534,8 +1661,6 @@ function expandCityLimits(city, pointer) {
 			city.map[e].push(new EmptyMap(type, 4, dname));
 		}
 	}
-
-	console.log('height', city.map[0].length, 'width', city.map.length, 'after expansion');
 
 	return true;
 }
@@ -1594,9 +1719,11 @@ function EmptyMap(type, sector, dname, surr) {
 	this.districtName = dname;
 	this.map = newMap(MAP_WIDTH, MAP_HEIGHT, MAX_LAYERS, type);
 }
-function pickFurniture() {
+function pickFurniture(force) {
 	var infront = whatsInFrontOf(player);
+	console.log('pickFurniture', infront);
 	if (everyman.held) {
+		console.log('furniture is being held');
 		if (!infront.upfront || infront.upfront == 'tile_empty') {
 			editActiveMap(infront.frontcoords.x, infront.frontcoords.y, 2, everyman.held);
 			everyman.held = undefined;
@@ -1604,16 +1731,20 @@ function pickFurniture() {
 		}
 	}
 	else {
+		console.log('furniture not held');
 		if (infront.upfront) {
+			console.log('something is in front of the player, lets name it ',infront.upfront);
 			var checkItem = furnitureStatus[infront.upfront];
 			var mode = isHome(player, player.mapID.x, player.mapID.y);
 			var exitStatus = 0;
 			if (!mode) exitStatus = 'home_not_yours';
 			if (!checkItem) exitStatus = 'forbidden_item';
 			if (checkItem == 'build' && !mode.bought) exitStatus = 'not_on_build_mode';
-			if (exitStatus) {
+			if (exitStatus && !force) {
+				console.log(exitStatus, force);
 				return;
 			}
+			console.log('forced pick? ', force);
 			everyman.held = infront.upfront;
 			editActiveMap(infront.frontcoords.x, infront.frontcoords.y, 2, 'tile_empty');
 			displayMap();
@@ -1664,19 +1795,34 @@ function whatsHere(array, pos) {
 	}
 	return false;
 }
-function movePointer(pointer, direction) {
-	var dir = direction;
+function Pointer(obj) {
+	this.x = obj.x;
+	this.y = obj.y;
+	this.w = obj.x;
+	this.h = obj.y;
+}
+function movePointer(pointer, direction, hypo) {
+	var dir = direction; //north, east, west, south
 	var directions = {
 		'north': size(0, -1),
 		'south': size(0, 1),
 		'east': size(1, 0),
 		'west': size(-1, 0),
+		'center': size(0, 0),
 	}
+	if (!pointer.w) pointer.w = pointer.x;
+	if (!pointer.h) pointer.h = pointer.y;
+
+	if (hypo) pointer = new Pointer(pointer);
+
 	var directionID = directionNames.indexOf(direction);
 	dir = directions[direction];
 
-	pointer.w += parseInt(dir.width);
-	pointer.h += parseInt(dir.height);
+	pointer.w += parseInt(dir.x);
+	pointer.h += parseInt(dir.y);
+
+	pointer.x += parseInt(dir.x);
+	pointer.y += parseInt(dir.y);
 
 	return pointer;
 }
@@ -1696,14 +1842,18 @@ function moveGuy(guyObject, direction, isPlayer, force) {
 	if (city.map[guyObject.mapID.x][guyObject.mapID.y] == undefined) guyObject.mapID.y = 1;
 
 	var guyMap = city.map[guyObject.mapID.x][guyObject.mapID.y];
+	var litems = guyMap.lostItems;
+	var oldmap = guyMap;
 	if (guyObject.inside != undefined) {
 		guyMap = guyMap.inside.map;
+		litems = [];
 	}
 	else {
 		guyMap = guyMap.map;
 	}
 	if (guyObject.insideStatic) {
 		guyMap = staticPlaces[guyObject.insideStatic].map;
+		litems = [];
 	}
 
 	direction = directions[direction];
@@ -1730,6 +1880,12 @@ function moveGuy(guyObject, direction, isPlayer, force) {
 			guyObject.walking = false;
 			drawPerson(guyObject);
 		}, 100);
+	}
+	for (var e in litems) {
+		var li = litems[e];
+		if (li.x == guyObject.x && li.y == guyObject.y && guyObject == player) {
+			getLostItem(oldmap, e);
+		}
 	}
 
 	var maxw = MAP_WIDTH - 1;
@@ -1761,22 +1917,18 @@ function redrawInside() {
 }
 function displaceThere(guy, direction) {
 	//TODO Añadir una pequeña transición al mover de un mapa a otro
+	//Saves last position to reload last map after the movement.
 	var lastpos = {
 		'x': guy.mapID.x,
 		'y': guy.mapID.y,
 	}
+	//Creates a new pointer to the destination (mapID)
+	var destination = movePointer(new Pointer(guy.mapID), direction, true);
+	//Checks whether the map is out of limits or is sea/void
+	var exists = (!isDestinationOutOfLimits(city, destination) && getTypeOfMap(city.map, destination.x, destination.y, 1)) ? true : false;
 
-	var destination = size(guy.mapID.x, guy.mapID.y);
-
-	if (direction == 'north') destination.y--;
-	if (direction == 'south') destination.y++;
-	if (direction == 'east') destination.x++;
-	if (direction == 'west') destination.x--;
-
-	var exists = (city.map[destination.x] && city.map[destination.x][destination.y] && city.map[destination.x][destination.y].type != 'sea') ? true : false;
-	if (exists || guy.inside) {
+	if (exists || guy.inside || guy.insideStatic) {
 		if (!guy.inside && !guy.insideStatic) {
-			console.log('Guy is not inside and not inside static');
 			guy.mapID.x = destination.x;
 			guy.mapID.y = destination.y;
 
@@ -1809,6 +1961,16 @@ function displaceThere(guy, direction) {
 	}
 	if (guy != player) {
 		switchStatus(guy);
+	}
+}
+function loadChunksAround(guy) {
+	for (var x = guy.mapID.x - 1; x <= guy.mapID.x + 1; x++) {
+		for (var y = guy.mapID.y - 1; y <= guy.mapID.y + 1; y++) {
+			if (!isDestinationOutOfLimits(city, size(x, y))) {
+				loadMapChunk(x, y);
+				loadMapChunk(x, y, 1);
+			}
+		}
 	}
 }
 function switchStatus(guy) {
@@ -1958,8 +2120,6 @@ function mapTile(mapx, mapy, position) {
 	var isoPos = getIsoTilePosition(size(30, 60), relpos);
 	el.style.left = isoPos.left;
 	el.style.top = isoPos.top;
-
-	console.log(el);
 }
 function drawTileElement(mapx, mapy, position) {
 	position.mapID = {'x': mapx, 'y': mapy};
@@ -1998,6 +2158,9 @@ function displayMap(width, height, layers, worldmap) {
 
 	//gaem.innerHTML = drawLayer(size(width, height, layers), size(30, 60), tiles, getTimeTileset(), player.mapID.x, player.mapID.y, player.insideStatic);
 	//gaem.innerHTML = drawSurroundings(size(width, height, layers), size(30, 60), tiles, getTimeTileset());
+
+	loadChunksAround(player);
+	/*
 	loadMapChunk(player.mapID.x, player.mapID.y);
 
 	loadMapChunk(player.mapID.x-1, player.mapID.y);
@@ -2006,6 +2169,7 @@ function displayMap(width, height, layers, worldmap) {
 	loadMapChunk(player.mapID.x, player.mapID.y+1);
 
 	loadMapChunk(player.mapID.x, player.mapID.y, true);
+	*/
 	for (var sp in staticPlaces) loadMapChunk(0, 0, 0, sp);
 
 	cMap.innerHTML = drawCityMap(city);
@@ -2135,7 +2299,7 @@ function displayCrime(guy, peek) {
 			totalvalue += fee;
 		}
 	}
-	var punishment = (totalvalue * 5);
+	var punishment = (totalvalue * 1000);
 	var wanted = Math.ceil(Math.log10(totalvalue) * 1.5) - 1;
 	if (wanted > 10) wanted = 10;
 	if (wanted < 0) wanted = 0;
@@ -2150,14 +2314,13 @@ function displayCrime(guy, peek) {
 function tickCrime(guy) {
 	for (var c in guy.crime) {
 		var crimeTier = crimes[c].tier;
-		var amt = 6 / crimeTier;
+		var amt = 11 / crimeTier;
 		guy.crime[c] = (guy.crime[c] / amt) - 1;
 
 		if (guy.crime[c] <= 0) guy.crime[c] = 0;
 	}
 }
 function transitionTileset(tileset) {
-	console.log('transitionTileset');
 	if (everyman.time.tileset == undefined) everyman.time.tileset = 'day';
 	if (!tileset) tileset = everyman.time.tileset;
 	var map = getActiveMap();
@@ -2167,18 +2330,14 @@ function transitionTileset(tileset) {
 	});
 }
 function tickPregnancy() {
-	console.log('A month passes.');
-	console.log('People in peopleList: '+everyman.peopleList.length);
 	for (var tp in everyman.peopleList) {
 		var p = everyman.peopleList[tp];
 		if (everyman.people[p].pregnant) {
 			var guy = everyman.people[p];
 			guy.pregnantTime++;
-			console.log(p, 'is pregnant. Pregnant time: ', guy.pregnantTime);
 			if (guy.pregnantTime >= 9) {
 				guy.pregnantTime = 0;
 				guy.pregnant = false;
-				console.log('People: '+everyman.peopleList.length);
 				addPerson(guy.type, guy.mapID.x, guy.mapID.y, guy);
 				console.log('A new baby has born at map id ', guy.mapID, 'GO FAST TO SEE IT! People: '+everyman.peopleList.length);
 			}
@@ -2204,7 +2363,8 @@ function swapDayTileset() {
 		//Night
 		if (everyman.time.tileset != 'night') everyman.time.tileset = 'night';
 	}
-	transitionTileset(everyman.time.tileset);
+	document.body.className = 'dd_'+everyman.time.tileset;
+	//transitionTileset(everyman.time.tileset);
 }
 function timePass(type) {
 	var amt = 1;
@@ -2299,10 +2459,26 @@ function timePass(type) {
 		}
 	}
 	tickPeopleStats(amt);
+	updateHUD();
+}
+function updateHUD() {
+	money_display.className = (player.money < 0) ? 'danger2' : 'safe';
+	var dollar = (player.money < 0) ? '-$' : '$';
+	money_display.innerHTML = dollar+Math.abs(player.money).toFixed(2);
 
-	money_display.innerHTML = player.money.toFixed(2);
 	display_holder.className = (displayCrime(player, 'wanted') > 0) ? 'wanted' : '';
-	time_display.innerHTML = zeroPad(everyman.time.hours, 2, true)+':'+zeroPad(everyman.time.minutes, 2, true)+' '+displayDate(everyman.time)+'<br>'+everyman.peopleList.length+'/'+getPopulation()+' population'+getPlayerStats();
+	var datclass = 'dd_night';
+	if (everyman.time.hours >= 5) datclass = 'dd_dawn';
+	if (everyman.time.hours >= 6) datclass = 'dd_day';
+	if (everyman.time.hours >= 18) datclass = 'dd_dusk';
+	if (everyman.time.hours >= 19) datclass = 'dd_night';
+	date_display.innerHTML = '<date><span style="float: left">'+displayHour()+'</span> <span style="float: right; font-weight: normal; font-size: 10px">'+displayDate(everyman.time)+'</span></date>';
+	date_display.className = datclass;
+
+	time_display.innerHTML = getPlayerStats();
+}
+function displayHour() {
+	return zeroPad(everyman.time.hours, 2, true)+':'+zeroPad(everyman.time.minutes, 2, true);
 }
 function getHighestCrime(guy) {
 	var highest = 0;
@@ -2316,17 +2492,29 @@ function getHighestCrime(guy) {
 	}
 	return highestid;
 }
+function changeKarma(guy, amt, peek) {
+	if (!guy.karma) guy.karma = 0;
+	if (peek) {
+		if (guy.karma < 0) return ' <span class="danger2"> Karma: '+round(guy.karma)+'</span>';
+		if (guy.karma > 0) return ' <span class="safe"> Karma: '+round(guy.karma)+'</span>';
+		if (guy.karma == 0) return ' <span> Karma: '+round(guy.karma)+'</span>';
+	}
+	guy.karma += amt;
+	if (guy.karma > 10) guy.karma = 10;
+	if (guy.karma < -10) guy.karma = -10;
+}
 function getPlayerStats() {
 	var sl = '';
 
-	sl = '<div>Criminal Status</div><div>'+getWantedLevel()+'</div>';
+	sl = '<div style="float: left; width: 200px;"> '+changeKarma(player, 0, 1)+
+	'<br><span class="item" style="background-position: -210px -45px"></span> <span>'+getWantedLevel()+'</span>';
 
 	if (!sl) doc('wrapper').className = '';
 	if (player.hygiene == undefined) player.hygiene = 100;
-	return '<div>'+player.health.toFixed(0)+'/100 Health</div>'+
-	'<div>'+player.hunger.toFixed(0)+'/100 Food</div>'+
-	'<div>'+player.energy.toFixed(0)+'/100 Energy</div>'+
-	'<div>'+player.hygiene.toFixed(0)+'/100 Hygiene</div>'+sl;
+	return '<div style="float: left; width: 100px;"><span class="item" style="background-position: -120px -45px"></span><meter value="'+player.health.toFixed(0)+'" max="100"></meter><br>'+
+	'<span class="item" style="background-position: -30px -45px"></span><meter value="'+player.hunger.toFixed(0)+'" max="100"></meter></div>'+
+	'<div style="float: left; width: 100px;"><span class="item" style="background-position: -150px -45px"></span><meter value="'+player.energy.toFixed(0)+'" max="100"></meter><br>'+
+	'<span class="item" style="background-position: -180px -45px"></span><meter value="'+player.hygiene.toFixed(0)+'" max="100"></meter></div>'+sl;
 }
 function getPopulation() {
 	var npcs = everyman.peopleList.length;
@@ -2397,7 +2585,7 @@ function tickPersonStats(person, peek, minutes) {
 			return;
 		}
 		if (person.deathStrikes >= 3) {
-			killPerson(person.id, 'starvation');
+			killPerson(person.id, 'starved to death');
 			return;
 		}
 	}
@@ -2420,10 +2608,24 @@ function tickPersonStats(person, peek, minutes) {
 		showNotice('Welcome Back!', 'Due to your poor health condition. You entered into a comma that lasted '+comma+' days.<br><b>Take care of yourself next time and remember to eat well!</b>')
 		enterStaticBuilding('hospital');
 	}
+	if (person.hygiene <= 0 && rand(0,1) && addStatus(person, -1, peek)) {
+
+	}
 
 	for (var h in person.homes) {
 		checkHomeRent(person.homes[h]);
 	}
+}
+function Status(obj) {
+	this.name = obj.name;
+	this.minutes = obj.minutes;
+	this.effect = obj.effect;
+	this.condition = obj.condition;
+	this.strength = 1;
+}
+function addStatus(guy, status, peek) {
+	if (guy.status == undefined) guy.status = [];
+	if (guy.status.length <= 5 && peek) return true;
 }
 function tickPeopleStats(mins) {
 	for (var p in everyman.people) {
@@ -2452,21 +2654,42 @@ function getMonthName(month) {
 }
 function killPerson(id, cause) {
 	var ixof = everyman.peopleList.indexOf(id);
-	everyman.peopleList.splice(ixof, 1);
-	var el = everyman.people[id].element;
-	if (el.parentNode != undefined) document.body.removeChild(el);
+	if (everyman.graveyard == undefined) everyman.graveyard = [];
+	if (!cause) cause = 'disappeared';
 
+	var guy = everyman.people[id];
+
+	everyman.graveyard.push({'name': guy.name, 'causeOfDeath': cause, 'family': guy.family, 'age': guy.age, 'job': {'type': guy.job.type, 'id': guy.job.id}});
+
+	var el = everyman.people[id].element;
+	el.style.opacity = 0;
+	document.body.removeChild(el);
+
+	everyman.peopleList.splice(ixof, 1);
 	delete everyman.people[id];
+
 
 	getPolicemen();
 }
-function canAnNPCWalk(x, y, peek) {
+function canAnNPCWalk(x, y, peek, carmode) {
 	var lay1min = 2;
 	var lay1max = 5;
 
 	var lay2min = 17;
 	var lay2max = 20;
 	var turns = [];
+
+	if (carmode) {
+		var lay1min = 1; var lay1max = 1;
+		var lay2min = 21; var lay1max = 21;
+
+		if (peek) {
+			turns.push([1, 1]);
+			turns.push([1, 21]);
+			turns.push([21, 1]);
+			turns.push([21, 21]);
+		}
+	}
 	if (peek) {
 		for (var x = 0; x < MAP_WIDTH; x++) for (var y = 0; y < MAP_WIDTH; y++) {
 			if (((y >= lay1min && y <= lay1max) || (x >= lay1min && x <= lay1max)) && ((y >= lay2min && y <= lay2max) || (x >= lay2min && x <= lay2max))) {
@@ -2592,7 +2815,7 @@ function getWantedLevel() {
 	if (wl > 8) wclass = 'mostwanted';
 	var hc = getHighestCrime(player);
 	hc = (hc >= 0) ? crimes[hc].name : '';
-	return '<div class="'+wclass+' outlaw" title="'+hc+'">'+wl+'/10 '+wantedLevels[wl]+'</div>';
+	return '<span class="'+wclass+' outlaw" title="'+hc+'">'+wl+'/10 '+wantedLevels[wl]+'</span>';
 }
 function getPolicemen() {
 	var c = 0;
@@ -2604,10 +2827,10 @@ function getPolicemen() {
 	return c;
 }
 function isPolice(guy) {
-	if (guy.job && guy.job.type == 'com' && guy.job.id == 0) return true;
+	if (guy.job && guy.job.type == 'com' && guy.job.id == 0 && guy.age >= 18 && guy.age < 55) return true;
 }
 function tickPolice() {
-	var isPlayerWanted = drawWanted(1);
+	var isPlayerWanted = displayCrime(player, 'wanted');
 	ticker++;
 	totalticker += TICK_PEOPLE_INTERVAL
 	if (ticker >= everyman.peopleList.length) {
@@ -2618,14 +2841,22 @@ function tickPolice() {
 	}
 
 	var purson = everyman.people[everyman.peopleList[ticker]];
+	drawPerson(purson);
+
 	var canTick = false;
+	if (!purson) return;
 	var relpos = getRelativePos(purson, player);
 	if (purson.mapID.x >= (player.mapID.x - 1) && purson.mapID.x <= (player.mapID.x + 1) && purson.mapID.y >= (player.mapID.y - 1) && purson.mapID.y <= (player.mapID.y + 1)) canTick = true;
 	if (isPlayerWanted && isPolice(purson) && rand(0,1)) canTick = true;
-	if (rand(1, 100) == 1) canTick = true;
-	if (canTick) tickPeople(everyman.peopleList[ticker]);
+	var force = false;
+	if (rand(1, 100) == 1) {
+		canTick = true;
+		force = true;
+	}
+	if (canTick) tickPeople(everyman.peopleList[ticker], force);
 
-	info.innerHTML = ' i:'+player.inside+' is:'+player.insideStatic+' crime:'+player.crime+' canAnNPCWalk:'+canAnNPCWalk(player.x, player.y)+' player.hold:'+player.hold;
+	info.innerHTML = ' i:'+player.inside+' is:'+player.insideStatic+' canAnNPCWalk:'+canAnNPCWalk(player.x, player.y)+' player.hold:'+player.hold+' x:'+player.x+' y:'+player.y+' facing:'+player.facing;
+	debug_interns.innerHTML = showNPCStats(player.crime);
 }
 function sleepy(guy, hours) {
 	var h = (hours/8) * 100;
@@ -2634,9 +2865,11 @@ function sleepy(guy, hours) {
 }
 function getNearestTurn(guy) {
 	if (NPCTurns.length <= 0) NPCTurns = canAnNPCWalk(0, 0, 1);
+	if (CarTurns.length <= 0) CarTurns = canAnNPCWalk(0, 0, 1, 1);
+	var arr = (guy.car) ? CarTurns : NPCTurns;
 	var lowest = {'x': -1, 'y': -1, 'distance': Infinity};
-	for (var t in NPCTurns) {
-		var turn = NPCTurns[t];
+	for (var t in arr) {
+		var turn = arr[t];
 		var d = distance(guy, turn);
 		if (d < lowest.distance) lowest = {
 			'x': turn.x, 'y': turn.y, 'distance': d,
@@ -2651,13 +2884,14 @@ function tickPeople(id, force) {
 	var person = everyman.people[id];
 	if (person == undefined) return;
 	var d = new Date();
-	drawPerson(person);
+	
 	if (person.lastMove > (totalticker * 10) || force) person.lastMove = (totalticker - 1);
 
 	if (totalticker < person.lastMove) {
 		return;
 	}
-	var m = 40;
+	var m = 500;
+	if (person.car) m = 20;
 	person.lastMove = totalticker + m;
 
 	if (person.working) {
@@ -2668,9 +2902,16 @@ function tickPeople(id, force) {
 	}
 
 	//Move guy
-	var canwalk = canAnNPCWalk(person.x, person.y);
+	var canwalk = canAnNPCWalk(person.x, person.y, undefined, person.car);
 	if (canwalk == 'turn') {
 		person.facing = rand(0,3);
+		if (person.car) {
+			var possibleTurns = [];
+			if (person.x == 1) possibleTurns.push(2);
+			if (person.x == 21) possibleTurns.push(0);
+			if (person.y == 1) possibleTurns.push(1);
+			if (person.y == 21) possibleTurns.push(3);
+		}
 		person.forceTurn = false;
 	}
 
@@ -2686,7 +2927,7 @@ function tickPeople(id, force) {
 	}
 
 	//Only for policemen
-	if (person.type == 'police' || person.type == 'police_extra' || (person.job && person.job.type == 'com' && person.job.id == 0)) {
+	if (isPolice(person)) {
 		if (isCriminal(player) > 0) {
 			var wanted = (displayCrime(player, 'wanted') * (MAP_WIDTH / 2));
 			var dist = distance(person, player);
@@ -2694,7 +2935,7 @@ function tickPeople(id, force) {
 				var bm = getBestMove(person, player);
 				dir = bm.dir;
 				wantedOfficers[person.id] = bm.dist;
-				if (bm.dist == 1 && person.inside == player.inside && !person.working && !person.sleeping) arrest(player, person);
+				if (bm.dist == 1 && person.inside == player.inside && !person.working && !person.sleeping && !player.insideStatic) arrest(player, person);
 			}
 			else {
 				if (wantedOfficers[person.id]) delete wantedOfficers[person.id];
@@ -3082,6 +3323,7 @@ function getTrashItems(mapx, mapy) {
 		if (amt > 0) gti += displayItem(id, amt, 'get')+'<br>';
 	}
 	if (!gti) gti = 'There are no items inside this trash bin.';
+	changeKarma(player, -0.01);
 
 	return gti;
 }
@@ -3109,16 +3351,6 @@ function showNotice(title, text, exit) {
 	notice_msg.innerHTML += '<br><hr><br><div class="btn btn-default" onclick="closeNotice()">'+exitext+'</div>';
 
 	sNotice();
-}
-function drawWanted(peek) {
-	var dw = ''
-	var v = 0;
-	for (var w in wantedOfficers) {
-		v++;
-		dw += 'Officer '+everyman.people[w].name+' (at '+wantedOfficers[w]+'m distance from you)<br>';
-	}
-	if (peek) return v;
-	return dw;
 }
 function arrest(guy, officer) {
 	player.hold = true;
@@ -3151,6 +3383,7 @@ function throwItem(id) {
 	if (used) player.inventory[id]--;
 	decreaseHygiene(player, 2);
 	addItemToTrash(player.mapID.x, player.mapID.y, id);
+	changeKarma(player, 0.02);
 	showInventory('throw');
 }
 function useItem(id, who, peek) {
@@ -3181,7 +3414,10 @@ function useItem(id, who, peek) {
 	}
 	if (peek) return false;
 	if (used && who == player) addItemToInventory(id, -1);
-	if (who == player) showInventory();
+	if (who == player) {
+		showInventory();
+		updateHUD();
+	}
 }
 function healWithItem(guy, item, peek) {
 	var stats = ['health', 'hunger', 'energy', 'hygiene'];
@@ -3265,12 +3501,13 @@ function displayItem(id, amt, variation) {
 	var item = itemList[id];
 	var itemclass = '';
 	if (item.illegal) itemclass = 'illegal';
+	if (item.test) itemclass = 'mostwanted';
 	var act = 'useItem';
 	if (variation == 'throw') act = 'throwItem';
 	if (variation == 'get') act = 'getTrashItem';
 	if (variation == 'shop') act = 'buyItem';
 	var test = healWithItem(player, item, true);
-	if (!test) itemclass += 'unavailable';
+	if (!test && item.food) itemclass += ' unavailable';
 	var act2 = '';
 	var desc = item.desc;
 	if (amt <= 0 && variation == 'shop') desc = '<b class="illegal">Out of stock!</b>';
@@ -3280,20 +3517,17 @@ function displayItem(id, amt, variation) {
 
 	'</div>';
 }
-function getLostItem(item) {
+function getLostItem(map, id) {
+	drawLostItems();
+	console.log('Hello, My name is ', map, 'and Im gonna show you my item id ', id);
+	var item = map.lostItems[id];
+	item = itemList[item.id];
 	addItemToInventory(item.id, 1);
-	var map = getCurrentMap();
-	var iid = 0;
-	for (var li in map.lostItems) {
-		if (map.lostItems[li] == item) {
-			iid = li;
-			break;
-		}
-	}
-	onPlayerNotification('<tho>Found '+itemList[item.id].name+' in the ground.</tho>');
-	map.lostItems.splice(iid, 1);
 
-	setTimeout(drawLostItems, 100);
+	onPlayerNotification('<tho>Found '+item.name+' in the ground.</tho>');
+	map.lostItems.splice(id, 1);
+
+	drawLostItems();
 }
 function getCurrentMap() {
 	return city.map[player.mapID.x][player.mapID.y];
@@ -3306,6 +3540,7 @@ function talkTo(id, act) {
 	if (act == 'talk') {
 		tt += speech(guy, 'talk')+'<br>';
 		guy.friendship++;
+		changeKarma(player, 0.01);
 	}
 	if (guy.friendship < 0 && rand(0,1)) setTimeout(closeNotice, 500);
 	if (act == 'steal' || act == 'attack') if (guy.friendship > 0) guy.friendship = Math.floor(guy.friendship / 2);
@@ -3328,15 +3563,42 @@ function talkTo(id, act) {
 		if (!success) {
 			tt += speech(guy, 'steal')+'<br>';
 			guy.friendship -= 5;
+			changeKarma(player, -0.05);
 			setTimeout(closeNotice, 500);
 		}
 		guy.friendship -= 5;
+		changeKarma(player, -0.05);
 		addCrime(player, 2, chances);
 	}
 	if (act == 'attack') {
+		var strength = (player.age + 1);
+		var dmg = rand(strength, (strength * 2));
 
-		tt += speech(guy, 'talk')+'<br>';
+		healGuy(guy, 'health', -dmg);
+		if (dmg == 0) addCrime(player, 7, (getNPCValue(guy) / 1000));
+		if (dmg > 0) {
+			if (isPolice(guy) && guy.age >= 18) addCrime(player, 10, (dmg * (getNPCValue(guy) / 100)));
+			if (!isPolice(guy) && guy.age >= 18) addCrime(player, 8, (dmg * (getNPCValue(guy) / 100)));
+			if (guy.age < 18) addCrime(player, 12, (dmg * (getNPCValue(guy) / 100)));
+		}
+
+		if (guy.health <= 0) {
+			if (!isPolice(guy) && guy.age >= 18) addCrime(player, 9, getNPCValue(guy));
+			if (isPolice(guy) && guy.age >= 18) addCrime(player, 11, getNPCValue(guy));
+			if (guy.age < 18) addCrime(player, 13, getNPCValue(guy));
+
+			if (guy.age < 18) addCrime(player, 9, getNPCValue(guy));
+			killPerson(guy.id, 'was killed by '+player.name+' '+player.family);
+			onPlayerNotification('You killed '+guy.name+' '+guy.family);
+			closeNotice();
+			return;
+		}
+
 		guy.friendship -= 25;
+		changeKarma(player, -0.25);
+
+		tt += '<br><b>You deal '+dmg+' damage to '+guy.name+' '+guy.family+' (Health: '+guy.health+'/100)</b><br>';
+		tt += speech(guy, 'talk')+'<br>';
 	}
 
 	tt += '<br><br><div class="btn btn-primary guybtn" onclick="talkTo(\''+id+'\', \'talk\')">Talk</div><br>';
@@ -3348,8 +3610,17 @@ function talkTo(id, act) {
 
 	showNotice(guy.name, tt, 'Say Goodbye');
 }
+function getNPCValue(guy, numode) {
+	if (numode) guy = {'age': guy};
+	var youngMod = Math.pow(1.1, (8 - guy.age));
+
+	var base = 100000 * youngMod;
+
+	base += guy.age;
+	return base;
+}
 function showNPCStats(guy) {
-	var sns = '';
+	var sns = 'Value: '+getNPCValue(guy)+'<br>';
 
 	if (typeof guy != 'object') return guy;
 
@@ -3357,18 +3628,21 @@ function showNPCStats(guy) {
 		var param = guy[e];
 		if (typeof param == 'object' && e != 'element') {
 			sns += '<b>'+e+'</b><br>';
-			for (var ee in param) sns += '<ind><i>'+ee+'</i> '+param[ee]+'</ind><br>';
+			var par = param[ee];
+			if (typeof par == 'number') par = round(par);
+			for (var ee in param) sns += '<ind><i>'+ee+'</i> '+par+'</ind><br>';
 			continue;
 		}
-		sns += '<b>'+e+'</b> '+guy[e]+'<br>';
+		var par = guy[e];
+		if (typeof par == 'number') par = round(par);
+		sns += '<b>'+e+'</b> '+par+'<br>';
 	}
 	return sns;
 }
 function canUseTile(tileObject) {
-	console.log('Check if I can use tile', tileObject);
-	if (tileObject == undefined) tileObject = {};
 	var d = new Date();
 	d = d.valueOf();
+	console.log(((d - tileObject.lastUsed)));
 	if (tileObject.lastUsed < d) {
 		tileObject.lastUsed = d + 10000;
 		console.log('Next usage time', tileObject.lastUsed);
@@ -3378,6 +3652,8 @@ function canUseTile(tileObject) {
 function useTile(tile) {
 	console.log('Using tile', tile);
 	if (!everyman.tileStatus) everyman.tileStatus = {};
+	if (!everyman.tileStatus[tile]) everyman.tileStatus[tile] = {'lastUsed': 0};
+
 	var actions = {
 		'tile_sink': "tileHealPlayer('hygiene', 10, 'Hygiene')",
 		'tile_sink2': "tileHealPlayer('hygiene', 10, 'Hygiene')",
@@ -3388,6 +3664,8 @@ function useTile(tile) {
 	}
 }
 function tileHealPlayer(stat, amt, name) {
+	var willheal = healGuy(player, stat, amt, true);
+	if (!willheal) onPlayerNotification(name+' max.');
 	healGuy(player, stat, amt);
 	onPlayerNotification('+'+amt+' '+name);
 }
@@ -3403,8 +3681,13 @@ $('body').on('keypress', function(evt) {
     	decorationMode();
     }
     if (key == 'f') showNotice('Family', getFamilyOf(player));
+    if (key == 'n' || key == 'm') showNotice('Citizen List', getFamilyOf(player, 'all'));
     if (key == 'p') {
     	pickFurniture();
+    }
+    if (key == 'o') {
+    	console.log('o key pressed');
+    	pickFurniture(1);
     }
     if (key == '$') {
     	if (everyman.held) {
@@ -3422,10 +3705,6 @@ $('body').on('keypress', function(evt) {
     if (key == ' ' || key == 'z') {
     	//Press space
     	var infront = whatsInFrontOf(player);
-    	if (infront.item) {
-    		getLostItem(infront.item);
-    		return;
-    	}
 	    if (infront.guyfront) {
 	    	var guy = everyman.people[infront.guyfront];
 	    	if (player.inside && !guy.inside) return;
@@ -3454,6 +3733,7 @@ $('body').on('keypress', function(evt) {
 	    		player.sleeping = true;
 	    		$('#sleeper').fadeIn(100);
 	    		switchTime('fast');
+	    		saveGame();
 	    	}
 	    	if (infront.upfront) useTile(infront.upfront);
 

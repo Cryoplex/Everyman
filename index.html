@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="utf-8">
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, 
     user-scalable=no, initial-scale=1, maximum-scale=1, user-scalable=0" />
     <!--<link rel="icon" href="../../favicon.ico">-->
@@ -21,9 +21,10 @@
     </div>
     <div class="gaem" id="gaem_overlay"></div>
 
-    <div style="width: 192px; height: 220px" id="display_holder">
-      <div style="text-align: center; display: inline-block; width: 50%">$</div><div id="money_display" style="text-align: center; width: 50%; display: inline-block">0</div>
-      <div id="time_display"></div>
+    <div style="width: 90vw; margin-left: 5vw;" id="display_holder">
+      <span id="money_display">0</span>
+      <span id="date_display"></span>
+      <span id="time_display"></span>
 
       <br>
       <citymap id="cMap"></citymap>
@@ -41,11 +42,8 @@
       Godmode options<br>
       <input type="button" onclick="addPerson()" value="Add NPC"><br>
       <input type="button" onclick="expandCity(city)" value="Expand City Limits"><br>
-      <input type="button" onclick="addBuildingHere(0)" value="Build Building (Top Left)"><br>
-      <input type="button" onclick="addBuildingHere(1)" value="Build Building (Top Right)"><br>
-      <input type="button" onclick="addBuildingHere(2)" value="Build Building (Bottom Left)"><br>
-      <input type="button" onclick="addBuildingHere(3)" value="Build Building (Bottom Right)"><br>
       <input type="button" onclick="redrawInside()" value="Reset Inside of This Building"><br>
+      <input type="button" onclick="resetGame()" value="Reset Game"><br>
 
       <div id="debug_interns"></div>
       <div id="debug_warehouse"></div>

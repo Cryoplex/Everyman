@@ -100,9 +100,21 @@ function drawSurroundings(mapSize, tileSize, tiles, addclass) {
 function drawLayer(mapSize, tileSize, tiles, addclass, mapx, mapy, isStatic) {
 	var l = '<div style="position: absolute; left: 80%; top: '+(tileSize.height * (mapSize.z / 8))+'px">';
 
-	for (var y = 0; y < mapSize.y; y++) {
-		for (var x = 0; x < mapSize.x; x++) {
-			for (var z = 0; z < mapSize.z; z++) {
+	for (var z = 0; z < mapSize.z; z++) {
+		if (tiles[z] == undefined || tiles[z].length <= 0) {
+			tiles[z] == undefined;
+			continue;
+		}
+		for (var y = 0; y < mapSize.y; y++) {
+			if (tiles[z][y] == undefined || tiles[z][y].length <= 0) {
+				tiles[z][y] == undefined;
+				continue;
+			}
+			for (var x = 0; x < mapSize.x; x++) {
+				if (tiles[z][y][x] == undefined || tiles[z][y][x] == 'tile_empty') {
+				tiles[z][y][x] == undefined;
+				continue;
+				}
 				loadv('Drawing map tiles', (mapSize.y + mapSize.x + mapSize.z), (mapSize.y * mapSize.x * mapSize.z));
 				if (tiles[z] == undefined) tiles[z] = [];
 				if (tiles[z][y] == undefined) tiles[z][y] = [];

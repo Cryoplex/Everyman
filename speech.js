@@ -56,7 +56,7 @@ var speech_messages = [
 	['talk', "Fuck you, you don't have anything better to do, than to waste my time? I said: GET LOST!", , -20],
 	['talk', "I hate people like you, really. How persistent. Don't you listen? GET THE FUCK OUT.", , -25],
 	['talk', "Do you think I'm happy with being harassed this way? I'm a HUMAN, like everyone else here, including you. Start acting like one, and stop being an animal.", , -30],
-	['talk', "I wish some bad guy at your shitty job as a %_getMyJobName() robs you tonight.", , -1, 'player.job.type == "slum"'],
+	['talk', "I wish some bad guy at your shitty job as a %_getMyJobName() robs you tonight.", , -1, 'player.job && player.job.type == "slum"'],
 	['talk', "I wish you get hit by a truck, that would be awesome.", , -10],
 
 
@@ -65,10 +65,13 @@ var speech_messages = [
 	['steal', "And I thought we were friends... I, hate you!", 30, ],
 ];
 function getMessages(guy, type) {
+	console.log('getMessages', guy, type);
 	var f = guy.friendship;
 	var mess = [];
+	console.log('getMessages', f, mess);
 	for (var s in speech_messages) {
 		var sm = speech_messages[s];
+		console.log('getMessages', s, speech_messages.length, sm);
 		if (sm[0] != type) continue;
 		var minf = sm[2];
 		if (minf == undefined) minf = -Infinity;
