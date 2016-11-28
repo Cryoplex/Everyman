@@ -23,7 +23,12 @@
 
     <div style="width: 90vw; margin-left: 5vw;" id="display_holder">
       <span id="money_display">0</span>
-      <span id="date_display"></span>
+      <span id="date_display">
+        <date>
+          <span style="float: left" id="date_display_hour"></span>
+          <span style="float: right; font-weight: normal; font-size: 10px" id="date_display_date"></span>
+        </date>
+      </span>
       <span id="time_display"></span>
 
       <br>
@@ -36,6 +41,17 @@
     <div id="notice" class="notice_message">
       <h3 id="notice_header"></h3>
       <p id="notice_msg"></p>
+    </div>
+
+    <div id="battle_blocker" style="z-index: 99997">
+      <div id="battle" style="z-index: 99998">
+        <h3 id="battle_header">Battle!</h3>
+        <div id="battle_inside">
+
+
+        </div>
+        <div id="battle_log"></div>
+      </div>
     </div>
 
     <div class="debuttons">

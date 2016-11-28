@@ -25,7 +25,7 @@ function drawTile(tileClass, size, position, layer, inner, opacity, bpos, addcla
 	var absx = (mapx * MAP_WIDTH) + position.x;
 	var absy = (mapy * MAP_HEIGHT) + position.y;
 
-	return '<tile id="maptile_'+absx+'_'+absy+'_'+layer+'" class="ts_'+addclass+'"><div id="intile_'+mapx+'_'+mapy+'_'+position.x+'_'+position.y+'_'+layer+'" class="'+tileClass+'" style="opacity: '+opacity+'; '+bpos+'; top: '+displayY+'px; left: '+displayX+'px; z-index: '+zindex+';">'+inner+'</div></tile>';
+	return '<tile class="ts_'+addclass+'"><div id="intile_'+mapx+'_'+mapy+'_'+position.x+'_'+position.y+'_'+layer+'" class="'+tileClass+'" style="opacity: '+opacity+'; '+bpos+'; top: '+displayY+'px; left: '+displayX+'px; z-index: '+zindex+';">'+inner+'</div></tile>';
 }
 
 function getIsoTilePosition(size, position, ret2) {
@@ -50,39 +50,6 @@ function getIsoTilePosition(size, position, ret2) {
 	return {
 		'left': displayX,
 		'top': displayY,
-	}
-}
-function drawColumn(city, mapx, mapy, x, y) {
-	var mappy = city.map[mapx][mapy].map;
-	var dc = '';
-	for (var e in mappy) {
-		var m = mappy[e][y][x];
-		var relpos = getRelativePos({'x': (x+1), 'y': (y+1), 'mapID': {'x': mapx, 'y': mapy}})
-		if (!m || m == 'tile_empty' || m == 'tile tile_empty') continue;
-		var op = 1 / (relpos.distance / 16);
-		dc += drawTile('tile '+m, size(30, 60), size(relpos.x, relpos.y, e), e, '', op, '', '', mapx, mapy);
-	}
-	return dc;
-}
-function reDrawColumn(mapx, mapy, x, y) {
-	var mappy = city.map[mapx][mapy].map;
-	for (var e in mappy) {
-		var m = mappy[e][y][x];
-		var relpos = getRelativePos({'x': x, 'y': y, 'mapID': {'x': mapx, 'y': mapy}})
-		if (!m || m == 'tile_empty' || m == 'tile tile_empty') continue;
-		var op = 1 / (relpos.distance / 16);
-		var tn = 'intile_'+mapx+'_'+mapy+'_'+x+'_'+y+'_'+e;
-		doc(tn).style.opacity = op;
-		var xx = (x - (e * 2));
-		var yy = (y - (e) * 2);
-
-		var rot = 0;
-
-		var displayX = (xx - yy) * ((30 - 2) / 2);
-		var displayY = (xx + yy) * ((60 - 4) / 8);
-
-		doc(tn).style.left = displayX+'px';
-		doc(tn).style.top = displayY+'px';
 	}
 }
 function drawSurroundings(mapSize, tileSize, tiles, addclass) {
@@ -115,7 +82,6 @@ function drawLayer(mapSize, tileSize, tiles, addclass, mapx, mapy, isStatic) {
 				tiles[z][y][x] == undefined;
 				continue;
 				}
-				loadv('Drawing map tiles', (mapSize.y + mapSize.x + mapSize.z), (mapSize.y * mapSize.x * mapSize.z));
 				if (tiles[z] == undefined) tiles[z] = [];
 				if (tiles[z][y] == undefined) tiles[z][y] = [];
 				if (tiles[z][y][x] == undefined) continue;
