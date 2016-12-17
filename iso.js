@@ -1,4 +1,4 @@
-function drawTile(tileClass, size, position, layer, inner, opacity, bpos, addclass, mapx, mapy, isStatic) {
+function drawTileIso(tileClass, size, position, layer, inner, opacity, bpos, addclass, mapx, mapy, isStatic) {
 	if (mapx == undefined) mapx = player.mapID.x;
 	if (mapy == undefined) mapy = player.mapID.y;
 	var width = size.width;
@@ -24,6 +24,31 @@ function drawTile(tileClass, size, position, layer, inner, opacity, bpos, addcla
 
 	var absx = (mapx * MAP_WIDTH) + position.x;
 	var absy = (mapy * MAP_HEIGHT) + position.y;
+
+	return '<tile class="ts_'+addclass+'"><div id="intile_'+mapx+'_'+mapy+'_'+position.x+'_'+position.y+'_'+layer+'" class="'+tileClass+'" style="opacity: '+opacity+'; '+bpos+'; top: '+displayY+'px; left: '+displayX+'px; z-index: '+zindex+';">'+inner+'</div></tile>';
+}
+function drawTile(tileClass, size, position, layer, inner, opacity, bpos, addclass, mapx, mapy, isStatic) {
+	if (mapx == undefined) mapx = player.mapID.x;
+	if (mapy == undefined) mapy = player.mapID.y;
+	var width = size.width;
+	var height = size.height;
+
+	var elayer = layer;
+
+	var x = (position.x);
+	var y = (position.y);
+
+	var rot = 0;
+
+	var displayX = x * width;
+	var displayY = (y * (height/2)) - (elayer * (height/2));
+
+	var zindex = 0;
+	zindex = elayer * 4;
+
+	if (tileClass == 'tile tile_empty') return '';
+
+	if (!inner) inner = '';
 
 	return '<tile class="ts_'+addclass+'"><div id="intile_'+mapx+'_'+mapy+'_'+position.x+'_'+position.y+'_'+layer+'" class="'+tileClass+'" style="opacity: '+opacity+'; '+bpos+'; top: '+displayY+'px; left: '+displayX+'px; z-index: '+zindex+';">'+inner+'</div></tile>';
 }
@@ -65,6 +90,38 @@ function drawSurroundings(mapSize, tileSize, tiles, addclass) {
 	return ds;
 }
 function drawLayer(mapSize, tileSize, tiles, addclass, mapx, mapy, isStatic) {
+	var l = '<div style="position: absolute; left: 0px; top: 0px">';
+
+	for (var z = 0; z < mapSize.z; z++) {
+		if (tiles[z] == undefined || tiles[z].length <= 0) {
+			tiles[z] == undefined;
+			continue;
+		}
+		for (var y = 0; y < mapSize.y; y++) {
+			if (tiles[z][y] == undefined || tiles[z][y].length <= 0) {
+				tiles[z][y] == undefined;
+				continue;
+			}
+			for (var x = 0; x < mapSize.x; x++) {
+				if (tiles[z][y][x] == undefined || tiles[z][y][x] == 'tile_empty') {
+				tiles[z][y][x] == undefined;
+				continue;
+				}
+				if (tiles[z] == undefined) tiles[z] = [];
+				if (tiles[z][y] == undefined) tiles[z][y] = [];
+				if (tiles[z][y][x] == undefined) continue;
+				var tile = tiles[z][y][x];
+				var opacity = 1;
+
+				l += drawTile(tile+' tile', tileSize, size(x, y), z, '', opacity, undefined, addclass, mapx, mapy, isStatic);
+			}
+		}
+	}
+
+	l += '</div>';
+	return l;
+}
+function drawLayerIso(mapSize, tileSize, tiles, addclass, mapx, mapy, isStatic) {
 	var l = '<div style="position: absolute; left: 80%; top: '+(tileSize.height * (mapSize.z / 8))+'px">';
 
 	for (var z = 0; z < mapSize.z; z++) {

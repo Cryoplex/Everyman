@@ -46,7 +46,7 @@ sup {
 
 .layer {
 	background-image: url(img/road.png);
-	height: 32px;
+	height: 24px;
 	width: 100%;
 	position: absolute;
 
@@ -115,7 +115,7 @@ tho {
 .gaem, .gaem_overlay, person_holder, item_holder {
 	position: absolute;
 	top: 0px;
-	left: 384px;
+	left: 0px;
 
 	background-color: rgba(128, 255, 64, 0.2);
 	width: 64px;
@@ -205,12 +205,12 @@ outline {
 }
 
 .tile, tile {
-	width: 30px;
-	height: 60px;
+	width: 24px;
+	height: 48px;
 	position: absolute;
 	image-rendering: pixelated;
 
-	background: url(img/tiles.png);
+	background: url(img_td/tiles.png);
 }
 .titem {
 	width: 30px;
@@ -226,22 +226,25 @@ outline {
 	display: inline-block;
 }
 .tiles {
-	background: url(img/tiles.png);
+	background: url(img_td/tiles.png);
 }
-.t_road, .tile_tra { background-position: -240px 0px; }
-.t_road_ns { background-position: -210px 0px; }
-.t_road_walk { background-position: -30px 0px; }
-.t_alley { background-position: -60px 0px; }
-.t_grass { background-position: -90px 0px; }
-.t_road_ew { background-position: -120px 0px; }
-.t_cross_ew { background-position: -150px 0px; }
-.t_cross_ns { background-position: -180px 0px; }
-.t_crossroad { background-position: -270px 0px; }
+
+.t_road_walk { background-position: -24px 0px; }
+.t_alley { background-position: -48px 0px; }
+.t_grass { background-position: -72px 0px; }
+
+.t_road_ew { background-position: -96px 0px; }
+.t_cross_ew { background-position: -144px 0px; }
+.t_cross_ns { background-position: -120px 0px; }
+.t_road_ns { background-position: -168px 0px; }
+.t_road, .tile_tra { background-position: -192px 0px; }
+
+.t_crossroad { background-position: -216px 0px; }
 
 .guy_layer {
 	position: absolute;
-	width: 30px;
-	height: 60px;
+	width: 24px;
+	height: 48px;
 	top: 0px;
 	left: 0px;
 	font-size: 8px;
@@ -339,7 +342,7 @@ outline {
 	background-image: url(img/grass.png);
 }
 .tile_hidden {
-	background-image: url(img/bigtiles.png);
+	background-image: url(img_td/bigtiles.png);
 	opacity: 0.5;
 }
 #battle_blocker {
@@ -365,68 +368,68 @@ outline {
 	z-index: 99999;
 }
 .tile_door {
-	background-image: url(img/bigtiles.png);
-	background-position: -30px 0px;
+	background-image: url(img_td/bigtiles.png);
+	background-position: -24px 0px;
 }
 .tile_fridge {
-	background-image: url(img/bigtiles.png);
-	background-position: -60px 0px;
+	background-image: url(img_td/bigtiles.png);
+	background-position: -48px 0px;
 }
 .tile_cabinet {
-	background-image: url(img/bigtiles.png);
-	background-position: -90px 0px;
+	background-image: url(img_td/bigtiles.png);
+	background-position: -72px 0px;
 }
 .tile_cooker {
-	background-image: url(img/bigtiles.png);
-	background-position: -120px 0px;
+	background-image: url(img_td/bigtiles.png);
+	background-position: -96px 0px;
 }
 .tile_sink {
-	background-image: url(img/bigtiles.png);
-	background-position: -150px 0px;
+	background-image: url(img_td/bigtiles.png);
+	background-position: -120px 0px;
 }
 .tile_toilet {
-	background-image: url(img/bigtiles.png);
-	background-position: -180px 0px;
+	background-image: url(img_td/bigtiles.png);
+	background-position: -144px 0px;
 }
 .tile_sink2 {
-	background-image: url(img/bigtiles.png);
-	background-position: -210px 0px;
+	background-image: url(img_td/bigtiles.png);
+	background-position: -168px 0px;
 }
 .tile_closet {
-	background-image: url(img/bigtiles.png);
-	background-position: -240px 0px;
+	background-image: url(img_td/bigtiles.png);
+	background-position: -192px 0px;
 }
 .tile_table {
-	background-image: url(img/bigtiles.png);
-	background-position: -270px 0px;
+	background-image: url(img_td/bigtiles.png);
+	background-position: -216px 0px;
 }
 .tile_bed1 {
-	background-image: url(img/bigtiles.png);
-	background-position: -300px 0px;
+	background-image: url(img_td/bigtiles.png);
+	background-position: -240px 0px;
 }
 .tile_bed2 {
-	background-image: url(img/bigtiles.png);
-	background-position: -330px 0px;
+	background-image: url(img_td/bigtiles.png);
+	background-position: -264px 0px;
 }
 .tile_woodwall {
-	background-image: url(img/bigtiles.png);
-	background-position: -360px 0px;
+	background-image: url(img_td/bigtiles.png);
+	background-position: -288px 0px;
 }
 .tile_fence_ns {
-	background-image: url(img/bigtiles.png);
-	background-position: -390px 0px;
+	background-image: url(img_td/bigtiles.png);
+	background-position: -312px 0px;
 }
 .tile_fence_ew {
-	background-image: url(img/bigtiles.png);
-	background-position: -420px 0px;
+	background-image: url(img_td/bigtiles.png);
+	background-position: -336px 0px;
 }
 .tile_fence_door {
-	background-image: url(img/bigtiles.png);
-	background-position: -450px 0px;
+	background-image: url(img_td/bigtiles.png);
+	background-position: -360px 0px;
 }
 .tile_work_door {
-	background-image: url(img/bigtiles.png);
-	background-position: -480px 0px;
+	background-image: url(img_td/bigtiles.png);
+	background-position: -384px 0px;
 }
 .get {
 	background-color: rgba(128, 192, 128, 0.8);
@@ -435,15 +438,17 @@ outline {
 	background-color: rgba(128, 128, 128, 0.8);
 }
 .tile_outerwall {
-	background-image: url(img/bigtiles.png);
+	background-image: url(img_td/bigtiles.png);
 	background-position: -510px 0px;
 }
 .tile_bin {
-	background-image: url(img/bigtiles.png);
+	background-image: url(img_td/bigtiles.png);
 	background-position: -540px 0px;
 }
 citychunk {
 	position: absolute;
+	top: 0px;
+	left: 0px;
 }
 .loader {
 	background-color: rgb(0, 0, 0);
@@ -470,175 +475,175 @@ citychunk {
 	background-position: -540px 0px;
 }
 .tile_belt {
-	background-image: url(img/bigtiles.png);
+	background-image: url(img_td/bigtiles.png);
 	background-position: -570px 0px;
 }
 .tile_belt_machinel {
-	background-image: url(img/bigtiles.png);
+	background-image: url(img_td/bigtiles.png);
 	background-position: -600px 0px;
 }
 .tile_belt_machiner {
-	background-image: url(img/bigtiles.png);
+	background-image: url(img_td/bigtiles.png);
 	background-position: -630px 0px;
 }
 .tile_crystalwall {
-	background-image: url(img/bigtiles.png);
+	background-image: url(img_td/bigtiles.png);
 	background-position: -660px 0px;
 }
 .tile_cfence {
-	background-image: url(img/bigtiles.png);
+	background-image: url(img_td/bigtiles.png);
 	background-position: -690px 0px;
 }
 .tile_metal_post {
-	background-image: url(img/bigtiles.png);
+	background-image: url(img_td/bigtiles.png);
 	background-position: -720px 0px;
 }
 .tile_metal_frame {
-	background-image: url(img/bigtiles.png);
+	background-image: url(img_td/bigtiles.png);
 	background-position: -750px 0px;
 }
 .tile_shop_desk {
-	background-image: url(img/bigtiles.png);
+	background-image: url(img_td/bigtiles.png);
 	background-position: -780px 0px;
 }
 .tile_shop_desk_machine {
-	background-image: url(img/bigtiles.png);
+	background-image: url(img_td/bigtiles.png);
 	background-position: -810px 0px;
 }
 .tile_shop_fridge {
-	background-image: url(img/bigtiles.png);
+	background-image: url(img_td/bigtiles.png);
 	background-position: -840px 0px;
 }
 .tile_shop_counter {
-	background-image: url(img/bigtiles.png);
+	background-image: url(img_td/bigtiles.png);
 	background-position: -870px 0px;
 }
 .tile_shop_shelf {
-	background-image: url(img/bigtiles.png);
+	background-image: url(img_td/bigtiles.png);
 	background-position: -900px 0px;
 }
 .tile_shop_work_door {
-	background-image: url(img/bigtiles.png);
+	background-image: url(img_td/bigtiles.png);
 	background-position: -930px 0px;
 }
 .tile_shop_vendor {
-	background-image: url(img/bigtiles.png);
+	background-image: url(img_td/bigtiles.png);
 	background-position: -960px 0px;
 }
 .tile_hospital_wall {
-	background-image: url(img/bigtiles.png);
+	background-image: url(img_td/bigtiles.png);
 	background-position: -990px 0px;
 }
 .tile_hospital_desk {
-	background-image: url(img/bigtiles.png);
+	background-image: url(img_td/bigtiles.png);
 	background-position: -1020px 0px;
 }
 .tile_hospital_blood {
-	background-image: url(img/bigtiles.png);
+	background-image: url(img_td/bigtiles.png);
 	background-position: -1050px 0px;
 }
 .tile_hospital_healthmeter {
-	background-image: url(img/bigtiles.png);
+	background-image: url(img_td/bigtiles.png);
 	background-position: -1080px 0px;
 }
 
 
 .tile_proto {
-	background-image: url(img/proto.png);
-	width: 30px;
-	height: 60px;
+	background-image: url(img_td/proto.png);
+	width: 24px;
+	height: 48px;
 }
 .tile_agro {
-	background-image: url(img/agro.png);
-	width: 30px;
-	height: 60px;
+	background-image: url(img_td/agro.png);
+	width: 24px;
+	height: 48px;
 }
 .top_left_left {
 	background-position: 0px 0px;
 }
 .top_left_middle {
-	background-position: -30px 0px;
+	background-position: -24px 0px;
 }
 .top_left_right {
-	background-position: -60px 0px;
+	background-position: -48px 0px;
 }
 
 .top_middle_left {
-	background-position: -90px 0px;
+	background-position: -72px 0px;
 }
 .top_middle_middle {
-	background-position: -120px 0px;
+	background-position: -96px 0px;
 }
 .top_middle_right {
-	background-position: -150px 0px;
+	background-position: -120px 0px;
 }
 
 .top_right_left {
-	background-position: -180px 0px;
+	background-position: -144px 0px;
 }
 .top_right_middle {
-	background-position: -210px 0px;
+	background-position: -168px 0px;
 }
 .top_right_right {
-	background-position: -240px 0px;
+	background-position: -192px 0px;
 }
 
 .middle_right_left {
-	background-position: -180px -60px;
+	background-position: -144px -48px;
 }
 .middle_right_middle {
-	background-position: -210px -60px;
+	background-position: -168px -48px;
 }
 .middle_right_right {
-	background-position: -240px -60px;
+	background-position: -192px -48px;
 }
 .middle_left_right {
-	background-position: -60px -60px;
+	background-position: -48px -48px;
 }
 .middle_middle_right {
-	background-position: -150px -60px;
+	background-position: -120px -48px;
 }
 
-.bottom_right_left {
-	background-position: -180px -120px;
+.middle_right_left {
+	background-position: -144px -96px;
 }
-.bottom_right_middle {
-	background-position: -210px -120px;
+.middle_right_middle {
+	background-position: -168px -96px;
 }
-.bottom_right_right {
-	background-position: -240px -120px;
+.middle_right_right {
+	background-position: -192px -96px;
 }
-.bottom_left_right {
-	background-position: -60px -120px;
+.middle_left_right {
+	background-position: -48px -96px;
 }
-.bottom_middle_right {
-	background-position: -150px -120px;
+.middle_middle_right {
+	background-position: -120px -96px;
 }
 
 .deco_1 {
-	background-position: 0px -60px;
+	background-position: 0px -48px;
 }
 .deco_2 {
-	background-position: -30px -60px;
+	background-position: -24px -48px;
 }
 .deco_3 {
-	background-position: -90px -60px;
+	background-position: -48px -48px;
 }
 .deco_4 {
-	background-position: -120px -60px;
+	background-position: -72px -48px;
 }
 
 .deco_5 {
-	background-position: 0px -120px;
+	background-position: 0px -96px;
 }
 .deco_6 {
-	background-position: -30px -120px;
+	background-position: -24px -96px;
 }
 .deco_7 {
-	background-position: -90px -120px;
+	background-position: -48px -96px;
 }
 .deco_8 {
-	background-position: -120px -120px;
+	background-position: -72px -96px;
 }
 .safe, .c_fir {
 	font-weight: bold;
@@ -910,13 +915,13 @@ meter {
 	background-position: -510px 0px;
 }
 .tile_woodfloor {
-	background-position: -540px 0px;
+	background-position: -432px 0px;
 }
 .tile_ironfloor {
-	background-position: -570px 0px;
+	background-position: -456px 0px;
 }
 .tile_clearfloor {
-	background-position: -600px 0px;
+	background-position: -480px 0px;
 }
 .fir {
 	background-color: rgba(0, 255, 0, 0.9);

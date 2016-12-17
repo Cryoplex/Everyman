@@ -54,13 +54,13 @@ var changelog = [
 ];
 
 var MAX_LAYERS = 5;
-var TILE_HEIGHT = 60;
+var TILE_HEIGHT = 48;
 var MAP_WIDTH = 23;
 var MAP_HEIGHT = 23;
 var BASE_HOUSE_VALUE = 100000;
 var ENTRY_PRICE_MOD = 1.5;
 var MAX_NPC = 100;
-var VISION_RANGE = 0;
+var VISION_RANGE = 5;
 
 var TICK_PEOPLE_INTERVAL = 100;
 
@@ -169,6 +169,11 @@ var jobList = {
 	],
 };
 
+var technology = {
+	'0': {'name': 'Prehistory', 'job': [{'sector': 'fir', 'id': 0}]},
+}
+
+
 var staticPlaces = {
 	'dream': new Inside('dream'),
 	'hospital': new Inside('hospital'),
@@ -176,6 +181,7 @@ var staticPlaces = {
 }
 
 var everyman, city, player, furtuto;
+var world;
 
 //TODO Dentro del juego, poder construir objetos, dedicándose a la investigación. Crear objetos con su nombre, descripción, propiedades, etc, guardar todos esos objetos en una variable "extra items" que se añadirá a la lista actual al cargar el juego
 var itemList = [
@@ -314,6 +320,10 @@ function resetVariables() {
 		city = new City();
 		while (!getZonesByType(city)) expandCity(city, true);
 		buildCity(city);
+	}
+	if (!world) {
+		world = new EmptyMap('wil', 4, 'world');
+		city.map[0][0] = world;
 	}
 	NPCTurns = canAnNPCWalk(0, 0, 1);
 	CarTurns = canAnNPCWalk(0, 0, 1, 1);
@@ -455,8 +465,8 @@ function Person(id, type, isCar) {
 
 	this.type = type;
 
-	this.x = 22;
-	this.y = 22;
+	this.x = 0;
+	this.y = 0;
 	this.z = 2;
 	this.facing = rand(0,3);
 	this.walking = false;
@@ -588,7 +598,12 @@ function onPlayerNotification(text) {
 	onCoordinateNotification(player.x, player.y, text);
 }
 function onCoordinateNotification(x, y, text) {
-	var isoPos = getIsoTilePosition(size(30, 60), size(x-1, y-3, 2));
+	//var isoPos = getIsoTilePosition(size(32, 64), size(x-1, y-3, 2));
+	var tdPos = {
+			'top': (y * 24) - 24,
+			'left': x * 24,
+	}
+
 	var el = document.createElement('person_holder');
 	el.style.width = 'auto';
 	el.style.height = 'auto';
@@ -599,7 +614,7 @@ function onCoordinateNotification(x, y, text) {
 	var wd = (tl * 5);
 
 
-	el.innerHTML = '<div style="top: '+isoPos.top+'; left: '+isoPos.left+'; z-index: 999; width: '+wd+'px" class="coordNotification">'+text+'</div>';
+	el.innerHTML = '<div style="top: '+tdPos.top+'px; left: '+tdPos.left+'px; z-index: 999; width: '+wd+'px" class="coordNotification">'+text+'</div>';
 	var time = 100 * text.length;
 
 	document.body.appendChild(el);
@@ -608,14 +623,19 @@ function onCoordinateNotification(x, y, text) {
 	}, time);
 }
 function drawObject(x, y, tileset, bpos) {
-	var isoPos = getIsoTilePosition(size(30, 60), size(x-1, y-3, 2));
+	//var isoPos = getIsoTilePosition(size(32, 64), size(x-1, y-3, 2));
+	var tdPos = {
+		'top': ((y * 24) - 24)+'px',
+		'left': x * 24+'px',
+	}
+
 	var el = document.createElement('item_holder');
 	el.className = 'tile whatever';
 	el.style.top = (TILE_HEIGHT * (MAX_LAYERS / 8))+'px';
 
 	el.style.opacity = (player.insideStatic || player.inside) ? 0 : 1;
 
-	el.innerHTML = '<div style="top: '+isoPos.top+'; left: '+isoPos.left+'; background: url(img/'+tileset+'.png); z-index: '+(x+y)+'; background-position: '+bpos+'; background: '+tileset+'" class="tile collectible"></div>';
+	el.innerHTML = '<div style="top: '+tdPos.top+'; left: '+tdPos.left+'; background: url(img/'+tileset+'.png); z-index: '+(x+y)+'; background-position: '+bpos+'; background: '+tileset+'" class="tile collectible"></div>';
 
 	document.body.appendChild(el);
 }
@@ -625,7 +645,7 @@ function makeHolder(guy) {
 	if (!guy.id && guy != player) return;
 	guy.element = document.createElement('person_holder');
 	guy.element.className = 'tile whatever';
-	guy.element.style.top = (TILE_HEIGHT * (MAX_LAYERS / 8))+'px';
+	guy.element.style.top = '0px';
 
 	var n = 'npch_'+guy.id;
 
@@ -634,14 +654,20 @@ function makeHolder(guy) {
 	if (guy.element.parentNode != document.body) document.body.appendChild(guy.element);
 }
 function getInsideHolder(guy) {
-	var isoPos = getIsoTilePosition(size(30, 60), size((guy.x - 1), (guy.y - 3), guy.z));
+	//var isoPos = getIsoTilePosition(size(32, 64), size((guy.x - 1), (guy.y - 3), guy.z));
+
+	var tdPos = {
+		'top': ((guy.y * 24) - 24)+'px',
+		'left': guy.x * 24+'px',
+	}
+
 
 	var gih = document.createElement('div');
 	gih.id = 'npch_'+guy.id;
 	gih.title = guy.name+' '+guy.family+' '+guy.id;
 	gih.className = 'guy_layer';
-	gih.style.top = isoPos.top;
-	gih.style.left = isoPos.left;
+	gih.style.top = tdPos.top;
+	gih.style.left = tdPos.left;
 	gih.style.zIndex = 9999;
 
 	gih.innerHTML = drawGuy(guy);
@@ -686,13 +712,17 @@ function drawPerson(guy) {
 
 	if (doc(hname)) {
 		doc(hname).style.display = 'inline-block';
-		var isoPos = getIsoTilePosition(size(30, 60), size((relpos.x - 1), (relpos.y - 3), guy.z));
-		if (doc(hname).style.top != isoPos.top) doc(hname).style.top = isoPos.top;
-		if (doc(hname).style.left != isoPos.left) doc(hname).style.left = isoPos.left;
+		//var isoPos = getIsoTilePosition(size(30, 60), size((relpos.x - 1), (relpos.y - 3), guy.z));
+		var tdPos = {
+			'top': (guy.y * 24) - 24,
+			'left': guy.x * 24,
+		}
+		if (doc(hname).style.top != tdPos.top) doc(hname).style.top = tdPos.top+'px';
+		if (doc(hname).style.left != tdPos.left) doc(hname).style.left = tdPos.left+'px';
 	}
 
 	var zindex = 0;
-	zindex = (guy.z * 4) + guy.x + guy.y;
+	zindex = (guy.z * 4);
 
 	if (doc(hname).style.zIndex != zindex) doc(hname).style.zIndex = zindex;
 
@@ -734,9 +764,9 @@ function getBackgroundPosition(guy, start, walking) {
 	var x = 0;
 	var y = 0;
 
-	var directions = [-120, -60, 0, -180];
-
-	if (walking) start -= 30;
+	var directions = [-96, -48, 0, -144];
+	start = -24;
+	if (walking) start = 0;
 
 	return start+'px '+directions[facing]+'px';
 }
@@ -778,7 +808,8 @@ function drawGuy(guy) {
 
 
 
-	var g = '<div class="guy_layer" id="npcpic_'+guy.id+'" style="background: url(img/npc/npc_'+gend+'_'+guy.variation+'.png) '+getBackgroundPosition(guy, 0, guy.walking)+'">';
+	//var g = '<div class="guy_layer" id="npcpic_'+guy.id+'" style="background: url(img/npc/npc_'+gend+'_'+guy.variation+'.png) '+getBackgroundPosition(guy, 0, guy.walking)+'">';
+	var g = '<div class="guy_layer" id="npcpic_'+guy.id+'" style="background: url(img_td/someguy.png) '+getBackgroundPosition(guy, 32, guy.walking)+'">';
 
 	g += '</div>';
 	return g;
@@ -1687,6 +1718,30 @@ function movePlayer(direction) {
 	if (isAPolicemanOnSight()) {
 		addCrime(player, 6, displayCrime(player, 'wanted') / 10);
 	}
+
+	drawMap();
+}
+function drawMap() {
+	var minx = player.x - VISION_RANGE;
+	var miny = player.y - VISION_RANGE;
+	var maxx = player.x + VISION_RANGE;
+	var maxy = player.y + VISION_RANGE;
+
+	var map = world.map;
+
+	for (var x = minx; x < maxx; x++) {
+		for (var y = miny; y < maxy; y++) {
+			drawColumn(map, x, y);
+		}
+	}
+}
+function drawColumn(map, x, y) {
+	for (var layer in map) {
+
+	}
+}
+function drawTile(map, layer, x, y) {
+	
 }
 function getRandomEmptySpace(city) {
 	var map = city.map;
@@ -1758,6 +1813,12 @@ function expandCity(city, forcerandom) {
 			populateChunkAt(cityMap, pointer.x, pointer.y);
 		}
 	} while (rand(0,1));
+}
+function expandMap(map) {
+	var width = map.length;
+	var height = map[0].length;
+
+	console.log('width', width, 'height', height);
 }
 function fixPointer(tpointer, direction) {
 	if (direction == 'west') movePointer(tpointer, 'east');
@@ -2090,6 +2151,7 @@ function displaceThere(guy, direction) {
 	var destination = movePointer(new Pointer(guy.mapID), direction, true);
 	//Checks whether the map is out of limits or is sea/void
 	var exists = (!isDestinationOutOfLimits(city, destination) && getTypeOfMap(city.map, destination.x, destination.y, 1)) ? true : false;
+	if (destination.x != 0 || destination.y != 0) destination = {'x': 0, 'y': 0}
 
 	if (exists || guy.inside || guy.insideStatic) {
 		if (!guy.inside && !guy.insideStatic) {
@@ -2119,8 +2181,8 @@ function displaceThere(guy, direction) {
 	if (guy == player) {
 		recheckGuys();
 		if (lastpos && lastpos.mapID) {
-			loadMapChunk(lastpos.mapID.x, lastpos.mapID.y);
-			loadMapChunk(lastpos.mapID.x, lastpos.mapID.y, true);
+			//loadMapChunk(lastpos.mapID.x, lastpos.mapID.y);
+			//loadMapChunk(lastpos.mapID.x, lastpos.mapID.y, true);
 		}
 		playSong(getTypeOfMap(city.map, player.mapID.x, player.mapID.y), everyman.time.hours, player.inside);
 	}
@@ -2201,17 +2263,17 @@ function recheckGuys() {
 	}
 }
 function getMapPos(x, y) {
-	var mx = 14;
+	var mx = 32;
 	mx *= MAP_WIDTH;
 
-	var my = 7;
+	var my = 32;
 	my *= MAP_HEIGHT;
 
-	var relpx = (x - player.mapID.x) ;
+	var relpx = (x - player.mapID.x);
 	var relpy = (y - player.mapID.y);
 
-	var relx = 432 + ((relpx - relpy) * mx);
-	var rely = 0 + ((relpy + relpx) * my);
+	var relx = relpx * mx;
+	var rely = 24 + (relpx * my);
 
 	return {
 		'left': relx+'px',
@@ -2273,7 +2335,7 @@ function createMapChunk(x, y, inside, staticc) {
 
 	if (mappy == undefined) return;
 
-	mel.innerHTML = drawLayer(size(MAP_WIDTH, MAP_HEIGHT, MAX_LAYERS), size(30, 60), mappy.map, getTimeTileset(), x, y, false);
+	mel.innerHTML = drawLayer(size(MAP_WIDTH, MAP_HEIGHT, MAX_LAYERS), size(24, 48), mappy.map, '', x, y, false);
 
 	var pos = getMapPos(x, y);
 	mel.style.left = pos.left;
@@ -2288,7 +2350,7 @@ function drawTileElement(mapx, mapy, position) {
 
 	var mp = city.map[mapx][mapy].map
 	var wh = whatsHere(mp, position);
-	ele.className = 'tile '+wh+' ts_'+everyman.time.tileset;
+	ele.className = 'tile '+wh;
 	var relpos = getRelativePos(position);
 	var opa = 1 / (relpos.distance / 16);
 	ele.style.opacity = opa;
@@ -2316,7 +2378,7 @@ function displayMap(width, height, layers, worldmap) {
 	var height = MAP_HEIGHT;
 	var layers = MAX_LAYERS;
 
-	loadChunksAround(player);
+	//loadChunksAround(player);
 
 	for (var sp in staticPlaces) loadMapChunk(0, 0, 0, sp);
 
@@ -2328,6 +2390,7 @@ function displayMap(width, height, layers, worldmap) {
 
 }
 function getTimeTileset() {
+	return '';
 	if (everyman.time.tileset == undefined) everyman.time.tileset = 'day';
 	return everyman.time.tileset;
 }
@@ -2488,6 +2551,7 @@ function tickCrime(guy) {
 	}
 }
 function transitionTileset(tileset) {
+	return '';
 	if (everyman.time.tileset == undefined) everyman.time.tileset = 'day';
 	if (!tileset) tileset = everyman.time.tileset;
 	var map = getActiveMap();
