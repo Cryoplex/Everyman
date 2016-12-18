@@ -60,9 +60,10 @@ var MAP_HEIGHT = 23;
 var BASE_HOUSE_VALUE = 100000;
 var ENTRY_PRICE_MOD = 1.5;
 var MAX_NPC = 100;
-var VISION_RANGE = 5;
+var VISION_RANGE_X = 8;
+var VISION_RANGE_Y = 5;
 
-var TICK_PEOPLE_INTERVAL = 100;
+var TICK_PEOPLE_INTERVAL = 150;
 
 var wantedOfficers = {};
 var policemenCount = 0;
@@ -75,6 +76,8 @@ var ticker = 0;
 var totalticker = 0;
 
 var lastDrops = [];
+
+var moneyticker = 0;
 
 var lastlog = [];
 
@@ -145,17 +148,20 @@ var lastplayed;
 var jobList = {
 	'fir': [
 	//Primary sector jobs have no input. They generate items by workforce at a rate of 2 items per worker per hour.
-	{'name': 'Farmer', 'output': [1]},
+	{'name': 'Farmer', 'output': [1, 7, 10, 11, 14, 15]},
 	],
 
 	'sec': [
 	//Secondary sector jobs take one or various items as input, and generate output items at a rate of 2 items/worker/hour.
-	{'name': 'Ketchup Maker', 'input': [1], 'output': [2]},
+	{'name': 'Food Processor', 'input': [1, 7, 15], 'output': [2, 8, 16]},
+	{'name': 'Tomato Pharmacologist', 'input': [2, 1], 'output': [5, 6]},
+	{'name': 'Baker', 'input': [8], 'output': [9]},
+	{'name': 'Hamburger Chef', 'input': [1, 2, 9, 10, 11, 14], 'output': [12, 13]},
 	],
 
 	'thi': [
 	//Tertiary sector jobs take a list of items from the warehouse and sell them in a shop.
-	{'name': 'Ketchup Vendor', 'shop': [1, 2]},
+	{'name': 'Shopkeeper', 'shop': [1, 2, 5, 6, 9, 12, 13, 16]},
 	],
 
 	'com': [
@@ -165,7 +171,7 @@ var jobList = {
 
 	'slum': [
 	//Slum sector jobs may take items as input, may output items and also may sell them. Slum jobs are illegal and you risk a 1% chance each hour of work of being sent to jail.
-	{'name': 'Ketchupaine Brewer', 'input': [2], 'output': [3], 'shop': [3]},
+	{'name': 'Ketchupaine Brewer', 'input': [2], 'output': [3], 'shop': [3, 5]},
 	],
 };
 
@@ -191,6 +197,19 @@ var itemList = [
 	new Item(2, {'name': 'Ketchup', 'desc': 'Edible. Made with real tomatoes.', 'food': true, 'hunger': 1, 'price': 2, 'byproduct': 4}), //Made by ketchup makers
 	new Item(3, {'name': 'Ketchupaine', 'desc': 'Drug. Increases energy and reduces health.', 'drug': true, 'health': -5, 'energy': 10, 'illegal': true, 'price': 10}), //Made by ketchupaine brewers
 	new Item(4, {'name': 'Ketchup Wrapper', 'desc': 'Trash item result after eating Ketchup.', 'tile': 2, 'price': 0.05}), //Produced after consuming Ketchup
+	new Item(5, {'name': 'Acetiltomatylic Acid', 'desc': 'Medicine made with Tomatoes used to treat pain.', 'food': true, 'health': 10, 'energy': -1, 'price': 25}),
+	new Item(6, {'name': 'Tomatine Shot', 'desc': 'Energy drunk that restores your hunger and energy.', 'food': true, 'hunger': 2, 'energy': 5, 'price': 8}),
+	new Item(7, {'name': 'Wheat', 'desc': 'Harvested in farms. Used to make bread.', 'price': 1}),
+	new Item(8, {'name': 'Flour', 'desc': 'Crushed wheat. Used to make bread.', 'food': true, 'hunger': 1, 'price': 2}),
+	new Item(9, {'name': 'Bread', 'desc': 'Tasty Bread. Restores hunger.', 'food': true, 'hunger': 8, 'price': 8}),
+	new Item(10, {'name': 'Onion', 'desc': 'Ew, onions.', 'food': true, 'hunger': 2, 'price': 4}),
+	new Item(11, {'name': 'Lettuce', 'desc': 'Harvested in farms. Well, you can eat this raw if you want.', 'food': true, 'hunger': 1, 'price': 2}),
+	new Item(12, {'name': 'Hamburger (Vegetarian)', 'desc': 'Made with tomato, onion, lettuce and bread.', 'food': true, 'hunger': 20, 'price': 20}),
+	new Item(13, {'name': 'Hamburger (Meat)', 'desc': 'Hamburger with steak and ketchup.', 'food': true, 'hunger': 30, 'price': 32}),
+	new Item(14, {'name': 'Steak', 'desc': 'Edible. Harvested by farmers.', 'food': true, 'hunger': 10, 'price': 12}),
+
+	new Item(15, {'name': 'Coffee Powder', 'desc': 'Harvested by farmers', 'food': true, 'hunger': 1, 'price': 3}),
+	new Item(16, {'name': 'Coffee', 'desc': 'Made with Coffee Powder lol', 'food': true, 'hunger': 3, 'energy': 15, 'price': 20}),
 ];
 
 var crimes = [
@@ -482,6 +501,11 @@ function Person(id, type, isCar) {
 	this.energy = 100; //If it reaches 0, forces sleep and disables movement
 	this.hygiene = 100; //Reduced by dirty actions
 
+	this.healthx = 100;
+	this.hungerx = 100;
+	this.energyx = 100;
+	this.hygienex = 100;
+
 	//Stats: Stats are divided into Physical, Psychological, and Social.
 	//Physical Stats: Influence the outcome of combat
 	this.strength = Math.random();      //Increases damage caused in combat
@@ -714,8 +738,8 @@ function drawPerson(guy) {
 		doc(hname).style.display = 'inline-block';
 		//var isoPos = getIsoTilePosition(size(30, 60), size((relpos.x - 1), (relpos.y - 3), guy.z));
 		var tdPos = {
-			'top': (guy.y * 24) - 24,
-			'left': guy.x * 24,
+			'top': ((guy.y - player.y + VISION_RANGE_Y) * 24) - 24,
+			'left': (guy.x - player.x + VISION_RANGE_X) * 24,
 		}
 		if (doc(hname).style.top != tdPos.top) doc(hname).style.top = tdPos.top+'px';
 		if (doc(hname).style.left != tdPos.left) doc(hname).style.left = tdPos.left+'px';
@@ -1481,8 +1505,6 @@ function getBestZone(mapx, mapy) {
 	var tot = firvalue + secvalue + thivalue;
 	var r = tot * Math.random();
 
-	console.log('chances', {'fir': firvalue, 'sec': secvalue, 'thi': thivalue, 'total': tot, 'value': r});
-
 	if (r <= (firvalue)) return read(firzones);
 	if (r <= (firvalue + secvalue)) return read(seczones);
 	if (r <= (firvalue + secvalue + thivalue)) return read(thizones);
@@ -1722,26 +1744,51 @@ function movePlayer(direction) {
 	drawMap();
 }
 function drawMap() {
-	var minx = player.x - VISION_RANGE;
-	var miny = player.y - VISION_RANGE;
-	var maxx = player.x + VISION_RANGE;
-	var maxy = player.y + VISION_RANGE;
-
-	var map = world.map;
-
-	for (var x = minx; x < maxx; x++) {
-		for (var y = miny; y < maxy; y++) {
-			drawColumn(map, x, y);
+	for (var x = -VISION_RANGE_X; x < VISION_RANGE_X; x++) {
+		for (var y = -VISION_RANGE_Y; y < VISION_RANGE_Y; y++) {
+			drawColumn(MAX_LAYERS, x, y);
 		}
 	}
 }
-function drawColumn(map, x, y) {
-	for (var layer in map) {
+function drawColumn(layers, relx, rely) {
+	for (var layer = 0; layer < layers; layer++) {
+		var el = 'maptile_'+layer+'_'+relx+'_'+rely;
+		if (!doc(el)) {
+			var el = document.createElement('maptile');
+			el.id = 'maptile_'+layer+'_'+relx+'_'+rely;
+			el.style.top = (VISION_RANGE_Y * 24) + ((layer - 1) * -24) + (rely * 24)+'px';
+			el.style.left = (VISION_RANGE_X * 24) + (relx * 24)+'px';
 
+			document.body.appendChild(el);
+		}
+		var el = 'maptile_'+layer+'_'+relx+'_'+rely;
+		var wmap = getActiveMap();
+		var x = player.x + relx;
+		var y = player.y + rely;
+
+		var wtile = whatsHere(wmap, {'x': x, 'y': y, 'z': layer});
+		if (!wtile) {
+			wtile = 'tile_empty';
+			if (layer == 1) wtile = 'tile_sea';
+		}
+		var ncn = 'tile '+wtile;
+		if (doc(el).className != ncn) doc(el).className = ncn;
+	}
+
+	for (var e in everyman.people) {
+		var guy = everyman.people[e];
+		if (guy.mapID.x != player.mapID.x || guy.mapID.y != player.mapID.y) continue;
+		if (guy.x < (player.x - VISION_RANGE_X) || guy.x > (player.x + VISION_RANGE_X)) continue;
+		if (guy.y < (player.y - VISION_RANGE_Y) || guy.y > (player.y + VISION_RANGE_Y)) continue;
+		drawPerson(guy);
 	}
 }
-function drawTile(map, layer, x, y) {
-	
+function mapExists(x, y) {
+	if (city) {
+		if (city.map[x]) {
+			if (city.map[x][y]) return true;
+		}
+	}
 }
 function getRandomEmptySpace(city) {
 	var map = city.map;
@@ -2151,7 +2198,7 @@ function displaceThere(guy, direction) {
 	var destination = movePointer(new Pointer(guy.mapID), direction, true);
 	//Checks whether the map is out of limits or is sea/void
 	var exists = (!isDestinationOutOfLimits(city, destination) && getTypeOfMap(city.map, destination.x, destination.y, 1)) ? true : false;
-	if (destination.x != 0 || destination.y != 0) destination = {'x': 0, 'y': 0}
+	//if (destination.x != 0 || destination.y != 0) destination = {'x': 0, 'y': 0}
 
 	if (exists || guy.inside || guy.insideStatic) {
 		if (!guy.inside && !guy.insideStatic) {
@@ -2181,10 +2228,11 @@ function displaceThere(guy, direction) {
 	if (guy == player) {
 		recheckGuys();
 		if (lastpos && lastpos.mapID) {
-			//loadMapChunk(lastpos.mapID.x, lastpos.mapID.y);
-			//loadMapChunk(lastpos.mapID.x, lastpos.mapID.y, true);
+			loadMapChunk(lastpos.mapID.x, lastpos.mapID.y);
+			loadMapChunk(lastpos.mapID.x, lastpos.mapID.y, true);
 		}
 		playSong(getTypeOfMap(city.map, player.mapID.x, player.mapID.y), everyman.time.hours, player.inside);
+		drawMap();
 	}
 	if (guy != player) {
 		switchStatus(guy);
@@ -2291,6 +2339,7 @@ function isMapViewable(x, y, inside, staticc) {
 	return itis;
 }
 function loadMapChunk(x, y, inside, staticc) {
+	return;
 	createMapChunk(x, y, inside, staticc);
 
 	if (!staticc) {
@@ -2378,7 +2427,7 @@ function displayMap(width, height, layers, worldmap) {
 	var height = MAP_HEIGHT;
 	var layers = MAX_LAYERS;
 
-	//loadChunksAround(player);
+	loadChunksAround(player);
 
 	for (var sp in staticPlaces) loadMapChunk(0, 0, 0, sp);
 
@@ -2390,7 +2439,6 @@ function displayMap(width, height, layers, worldmap) {
 
 }
 function getTimeTileset() {
-	return '';
 	if (everyman.time.tileset == undefined) everyman.time.tileset = 'day';
 	return everyman.time.tileset;
 }
@@ -2425,7 +2473,8 @@ function internWork() {
 			delete everyman.interns.slave;
 			continue;
 		}
-		for (var i in everyman.interns[s]) {
+		for (var i in jobList[s]) {
+			if (!everyman.interns[s][i]) everyman.interns[s][i] = 1;
 			var interns = everyman.interns[s][i];
 			var job = jobList[s][i];
 
@@ -2541,17 +2590,17 @@ function displayCrime(guy, peek) {
 function tickCrime(guy) {
 	for (var c in guy.crime) {
 		var crimeTier = crimes[c].tier;
-		var crimod = Math.pow(1.05, (crimeTier - 11));
-		var toreduce = ((guy.crime[c] - (guy.crime[c] * crimod) + 0.1));
+		
+		var toreduce = 1 - (0.1 / Math.abs((crimeTier + 1) * (1 + displayCrime(player, 'wanted'))));
 
-		guy.crime[c] -= toreduce;
+		guy.crime[c] *= toreduce;
+		guy.crime[c] -= 0.01;
 
 
 		if (guy.crime[c] <= 0) guy.crime[c] = 0;
 	}
 }
 function transitionTileset(tileset) {
-	return '';
 	if (everyman.time.tileset == undefined) everyman.time.tileset = 'day';
 	if (!tileset) tileset = everyman.time.tileset;
 	var map = getActiveMap();
@@ -2599,6 +2648,8 @@ function swapDayTileset() {
 function timePass(type) {
 	var amt = 1;
 	if (type == 'fast') amt = 6;
+	if (player.concentration) amt = 60;
+
 	everyman.time.minutes += amt;
 
 	if (isCriminal(player)) tickCrime(player);
@@ -2625,7 +2676,7 @@ function timePass(type) {
 			var pg = everyman.people[p];
 			if (pg.working && pg.job && pg.job.dueHours < 0) pg.working = false;
 			if (pg.sleeping) sleepy(pg, amt);
-			if (pg.sleeping && pg.energy >= 100) pg.sleeping = false;
+			if (pg.sleeping && pg.energy >= (pg.energyx * 0.9)) pg.sleeping = false;
 
 			if (pg.job == undefined) person.job = new Job(person.mapID.x, person.mapID.y);
 
@@ -2636,6 +2687,7 @@ function timePass(type) {
 
 
 		addRandomItemToTrash();
+		updateInterns();
 	}
 	if (everyman.time.hours >= 24) {
 		everyman.time.hours = 0;
@@ -2656,7 +2708,6 @@ function timePass(type) {
 		immigrantPack('day');
 
 		newDayEvents();
-		updateInterns();
 	}
 	if (everyman.time.day >= MONTH_DAYS) {
 		everyman.time.day = 1;
@@ -2683,7 +2734,7 @@ function timePass(type) {
 	}
 	if (player.sleeping) {
 		sleepy(player, (amt/60));
-		if (player.energy >= 100) {
+		if (player.energy >= (player.energyx * 0.9)) {
 			player.sleeping = false;
 			$('#sleeper').fadeOut(100);
 			switchTime('slow');
@@ -2692,11 +2743,21 @@ function timePass(type) {
 	tickPeopleStats(amt);
 	updateHUD();
 }
-function updateHUD() {
-	money_display.className = (player.money < 0) ? 'danger2' : 'safe';
-	var dollar = (player.money < 0) ? '-$' : '$';
-	money_display.innerHTML = dollar+Math.abs(player.money).toFixed(2);
+function to1(num) {
+	num = Math.floor(num * 100);
+	var tier = num.toString().length - 1;
+	return (Math.floor(num / Math.pow(10, tier)) * Math.pow(10, tier) / 100);
+}
+function updateMoney() {
+	var abs = (Math.abs(moneyticker - player.money));
+	if (moneyticker > player.money) moneyticker -= to1(abs)
+	if (moneyticker < player.money) moneyticker += to1(abs)
 
+	money_display.className = (moneyticker < 0) ? 'danger2' : 'safe';
+	var dollar = (moneyticker < 0) ? '-$' : '$';
+	money_display.innerHTML = dollar+Math.abs(moneyticker).toFixed(2);
+}
+function updateHUD() {
 	display_holder.className = (displayCrime(player, 'wanted') > 0) ? 'wanted' : '';
 	var datclass = 'dd_night';
 	if (everyman.time.hours >= 5) datclass = 'dd_dawn';
@@ -2743,10 +2804,10 @@ function getPlayerStats() {
 
 	if (!sl) doc('wrapper').className = '';
 	if (player.hygiene == undefined) player.hygiene = 100;
-	return '<div style="float: left; width: 100px;"><span class="item" style="background-position: -120px -45px"></span><meter value="'+player.health.toFixed(0)+'" max="100"></meter><br>'+
-	'<span class="item" style="background-position: -30px -45px"></span><meter value="'+player.hunger.toFixed(0)+'" max="100"></meter></div>'+
-	'<div style="float: left; width: 100px;"><span class="item" style="background-position: -150px -45px"></span><meter value="'+player.energy.toFixed(0)+'" max="100"></meter><br>'+
-	'<span class="item" style="background-position: -180px -45px"></span><meter value="'+player.hygiene.toFixed(0)+'" max="100"></meter></div>'+sl;
+	return '<div style="float: left; width: 100px;"><span class="item" style="background-position: -120px -45px"></span><meter value="'+player.health.toFixed(0)+'" max="'+player.healthx+'"></meter><br>'+
+	'<span class="item" style="background-position: -30px -45px"></span><meter value="'+player.hunger.toFixed(0)+'" max="'+player.hungerx+'"></meter></div>'+
+	'<div style="float: left; width: 100px;"><span class="item" style="background-position: -150px -45px"></span><meter value="'+player.energy.toFixed(0)+'" max="'+player.energyx+'"></meter><br>'+
+	'<span class="item" style="background-position: -180px -45px"></span><meter value="'+player.hygiene.toFixed(0)+'" max="'+player.hygienex+'"></meter></div>'+sl;
 }
 function getPopulation() {
 	var npcs = everyman.peopleList.length;
@@ -2787,10 +2848,16 @@ function tickPersonStats(person, peek, minutes) {
 
 	var maxvdrain = (dayfraction * 33);
 
+	if (person.concentration) {
+		maxedrain *= 1.5;
+		maxhdrain *= 1.5;
+		maxvdrain *= 1.5;
+	}
+
 	if (peek) return {'edrain': maxedrain, 'hdrain': maxhdrain, 'vdrain': maxvdrain};
 
-	person.energy = person.energy - (maxedrain);
-	person.hunger = person.hunger - (maxhdrain);
+	healGuy(person, 'energy', -maxedrain);
+	healGuy(person, 'hunger', -maxhdrain);
 	if (person.energy <= 0) {
 		person.energy = 0;
 		if (person == player && rand(0,1)) {
@@ -2809,11 +2876,11 @@ function tickPersonStats(person, peek, minutes) {
 		person.hunger = 0;
 		var maxdrain = (person.energy > 25) ? 1 : 2;
 		maxvdrain *= maxdrain;
-		person.health -= maxvdrain;
+		healGuy(person, 'health', -maxvdrain);
 	}
 	if (person.health <= 0 && person != player) {
 		person.deathStrikes += rand(0,1);
-		person.health = 100;
+		person.health = person.healthx;
 		if (rand(0,1)) {
 			makeIntern(person.id);
 			return;
@@ -2834,9 +2901,9 @@ function tickPersonStats(person, peek, minutes) {
 			return;
 		}
 
-		person.health = 100;
-		person.energy = 100;
-		person.hunger = 100;
+		person.health = person.healthx
+		person.energy = person.energyx
+		person.hunger = person.hungerx
 		var comma = rand(player.age, player.age*2) + 1;
 		everyman.time.day += comma;
 		showNotice('Welcome Back!', 'Due to your poor health condition. You entered into a comma that lasted '+comma+' days.<br><b>Take care of yourself next time and remember to eat well!</b>')
@@ -3114,9 +3181,8 @@ function tickPolice() {
 	info.innerHTML = '';
 }
 function sleepy(guy, hours) {
-	var h = (hours/8) * 100;
-	guy.energy += h;
-	if (guy.energy >= 100) guy.energy = 100;
+	var h = (hours/8) * guy.energyx;
+	healGuy(guy, 'energy', h);
 }
 function getNearestTurn(guy) {
 	if (NPCTurns.length <= 0) NPCTurns = canAnNPCWalk(0, 0, 1);
@@ -3400,12 +3466,27 @@ function updateWork() {
 
 	notice_msg.innerHTML += '<b>Salary Info</b><br>';
 	if (player.job.dueHours > 0) notice_msg.innerHTML += 'Hours left today: '+ch.worked.toFixed(1)+'/'+ch.objective+' ('+(100 * ch.efficiency).toFixed(2)+'% Efficiency)<br>';
-	if (player.job.dueHours <= 0) notice_msg.innerHTML += '<i>You have finished your work schedule.<br>You have worked '+Math.abs(player.job.dueHours).toFixed(1)+' extra hours.</i><br>'
+	if (player.job.dueHours <= 0) {
+		var min = getHourObjective(player);
+		var max = 1;
+		notice_msg.innerHTML += '<b>Next Raise</b><br>';
+		if (min >= max) {
+			notice_msg.innerHTML += '<bar><filled class="boldy" style="background: black; width: 100%"><b>RAISE IMMINENT</b></filled></bar><br>';
+		}
+		else {
+			notice_msg.innerHTML += '<bar><filled style="width: '+((min/max)*100)+'%"><iii class="boldy">'+((min/max)*100).toFixed(3)+'%</iii></filled></bar><br>';
+		}
+	}
 	if (ch.extra) notice_msg.innerHTML += 'Worked extra hours: '+ch.extra.toFixed(1)+'<br>';
 
 	if (player.job.payday > 0) {
-		notice_msg.innerHTML += 'You will receive $'+(ch.baseSalary).toFixed(2)+' in your next Paycheck.<br>';
-		notice_msg.innerHTML += 'Next Paycheck in '+(ch.nextPaycheck * 24).toFixed(2)+' hours.<br><br>';
+		var pd = player.job.payday;
+		var p = ch.nextPaycheck + pd;
+		var per = ((p / pd) * 100);
+		notice_msg.innerHTML += '<b>Next Paycheck ($'+(ch.baseSalary).toFixed(2)+')</b><br>';
+		notice_msg.innerHTML += '<bar><filled style="background: linear-gradient(rgb(0, 128, 255), rgb(0, 255, 255)); width: '+per+'%"><iii class="boldy">'+per.toFixed(3)+'%</iii></filled></bar><br>';
+
+		if (!player.concentration) notice_msg.innerHTML += '<div class="btn btn-warning" onclick="activateConMode()">Concentration Mode</div> Warning: Unexpected results!';
 	}
 
 	if (lastDrops.length > 0) notice_msg.innerHTML += displayDrops();
@@ -3416,6 +3497,9 @@ function updateWork() {
 		if (ef >= 0.8) payCheck(player);
 		if (ef < 0.8) quitJob(player);
 	}
+}
+function activateConMode() {
+	player.concentration = true;
 }
 function payCheck(guy) {
 	var job = guy.job;
@@ -3437,13 +3521,27 @@ function payCheck(guy) {
 	if (guy == player) notification(eg+'You have been paid $'+check+' for your work.');
 
 	var level = job.level;
-	var c = rand(0, level);
+	var c = 0;
 
-	if (g && c == 0) {
+	var objective = getHourObjective(guy);
+
+
+	if (objective >= 1) {
+		job.dueHours += getHourObjective(guy, 1);
 		var oldsalary = job.baseSalary;
 		upgradeJob(job);
 		if (guy == player) notification('You have been raised! $/hour: '+oldsalary.toFixed(2)+'->'+job.baseSalary.toFixed(2));
 	}
+}
+function getHourObjective(guy, peek) {
+	var level = guy.job.level;
+	var obj = (level * 9.4);
+	if (peek) return obj;
+	var extra = guy.job.dueHours;
+	if (extra > 0) return 0;
+	if (extra < 0) extra = Math.abs(extra);
+
+	return extra / obj;
 }
 function doWork() {
 	notice_header.innerHTML = 'You are working';
@@ -3462,6 +3560,7 @@ function closeNotice() {
 	switchTime('slow');
 	player.working = false;
 	player.hold = false;
+	player.concentration = false;
 }
 function startWorking() {
 	switchTime('fast');
@@ -3684,7 +3783,7 @@ function throwItem(id) {
 	}
 	showInventory('throw');
 }
-function useItem(id, who, peek) {
+function useItem(id, who, peek, all) {
 	if (!who) {
 		who = player;
 		var amt = 1;
@@ -3692,6 +3791,8 @@ function useItem(id, who, peek) {
 	if (who == player || !who) {
 		var amt = who.inventory[id];
 	}
+	var amtouse = 1;
+	if (player.allmode) amtouse = amt;
 	
 	if (amt > 0) {
 		//Can use item
@@ -3700,41 +3801,50 @@ function useItem(id, who, peek) {
 
 		var willheal = healWithItem(who, item, 1);
 		if (peek) return willheal;
-		if (willheal) {
-			healWithItem(who, item);
-			used = true;
-			if (item.byproduct && who == player) addItemToInventory(item.byproduct, 1);
-		}
+
+		healWithItem(who, item, 0, amtouse);
+		used = true;
+		if (item.byproduct && who == player) addItemToInventory(item.byproduct, amtouse);
 	}
 	if (peek) return false;
-	if (used && who == player) addItemToInventory(id, -1);
+	if (used && who == player) addItemToInventory(id, -amtouse);
 	if (who == player) {
 		showInventory();
 		updateHUD();
 	}
 }
-function healWithItem(guy, item, peek) {
+function healWithItem(guy, item, peek, amtouse) {
 	var stats = ['health', 'hunger', 'energy', 'hygiene'];
+	if (!amtouse) amtouse = 1;
 	var totalhealed = 0;
 	var willheal = false;
 	for (var s in stats) {
 		var stat = stats[s];
 		if (!item[stat]) continue;
-		var hg = healGuy(guy, stat, item[stat], peek);
+		var hg = healGuy(guy, stat, (item[stat] * amtouse), peek);
 		if (hg) willheal = true;
 	}
 	return willheal;
 }
 function healGuy(guy, what, amt, peek) {
+	var max = what+'x';
+	var maxx = max;
+	if (!guy[max]) guy[max] = 100;
+	max = guy[max];
 	if (peek) {
 		var g = Math.ceil(guy[what]);
 		g = Math.ceil(g + amt);
-		if (g >= 100) g = 100;
+		if (g >= max) {
+			g = max;
+		}
 		if (g <= 0) g = 0;
 		return (Math.ceil(g) - Math.ceil(guy[what]));
 	}
 	guy[what] += amt;
-	if (guy[what] >= 100) guy[what] = 100;
+	if (guy[what] >= max) {
+		guy[what] = max;
+		guy[maxx] += Math.ceil(amt / 10);
+	}
 	if (guy[what] <= 0) guy[what] = 0;
 
 	return 0;
@@ -3782,6 +3892,9 @@ function decreaseHygiene(who, amt) {
 function buyItem(id, amt, fromshop) {
 	if (amt == undefined) amt = 1;
 	var available = everyman.warehouse[id];
+	var maxamt = Math.floor(player.money / itemList[id].price);
+	if (maxamt > available) maxamt = available;
+	if (player.allmode) amt = maxamt;
 	if (available <= 0) return;
 	var price = (itemList[id].price * amt);
 	if (player.money < price) return;
@@ -3808,7 +3921,8 @@ function displayItem(id, amt, variation, exparam) {
 	if (amt <= 0 && variation == 'shop') desc = '<b class="illegal">Out of stock!</b>';
 	var param = (act == 'useItem') ? 0 : 1;
 	if (exparam) exparam = '\''+exparam+'\'';
-	return '<div class="'+variation+' itemButton" onclick="'+act+'('+id+', '+param+', '+exparam+')">'+amt+' x <b class="'+itemclass+'">'+item.name+'</b> ($'+item.price+')<br>'+
+	var act3 = (act == 'useItem') ? 'useItem('+id+', '+param+', '+exparam+', 1)' : '';
+	return '<div class="'+variation+' itemButton" onclick="'+act+'('+id+', '+param+', '+exparam+')" onkeypress="'+act3+'">'+amt+' x <b class="'+itemclass+'">'+item.name+'</b> ($'+item.price+')<br>'+
 	'<i>'+desc+'</i><br>'+
 
 	'</div>';
@@ -3895,7 +4009,7 @@ function talkTo(id, act) {
 		var karmamount = (isBadGuy(guy)) ? 0.25 : -0.25
 		changeKarma(player, karmamount);
 
-		tt += '<br><b>You deal '+dmg+' damage to '+guy.name+' '+guy.family+' (Health: '+guy.health+'/100)</b><br>';
+		tt += '<br><b>You deal '+dmg+' damage to '+guy.name+' '+guy.family+' (Health: '+guy.health+'/'+guy.healthx+')</b><br>';
 		tt += speech(guy, 'talk')+'<br>';
 	}
 
@@ -3980,12 +4094,12 @@ function showNPCInfo(guy) {
 	message += '<statd><br></statd>';
 	message += '<statd style="width: 100%"><br></statd>';
 
-	message += '<statd>'+round(guy.health)+'% Health</statd>';
-	message += '<statd>'+round(guy.hunger)+'% Food</statd>';
+	message += '<statd>'+round(guy.health / guy.healthx * 100)+'% Health ('+guy.healthx+' max)</statd>';
+	message += '<statd>'+round(guy.hunger / guy.hungerx * 100)+'% Food ('+guy.hungerx+' max)</statd>';
 	message += '<statd><br></statd>';
 
-	message += '<statd>'+round(guy.energy)+'% Energy</statd>';
-	message += '<statd>'+round(guy.hygiene)+'% Hygiene</statd>';
+	message += '<statd>'+round(guy.energy / guy.energyx * 100)+'% Energy ('+guy.energyx+' max)</statd>';
+	message += '<statd>'+round(guy.hygiene / guy.hygienex * 100)+'% Hygiene ('+guy.hygienex+' max)</statd>';
 	message += '<statd><br></statd>';
 
 	message += '<statd style="width: 100%"><br></statd>';
@@ -4040,6 +4154,9 @@ $('body').on('keypress', function(evt) {
     if (key == 'n' || key == 'm') showNotice('Citizen List', getFamilyOf(player, 'all'));
     if (key == 'p') {
     	pickFurniture();
+    }
+    if (key == 'q') {
+    	player.allmode = (player.allmode) ? false : true;
     }
     if (key == '$') {
     	if (everyman.held) {
@@ -4136,3 +4253,4 @@ var timer_tp = setInterval(timePass, 1000);
 window.onbeforeunload = function() {
 	$('#loader').slideDown('100');
 }
+setInterval(updateMoney, 250);
