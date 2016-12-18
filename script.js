@@ -51,6 +51,17 @@ var changelog = [
 'ax You now get good karma for throwing drugs into a trash bin, and for killing drug dealers.',
 'ab Fixed Karma decreased by non-effective "Resistance to Authority" crime triggers.',
 'af Added stats. Physical, Psychological and Social. You can see your stats pressing E. You can see other NPC stats if your friendship is high enough.',
+'af Added a bunch of new jobs and items',
+'ax added a Save Game button',
+'ax Map now renders based on a "vision range", that is, by default, 16 width and 10 height',
+'ax Added a nice animation to money',
+'ax Added max health/hunger/energy/hygiene, you can increase those by over-eating or overdosing drugs',
+'ax Added concentration mode at work, time passes at 10x speed, energy constumption is increased by 150%',
+'ax Fixed warehouse item production',
+'ax Added a "next raise" and a "next paycheck" meter at the job window',
+'ax Raises now occur after a certain period of hours, instead of randomly, you have to work X extra hours in order to get a raise.',
+'ax You can press Q to activate "all mode", you can buy all you want, instead of buying 1 by 1, and use all of your items at once.',
+'ab Fixed crimes being forgotten way too fast',
 ];
 
 var MAX_LAYERS = 5;
