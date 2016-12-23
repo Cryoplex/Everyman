@@ -213,13 +213,31 @@ function placeBuilding(map, start, size, tiles) {
 	var sx = start.x;
 	var sy = start.y;
 
-	var mxz = size.z + sz;
+	var mxz = (size.z * 2) + sz;
 	var mxx = size.x + sx;
 	var mxy = size.y + sy;
 
 	var lastz = (mxz - 1);
 	var lastx = (mxx - 1);
 	var lasty = (mxy - 1);
+
+	var yy = mxy;
+
+	for (var xx = sx; xx < mxx; xx++) {
+		for (var zz = sz; zz < mxz; zz+=2) {
+			var vari = rand(3,4);
+			if (xx == sx) vari = 1;
+			if (xx == (sx + 1)) vari = 2;
+			if (xx == (mxx - 1)) vari = 5;
+
+			var place = 'mid';
+			if (zz == sz) place = 'bot';
+			if (zz == (mxz - 2)) place = 'top';
+
+			map[zz][yy][xx] = tiles+' '+'b_'+place+'_'+vari;
+		}
+	}
+	return;
 	for (var zz = sz; zz < MAX_LAYERS; zz++) {
 		for (var xx = sx; xx < mxx; xx++) {
 			for (var yy = sy; yy < mxy; yy++) {
@@ -253,7 +271,6 @@ function placeBuilding(map, start, size, tiles) {
 				if (zz == sz && xx == (sx + 1) && yy == lasty) {
 					variation = 'deco_8';
 				}
-
 				map[zz][yy][xx] = tiles + ' ' + variation;
 			}
 		}

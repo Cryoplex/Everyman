@@ -62,17 +62,19 @@ var changelog = [
 'ax Raises now occur after a certain period of hours, instead of randomly, you have to work X extra hours in order to get a raise.',
 'ax You can press Q to activate "all mode", you can buy all you want, instead of buying 1 by 1, and use all of your items at once.',
 'ab Fixed crimes being forgotten way too fast',
+'af',
+'ax Changed minimap size and map vision range.',
 ];
 
-var MAX_LAYERS = 5;
+var MAX_LAYERS = 10;
 var TILE_HEIGHT = 48;
 var MAP_WIDTH = 23;
 var MAP_HEIGHT = 23;
 var BASE_HOUSE_VALUE = 100000;
 var ENTRY_PRICE_MOD = 1.5;
 var MAX_NPC = 100;
-var VISION_RANGE_X = 8;
-var VISION_RANGE_Y = 5;
+var VISION_RANGE_X = 12;
+var VISION_RANGE_Y = 8;
 
 var TICK_PEOPLE_INTERVAL = 150;
 
@@ -738,7 +740,9 @@ function drawPerson(guy) {
 		if (doc(hname)) doc(hname).style.display = 'none';
 		return;
 	}
-	doc(hname).style.opacity = (!isVisible(getActiveMap(), size(player.x, player.y, player.z))) ? 0.5 : 1;
+	//TODO player visible "opacidad tras edificios"
+	var opac = 1;
+	doc(hname).style.opacity = opac;
 	if (!guy.facing) guy.facing = 0;
 
 	if (guy.element.style.display != 'inline-block') guy.element.style.display = 'inline-block';
@@ -1406,6 +1410,10 @@ function buildBuilding(wherex, wherey) {
 	city.map[wherex][wherey].inside = new Inside(buildingType, bsize, floors);
 	var tileset = 'tile_proto';
 	if (buildingType == 'fir') tileset = 'tile_agro';
+	if (buildingType == 'res') tileset = 'tile_b_res';
+	if (buildingType == 'sec') tileset = 'tile_b_sec';
+	if (buildingType == 'slum') tileset = 'tile_b_slum';
+	if (buildingType == 'thi') tileset = 'tile_b_thi';
 
 	placeBuilding(here, size(7, 7, 2), block, tileset);
 
@@ -1990,8 +1998,10 @@ function drawCityMap(city) {
 		for (var dy in city.map[0]) {
 			var sq = city.map[dx][dy];
 			var youAreHere = (player.mapID.x == dx && player.mapID.y == dy) ? 'youAreHere' : '';
+			if (isHome(player, dx, dy)) youAreHere = 'youLiveHere';
+			if (player.job.x == dx && player.job.y == dy && player.job.dueHours > 0) youAreHere = 'youWorkHere';
 			//TODO Mostrar un icono especial cuando ese distrito sea tu casa/trabajo, que cambie de color si tu casa está sin pagar, o si tienes trabajo que hacer
-			div += '<div title="District '+dx+'x'+dy+' '+sq.districtName+""+'0'+""+sq.sector+' '+sq.type+'" class="'+sq.type+' cityMapTile '+youAreHere+'" style="top: '+(parseInt(dy) * 4)+'px; left: '+(parseInt(dx) * 4)+'px"></div>';
+			div += '<div title="District '+dx+'x'+dy+' '+sq.districtName+""+'0'+""+sq.sector+' '+sq.type+'" class="'+sq.type+' cityMapTile '+youAreHere+'" style="top: '+(parseInt(dy) * 10)+'px; left: '+(parseInt(dx) * 10)+'px"></div>';
 		}
 		div += '<div class="breaker"></div>';
 	}
@@ -2475,7 +2485,7 @@ function addItemToWarehouse(id, amt) {
 	if (everyman.warehouse[id] == undefined) everyman.warehouse[id] = 0;
 	everyman.warehouse[id] += amt;
 
-	addToLog('Added '+amt+' x item id '+id+' to warehouse.');
+	if (amt != 0) addToLog('Added '+amt+' x item id '+id+' to warehouse.');
 }
 function internWork() {
 	for (var s in everyman.interns) {
@@ -2485,7 +2495,7 @@ function internWork() {
 			continue;
 		}
 		for (var i in jobList[s]) {
-			if (!everyman.interns[s][i]) everyman.interns[s][i] = 1;
+			if (!everyman.interns[s][i]) everyman.interns[s][i] = 0;
 			var interns = everyman.interns[s][i];
 			var job = jobList[s][i];
 
@@ -3060,6 +3070,7 @@ function tickWork(guy, hours) {
 	//     durante ese tiempo, el npc estará durmieno o trabajando de forma obligada
 	//     se dará prioridad al sueño y luego al trabajo
 	guy.job.workedHours += hours;
+	guy.job.experience += hours;
 	if (guy.job.production == undefined) guy.job.production = 0;
 	var canProduce = produce(guy, true);
 	if (canProduce) guy.job.production += hours;
@@ -3069,6 +3080,7 @@ function tickWork(guy, hours) {
 	if (ch.nextPaycheck >= 0) {
 		payCheck(guy);
 	}
+	console.log('worked', hours, 'hours');
 }
 function produce(guy, peek) {
 	var job = guy.job;
@@ -3083,8 +3095,6 @@ function produce(guy, peek) {
 
 	if (jobObject == undefined) return;
 
-	addToLog('Production by '+guy.id+' the '+getMyJobName(guy)+' inputList '+inputList.length+' outputList '+outputList.length);
-
 
 
 	if (!inputList && !outputList) return;
@@ -3092,7 +3102,6 @@ function produce(guy, peek) {
 	if (inputList == undefined && outputList == undefined) job.production -= 10;
 	if (inputList != undefined && outputList != undefined) {
 		//Input + Output job, 2xinput, 1xoutput
-		addToLog('Input + Output');
 		var input = 1;
 		var output = 2;
 		var stock = 0;
@@ -3115,8 +3124,7 @@ function produce(guy, peek) {
 	}
 	if (inputList == undefined && outputList != undefined) {
 		//Output only job (2xoutput)
-		addToLog('Output only');
-		var output = (interns * 2);
+		var output = 2;
 		for (var it in outputList) {
 			var id = outputList[it];
 			addItemToWarehouse(id, output);
@@ -3521,7 +3529,7 @@ function payCheck(guy) {
 	guy.money += check;
 	var g = (job.workedHours > job.workhours);
 
-	if (guy.job.type == 'slum') addCrime(player, 3, check);
+	if (guy.job.type == 'slum' && guy == player) addCrime(player, 3, check);
 
 	guy.job.workedHours = 0;
 	guy.job.nextPaycheck = new EMDate(guy.job.payday, 0, 0);
@@ -3529,7 +3537,7 @@ function payCheck(guy) {
 	
 	var eg = (g) ? 'Good Job! ': '';
 
-	if (guy == player) notification(eg+'You have been paid $'+check+' for your work.');
+	if (guy == player && check > 0) notification(eg+'You have been paid $'+check+' for your work.');
 
 	var level = job.level;
 	var c = 0;
@@ -3538,21 +3546,19 @@ function payCheck(guy) {
 
 
 	if (objective >= 1) {
-		job.dueHours += getHourObjective(guy, 1);
+		job.experience = 0;
 		var oldsalary = job.baseSalary;
 		upgradeJob(job);
 		if (guy == player) notification('You have been raised! $/hour: '+oldsalary.toFixed(2)+'->'+job.baseSalary.toFixed(2));
 	}
 }
 function getHourObjective(guy, peek) {
+	if (!guy.job.experience) guy.job.experience = 0;
 	var level = guy.job.level;
-	var obj = (level * 9.4);
+	var obj = Math.pow(level, 1.5) * (guy.job.workhours + 1);
 	if (peek) return obj;
-	var extra = guy.job.dueHours;
-	if (extra > 0) return 0;
-	if (extra < 0) extra = Math.abs(extra);
 
-	return extra / obj;
+	return guy.job.experience / obj;
 }
 function doWork() {
 	notice_header.innerHTML = 'You are working';
@@ -3870,6 +3876,7 @@ function decorationMode() {
 		if (!buildmode && furnitureStatus[p] == 'build') continue;
 		flist += displayFurniture(f)+'<br>';
 	}
+	if (!mode) flist = '';
 	if (!flist) flist = '<i>There are no pieces of furniture you can buy right now.</i>';
 	showNotice('Decoration Mode', 'Click any piece of furniture to buy it.<br>'+flist);
 }
@@ -4196,7 +4203,7 @@ $('body').on('keypress', function(evt) {
 	    	return;
 	    }
     	if (infront.upfront != undefined) {
-    		if (infront.upfront.match('deco_8')) {
+    		if (infront.upfront.match('deco_8') || infront.upfront.match('b_bot_2')) {
 	    		enterBuilding(player);
 	    		recheckGuys();
 	    		displayMap();

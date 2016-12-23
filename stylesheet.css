@@ -453,6 +453,10 @@ citychunk {
 	top: 0px;
 	left: 0px;
 }
+.whatever {
+	opacity: 0;
+	background: none;
+}
 .loader {
 	background-color: rgb(0, 0, 0);
 	color: white;
@@ -561,6 +565,74 @@ citychunk {
 	width: 24px;
 	height: 48px;
 }
+.tile_b_res {
+	background-image: url(img_td/b_res.png);
+	width: 24px;
+	height: 48px;
+}
+.tile_b_sec {
+	background-image: url(img_td/b_sec.png);
+	width: 24px;
+	height: 48px;
+}
+.tile_b_slum {
+	background-image: url(img_td/b_slum.png);
+	width: 24px;
+	height: 48px;
+}
+.tile_b_thi {
+	background-image: url(img_td/b_thi.png);
+	width: 24px;
+	height: 48px;
+}
+.b_top_1 {
+	background-position: 0px 0px;
+}
+.b_top_2 {
+	background-position: -24px 0px;
+}
+.b_top_3 {
+	background-position: -48px 0px;
+}
+.b_top_4 {
+	background-position: -72px 0px;
+}
+.b_top_5 {
+	background-position: -96px 0px;
+}
+
+.b_mid_1 {
+	background-position: 0px -48px;
+}
+.b_mid_2 {
+	background-position: -24px -48px;
+}
+.b_mid_3 {
+	background-position: -48px -48px;
+}
+.b_mid_4 {
+	background-position: -72px -48px;
+}
+.b_mid_5 {
+	background-position: -96px -48px;
+}
+
+.b_bot_1 {
+	background-position: 0px -96px;
+}
+.b_bot_2 {
+	background-position: -24px -96px;
+}
+.b_bot_3 {
+	background-position: -48px -96px;
+}
+.b_bot_4 {
+	background-position: -72px -96px;
+}
+.b_bot_5 {
+	background-position: -96px -96px;
+}
+
 .top_left_left {
 	background-position: 0px 0px;
 }
@@ -708,6 +780,12 @@ statd {
 .youAreHere {
 	animation: blink 1s infinite;
 }
+.youLiveHere {
+	animation: blink2 3s infinite;
+}
+.youWorkHere {
+	animation: blink3 0.25s infinite;
+}
 @keyframes blink {
 	0% {
 		-webkit-filter: hue-rotate(180deg);
@@ -722,11 +800,34 @@ statd {
 		opacity: 0.5;
 	}
 }
+@keyframes blink2 {
+	0% {
+		transform: scale(1.5) rotate(0deg);
+		opacity: 1;
+	}
+	50% {
+		-webkit-filter: brightness(0);
+		filter: brightness(0);
+		transform: scale(1.0) rotate(180deg);
+		opacity: 0.8;
+	}
+}
+@keyframes blink3 {
+	0% {
+		-webkit-filter: brightness(1000);
+		filter: brightness(1000);
+		transform: scale(2.0);
+	}
+	50% {
+		-webkit-filter: brightness(0);
+		filter: brightness(0);
+	}
+}
 
 .cityMapTile {
 	position: absolute;
-	width: 4px;
-	height: 4px;
+	width: 10px;
+	height: 10px;
 	float: left;
 
 	display: inline-block;
