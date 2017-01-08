@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, 
+	user-scalable=no, initial-scale=1, maximum-scale=1, user-scalable=0" />
+	<!--<link rel="icon" href="../../favicon.ico">-->
+
+	<title>Game</title>
+
+	<link type="text/css" rel="stylesheet" href="../bootstrap.css">
+	<link type="text/css" rel="stylesheet" href="stylesheet.css">
+</head>
+
+<body>
+	<div id="game_menu">
+		<logo><img src="logo.png"></logo>
+		<menu id="start">
+			<div class="menutton" id="contbutton">Continue</div>
+			<div class="menutton" id="newbutton" onclick="newWorld()">New World</div>
+		</menu>
+	</div>
+
+	<div id="game_game" style="display: none; width: 960px; height: 600px; display: inline-block; overflow: hidden;">
+		<layer id="layer_bottom"></layer>
+		<layer id="layer_wall"></layer>
+		<layer id="layer_items"></layer>
+		<layer id="layer_entities"></layer>
+
+	</div>
+
+	<log id="debug_interns"></log>
+
+	<script src="../jquery-2.1.4.min.js"></script>
+	<script src="../jquery-ui.min.js"></script>
+	<script src="./noise.js"></script>
+	<script src="../common.js"></script>
+	<script src="./iso.js"></script>
+	<script src="./em_common.js"></script>
+	<script src="./ew.js"></script>
+</body>
+</html>

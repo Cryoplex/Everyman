@@ -2,6 +2,26 @@
 	background-image: url(jum.png);
 	height: 500px;
 }
+logo {
+	position: relative;
+	top: 32px;
+	width: 100%;
+	text-align: center;
+	margin: auto;
+	display: block;
+}
+menu {
+	width: 40%;
+	left: 30%;
+	height: 300px;
+	background: linear-gradient(rgba(192, 192, 192, 0.8), rgba(170, 170, 170, 0.8));
+	position: relative;
+	top: 48px;
+	padding: 1%;
+	border-radius: 16px;
+	box-shadow: 0 0 8px black;
+}
+
 body {
 	width: 100vw;
 	height: 100vh;
@@ -187,6 +207,13 @@ ind {
 		background: linear-gradient(rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.8), rgba(64, 64, 255, 0.8));
 	}
 }
+log {
+	width: 20%;
+	position: fixed;
+	right: 0px;
+	top: 0px;
+	font-size: 0.5em;
+}
 .debuttons {
 	position: fixed;
 	right: 128px;
@@ -211,6 +238,8 @@ outline {
 	image-rendering: pixelated;
 
 	background: url(img_td/tiles.png);
+}
+wall {
 }
 .tile_empty {
 	opacity: 0;
@@ -243,7 +272,9 @@ outline {
 .t_road, .tile_tra { background-position: -192px 0px; }
 
 .t_crossroad { background-position: -216px 0px; }
-
+layer {
+	position: relative;
+}
 .guy_layer {
 	position: absolute;
 	width: 24px;
@@ -340,9 +371,6 @@ outline {
 }
 .tile_stone {
 	background-image: url(img/stone.png);
-}
-.tile_grass {
-	background-image: url(img/grass.png);
 }
 .tile_hidden {
 	background-image: url(img_td/bigtiles.png);
@@ -933,18 +961,40 @@ maptile {
 .c_oldfart {
 	color: rgb(128, 64, 0);
 }
-.boldy {
+.boldy, .menutton {
 	font-weight: bolder;
 	color: white;
 	text-shadow: -1px -1px 0px black,
-				 -1px  0px 0px black,
-				 -1px  1px 0px black,
-				 0px  -1px 0px black,
-				 0px   0px 0px black,
-				 0px   1px 0px black,
-				  1px -1px 0px black,
-				  1px  0px 0px black,
-				  1px  1px 0px black;
+	-1px  0px 0px black,
+	-1px  1px 0px black,
+	0px  -1px 0px black,
+	0px   0px 0px black,
+	0px   1px 0px black,
+	1px -1px 0px black,
+	1px  0px 0px black,
+	1px  1px 0px black;
+}
+.menutton {
+	width: 96%;
+	height: 50px;
+	margin: 2%;
+	padding: 2%;
+	text-align: center;
+	font-size: 1.6em;
+	background-color: rgba(220, 220, 220, 0.8);
+	border: 2px solid rgba(0, 0, 0, 0.8);
+	box-shadow: 0 2px 2px black;
+	color: rgb(192, 192, 192);
+	cursor: pointer;
+}
+.menutton:hover {
+	background: linear-gradient(rgb(128, 255, 255), rgb(64, 128, 128));
+	color: rgb(96, 255, 255);
+	box-shadow: 0 4px 4px black;
+}
+.menutton:active {
+	background: linear-gradient(rgb(8, 16, 16), rgb(16, 32, 32));
+	color: rgb(240, 255, 255);
 }
 .mostwanted, .c_teen {
 	animation: mw 1s infinite;
@@ -1090,8 +1140,59 @@ meter {
 .sea {
 	background-color: rgb(0, 192, 255);
 }
+.deepsea {
+	background-color: rgb(0, 48, 160);
+}
+.dirt {
+	background-color: rgb(192, 96, 0);
+}
+.stone {
+	background-color: rgb(192, 192, 192);
+}
 .tile_sea {
 	background-position: -240px 0px;
+}
+.tile_grass {
+	background-position: -504px 0px;
+}
+.tile_dirt {
+	background-position: -528px 0px;
+}
+.tile_stonew {
+	background-position: -552px 0px;
+}
+.tile_grasspillar {
+	background-position: -600px 0px;
+}
+.tile_stonepillar {
+	background-position: -624px 0px;
+}
+.tile_sand {
+	background-position: -648px 0px;
+}
+.tile_abyss {
+	background-position: -672px 0px;
+}
+.tile_deepsea {
+	background-position: -576px 0px;
+}
+.tile_ice {
+	background-position: -696px 0px;
+}
+.tile_snow {
+	background-position: -720px 0px;
+}
+.tile_pine {
+	background-position: -744px 0px;
+}
+.tile_pines {
+	background-position: -768px 0px;
+}
+.tile_drygrass {
+	background-position: -792px 0px;
+}
+.tile_lava {
+	background-position: -816px 0px;
 }
 bar {
 	border-radius: 8px;

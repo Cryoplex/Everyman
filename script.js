@@ -359,13 +359,7 @@ function resetVariables() {
 	}
 	NPCTurns = canAnNPCWalk(0, 0, 1);
 	CarTurns = canAnNPCWalk(0, 0, 1, 1);
-}
-function addToLog(text) {
-	lastlog.push(text);
-	if (lastlog.length > 10) lastlog.splice(0, 1);
-
-	debug_interns.innerHTML = lastlog.join('<br>');
-}
+	}
 function afterLoad() {
 	everyman.peopleList = [];
 	for (var p in everyman.people) {
