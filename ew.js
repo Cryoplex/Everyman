@@ -27,71 +27,145 @@ var terrainGenerator = {
 	'noise': 0.02,
 
 	'biomes': [
-		[
-			{'name': 'frozensea',
-			'tiles': [9,9,9,9,9,9,9,9,7,10],
-			'walls': [,,,,,,,,],
+			{'name': 'dryplains',
+			'tiles': [8,1,0,7,3,3,3,3,4,4],
+			'walls': [,,,,,,,,,],
+			},
+			{'name': 'dryplains_t1',
+			'tiles': [8,1,9,7,3,3,3,3,3,4],
+			'walls': [,,,,,,,,,],
+			},
+			{'name': 'dryplains_t2',
+			'tiles': [8,9,9,7,3,3,3,3,3,3],
+			'walls': [,,,,,,,,,6],
+			},
+			{'name': 'dryplains_t3',
+			'tiles': [9,9,9,7,3,3,3,3,10,10],
+			'walls': [,,,,,,,,,6],
+			},
+			{'name': 'dryplains_t4',
+			'tiles': [9,9,9,7,3,3,10,10,10,10],
+			'walls': [,,,,,,,,5,6],
+			},
+			{'name': 'dryplains_t5',
+			'tiles': [9,9,9,7,3,10,10,10,10,10],
+			'walls': [,,,,,,,,5,6],
 			},
 			{'name': 'tundra',
 			'tiles': [9,9,9,7,10,10,10,10,10,10],
 			'walls': [,,,,,,,,5,6],
 			},
+			{'name': 'tundra_t1',
+			'tiles': [9,9,9,7,10,10,10,10,10,10],
+			'walls': [,,,,,,,,11,6],
+			},
 			{'name': 'taiga',
 			'tiles': [9,9,9,7,10,10,10,10,10,10],
 			'walls': [,,,,,,,,11,12],
 			},
-			{'name': 'mountain',
-			'tiles': [0,0,0,3,4,4,4,4,4,4],
-			'walls': [,,,,,,,,6,6],
+			{'name': 'taiga_t1',
+			'tiles': [8,9,9,7,10,10,10,10,10,4],
+			'walls': [,,,,,,,,,12],
 			},
-		],
-
-		[
-			{'name': 'dryplains',
-			'tiles': [8,1,0,7,3,3,3,3,4,4],
+			{'name': 'taiga_t2',
+			'tiles': [8,1,9,7,10,10,10,10,4,4],
+			'walls': [,,,,,,,,,],
+			},
+			{'name': 'taiga_t3',
+			'tiles': [8,1,0,7,2,10,10,2,4,4],
 			'walls': [,,,,,,,,,],
 			},
 			{'name': 'plains',
 			'tiles': [8,1,0,7,2,2,2,2,4,4],
 			'walls': [,,,,,,,,,],
 			},
+			{'name': 'plains_t1',
+			'tiles': [8,1,0,7,2,2,2,2,2,4],
+			'walls': [,,,,,,,,,12],
+			},
 			{'name': 'forest',
 			'tiles': [8,1,0,7,2,2,2,2,2,2],
 			'walls': [,,,,,,,,11,12],
+			},
+			{'name': 'jungle',
+			'tiles': [8,1,0,7,2,2,2,2,2,2],
+			'walls': [,,,,,,,,12,12],
+			},
+			{'name': 'forest_t1',
+			'tiles': [8,1,0,7,2,2,2,2,4,4],
+			'walls': [,,,,,,,,11,5],
+			},
+			{'name': 'forest_t2',
+			'tiles': [8,1,0,7,2,2,4,4,4,4],
+			'walls': [,,,,,,,,5,5],
 			},
 			{'name': 'plateau',
 			'tiles': [8,1,0,7,4,4,4,4,4,4],
 			'walls': [,,,,,,,,5,5],
 			},
-		],
-
-		[
+			{'name': 'plateau_t2',
+			'tiles': [8,1,0,7,7,4,4,4,4,4],
+			'walls': [,,,,,,,,,5],
+			},
+			{'name': 'plateau_t3',
+			'tiles': [8,1,0,7,7,7,4,4,4,4],
+			'walls': [,,,,,,,,,],
+			},
+			{'name': 'plateau_t4',
+			'tiles': [8,1,0,7,7,7,7,7,4,4],
+			'walls': [,,,,,,,,,],
+			},
 			{'name': 'desert',
 			'tiles': [8,1,0,7,7,7,7,7,7,7],
+			'walls': [,,,,,,,,,],
+			},
+			{'name': 'desert_t1',
+			'tiles': [8,1,0,7,7,7,7,7,13,13],
+			'walls': [,,,,,,,,,],
+			},
+			{'name': 'desert_t2',
+			'tiles': [8,1,0,7,7,7,13,13,13,13],
 			'walls': [,,,,,,,,,],
 			},
 			{'name': 'savanna',
 			'tiles': [8,1,0,7,13,13,13,13,13,13],
 			'walls': [,,,,,,,,,11],
 			},
-			{'name': 'jungle',
-			'tiles': [8,1,0,7,2,2,2,2,2,2],
-			'walls': [,,,,,,,,12,12],
+			{'name': 'savanna_t1',
+			'tiles': [8,1,0,7,4,4,13,13,13,13],
+			'walls': [,,,,,,,,,],
 			},
-			{'name': 'ocean',
-			'tiles': [8,1,0,0,0,0,0,0,7,2],
-			'walls': [,,,,,,,,],
-			},
-		],
-
-		[
-			{'name': 'lavasea',
-			'tiles': [14,14,14,14,14,14,14,14,3,4],
-			'walls': [,,,,,,,,],
+			{'name': 'savanna_t2',
+			'tiles': [8,1,0,7,4,4,4,4,13,13],
+			'walls': [,,,,,,,,,],
 			},
 			{'name': 'hell',
-			'tiles': [14,14,14,3,4,4,4,4,4,4],
-			'walls': [,,,,,,,,5,5],
+			'tiles': [8,1,0,3,4,4,4,4,14,14],
+			'walls': [,,,,,,,,,],
+			},
+			{'name': 'hell_t1',
+			'tiles': [1,1,0,3,4,4,4,4,4,14],
+			'walls': [,,,,,,,,,],
+			},
+			{'name': 'hell_t2',
+			'tiles': [1,0,0,3,4,4,4,4,4,4],
+			'walls': [,,,,,,,,,],
+			},
+			{'name': 'mountain',
+			'tiles': [0,0,0,3,4,4,4,4,4,4],
+			'walls': [,,,,,,,,6,6],
+			},
+			{'name': 'mountain_t1',
+			'tiles': [1,1,0,7,4,4,4,4,4,4],
+			'walls': [,,,,,,,,6,6],
+			},
+			{'name': 'mountain_t2',
+			'tiles': [8,1,0,7,3,3,4,4,4,4],
+			'walls': [,,,,,,,,6,6],
+			},
+			{'name': 'mountain_t3',
+			'tiles': [8,1,0,7,3,3,3,3,4,4],
+			'walls': [,,,,,,,,6,6],
 			},
 			{'name': 'hotsprings',
 			'tiles': [8,1,0,7,3,3,3,3,4,0],
@@ -101,7 +175,6 @@ var terrainGenerator = {
 			'tiles': [8,1,0,7,3,3,3,3,4,14],
 			'walls': [,,,,,,,,6,],
 			},
-		],
 	],
 };
 var tileAliases = {
@@ -146,11 +219,9 @@ function newMap(height, width) {
 	var walls = [];
 	var heightMap = [];
 	var temperatureMap = [];
-	var humidityMap = [];
 	for (var h = 0; h < height; h++) {
 		var li = [];
 		var tli = [];
-		var hli = [];
 
 		var mp = [];
 		var wp = [];
@@ -167,11 +238,10 @@ function newMap(height, width) {
 			if (n > 0.99) n = 0.99;
 			li.push(n);
 			var temp = noise.noise(rw/4, rh/4);
-			var hum = noise.noise(rh/4, rw/4);
-			tli.push(temp);
-			hli.push(hum);
 
-			var biom = getBiome(temp, hum).biome;
+			tli.push(temp);
+
+			var biom = getBiome(temp).biome;
 
 			mp.push(tileByHeight(biom, n));
 			wp.push(tileByHeight(biom, n, 'wall'));
@@ -182,11 +252,10 @@ function newMap(height, width) {
 
 		heightMap.push(li);
 		temperatureMap.push(tli);
-		humidityMap.push(hli);
 	}
 	addToLog('walls: '+walls.join('.'));
 
-	return {'height': heightMap, 'map': map, 'walls': walls, 'humidity': humidityMap, 'temperature': temperatureMap}
+	return {'height': heightMap, 'map': map, 'walls': walls, 'temperature': temperatureMap}
 }
 function tileByHeight(biom, height, wallmode) {
 	height++;
@@ -205,7 +274,6 @@ function newWorld() {
 	everyworld.height = map.height;
 	everyworld.map = map.map;
 	everyworld.walls = map.walls;
-	everyworld.humidity = map.humidity;
 	everyworld.temperature = map.temperature;
 
 	loadWorld();
@@ -257,32 +325,14 @@ function updateEWMap(x, y) {
 	wh = tileAliases[wh];
 	docerw.className = 'tile '+wh;
 }
-function getBiome(temperature, humidity) {
+function getBiome(temperature) {
 	temperature++;
-	humidity++; 
 
 	if (!temperature) temperature = 0;
-	if (!humidity) humidity = 0;
 
 	var weatherByTemperature = Math.floor(temperature / (2 / terrainGenerator.biomes.length));
-	var weatherByHumidity = Math.floor(humidity / (2 / terrainGenerator.biomes[weatherByTemperature].length));
 
-	return {'humidity': weatherByHumidity, 'temperature': weatherByTemperature, 'biome': terrainGenerator.biomes[weatherByTemperature][weatherByHumidity]}
-}
-function getWeather(x, y) {
-	var humidity = everyworld.humidity;
-	var temperature = everyworld.temperature;
-
-	var hh = 0;
-	var tt = 0;
-
-	if (humidity && humidity[y] && humidity[y][x]) hh = humidity[y][x];
-	if (temperature && temperature[y] && temperature[y][x]) tt = temperature[y][x];
-
-	hh++;
-	tt++;
-
-	return {'humidity': hh, 'temperature': tt};
+	return {'temperature': weatherByTemperature, 'biome': terrainGenerator.biomes[weatherByTemperature]}
 }
 function whatsHere(array, x, y) {
 	if (array == undefined) return;
