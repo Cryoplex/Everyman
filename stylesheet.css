@@ -1150,7 +1150,23 @@ meter {
 	background-color: rgb(192, 192, 192);
 }
 .tile_sea {
+	height: 24px;
 	background-position: -240px 0px;
+	animation: sea 2s infinite steps(1);
+}
+@keyframes sea {
+	0% {
+		background-position: -240px 0px;
+	}
+	25% {
+		background-position: -240px -24px;
+	}
+	50% {
+		background-position: -240px -48px;
+	}
+	75% {
+		background-position: -240px -72px;
+	}
 }
 .tile_grass {
 	background-position: -504px 0px;
@@ -1171,10 +1187,42 @@ meter {
 	background-position: -648px 0px;
 }
 .tile_abyss {
+	height: 24px;
 	background-position: -672px 0px;
+	animation: abyss 2s infinite steps(1);
+}
+@keyframes abyss {
+	0% {
+		background-position: -672px 0px;
+	}
+	25% {
+		background-position: -672px -24px;
+	}
+	50% {
+		background-position: -672px -48px;
+	}
+	75% {
+		background-position: -672px -72px;
+	}
 }
 .tile_deepsea {
+	height: 24px;
 	background-position: -576px 0px;
+	animation: deepsea 2s infinite steps(1);
+}
+@keyframes deepsea {
+	0% {
+		background-position: -576px 0px;
+	}
+	25% {
+		background-position: -576px -24px;
+	}
+	50% {
+		background-position: -576px -48px;
+	}
+	75% {
+		background-position: -576px -72px;
+	}
 }
 .tile_ice {
 	background-position: -696px 0px;
@@ -1192,7 +1240,62 @@ meter {
 	background-position: -792px 0px;
 }
 .tile_lava {
-	background-position: -816px 0px;
+	background-position: -814px 0px;
+}
+.tile_whirl {
+	height: 24px;
+	background-position: -840px 0px;
+	animation: whirl 0.5s infinite steps(8);
+}
+@keyframes whirl {
+	0% {
+		transform: rotate(0deg);
+	}
+	50% {
+		transform: rotate(180deg);
+	}
+	100% {
+		transform: rotate(360deg);
+	}
+}
+.tile_shell_1 {
+	background-position: -864px 0px;
+}
+.tile_shell_2 {
+	background-position: -888px 0px;
+}
+.tile_shell_3 {
+	background-position: -912px 0px;
+}
+.tile_flower_1 {
+	background-position: -936px 0px;
+}
+.tile_flower_2 {
+	background-position: -960px 0px;
+}
+.tile_flower_3 {
+	background-position: -984px 0px;
+}
+.tile_weed {
+	background-position: -1008px 0px;
+}
+.tile_bush {
+	background-position: -1032px 0px;
+}
+.tile_pebbles {
+	background-position: -1056px 0px;
+}
+.tile_dryleaves {
+	background-position: -1080px 0px;
+}
+.tile_deadbush {
+	background-position: -1104px 0px;
+}
+.tile_fossil {
+	background-position: -1128px 0px;
+}
+.tile_snowman {
+	background-position: -1152px 0px;
 }
 bar {
 	border-radius: 8px;

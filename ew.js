@@ -33,15 +33,15 @@ var terrainGenerator = {
 			},
 			{'name': 'dryplains_t1',
 			'tiles': [8,1,9,7,3,3,3,3,3,4],
-			'walls': [,,,,,,,,,],
+			'walls': [,,,,,,,,,6],
 			},
 			{'name': 'dryplains_t2',
 			'tiles': [8,9,9,7,3,3,3,3,3,3],
-			'walls': [,,,,,,,,,6],
+			'walls': [,,,,,,,,5,6],
 			},
 			{'name': 'dryplains_t3',
 			'tiles': [9,9,9,7,3,3,3,3,10,10],
-			'walls': [,,,,,,,,,6],
+			'walls': [,,,,,,,,5,6],
 			},
 			{'name': 'dryplains_t4',
 			'tiles': [9,9,9,7,3,3,10,10,10,10],
@@ -105,27 +105,27 @@ var terrainGenerator = {
 			},
 			{'name': 'plateau_t2',
 			'tiles': [8,1,0,7,7,4,4,4,4,4],
-			'walls': [,,,,,,,,,5],
+			'walls': [,,,,,,,,5,6],
 			},
 			{'name': 'plateau_t3',
 			'tiles': [8,1,0,7,7,7,4,4,4,4],
-			'walls': [,,,,,,,,,],
+			'walls': [,,,,,,,,6,6],
 			},
 			{'name': 'plateau_t4',
 			'tiles': [8,1,0,7,7,7,7,7,4,4],
-			'walls': [,,,,,,,,,],
+			'walls': [,,,,,,,,6,6],
 			},
 			{'name': 'desert',
 			'tiles': [8,1,0,7,7,7,7,7,7,7],
-			'walls': [,,,,,,,,,],
+			'walls': [,,,,,,,,6,6],
 			},
 			{'name': 'desert_t1',
 			'tiles': [8,1,0,7,7,7,7,7,13,13],
-			'walls': [,,,,,,,,,],
+			'walls': [,,,,,,,,,6],
 			},
 			{'name': 'desert_t2',
 			'tiles': [8,1,0,7,7,7,13,13,13,13],
-			'walls': [,,,,,,,,,],
+			'walls': [,,,,,,,,,11],
 			},
 			{'name': 'savanna',
 			'tiles': [8,1,0,7,13,13,13,13,13,13],
@@ -133,49 +133,58 @@ var terrainGenerator = {
 			},
 			{'name': 'savanna_t1',
 			'tiles': [8,1,0,7,4,4,13,13,13,13],
-			'walls': [,,,,,,,,,],
+			'walls': [,,,,,,,,,6],
 			},
 			{'name': 'savanna_t2',
 			'tiles': [8,1,0,7,4,4,4,4,13,13],
-			'walls': [,,,,,,,,,],
+			'walls': [,,,,,,,,6,6],
 			},
 			{'name': 'hell',
-			'tiles': [8,1,0,3,4,4,4,4,14,14],
-			'walls': [,,,,,,,,,],
+			'tiles': [8,1,0,3,4,4,14,14,4,4],
+			'walls': [,,,,,,,,6,6],
 			},
 			{'name': 'hell_t1',
-			'tiles': [1,1,0,3,4,4,4,4,4,14],
-			'walls': [,,,,,,,,,],
+			'tiles': [1,1,0,3,4,4,14,14,4,4],
+			'walls': [,,,,,,,,6,6],
 			},
 			{'name': 'hell_t2',
-			'tiles': [1,0,0,3,4,4,4,4,4,4],
-			'walls': [,,,,,,,,,],
+			'tiles': [1,0,0,3,4,4,14,4,4,4],
+			'walls': [,,,,,,,,6,6],
 			},
 			{'name': 'mountain',
 			'tiles': [0,0,0,3,4,4,4,4,4,4],
-			'walls': [,,,,,,,,6,6],
+			'walls': [,,,,,,,6,6,6],
 			},
 			{'name': 'mountain_t1',
 			'tiles': [1,1,0,7,4,4,4,4,4,4],
-			'walls': [,,,,,,,,6,6],
+			'walls': [,,,,,,6,6,6,6],
 			},
 			{'name': 'mountain_t2',
 			'tiles': [8,1,0,7,3,3,4,4,4,4],
-			'walls': [,,,,,,,,6,6],
+			'walls': [,,,,,6,6,6,6,6],
 			},
 			{'name': 'mountain_t3',
 			'tiles': [8,1,0,7,3,3,3,3,4,4],
-			'walls': [,,,,,,,,6,6],
+			'walls': [,,,,,6,6,6,6,6],
 			},
 			{'name': 'hotsprings',
 			'tiles': [8,1,0,7,3,3,3,3,4,0],
-			'walls': [,,,,,,,,6,],
+			'walls': [,,,,,6,6,6,6,],
 			},
 			{'name': 'volcano',
 			'tiles': [8,1,0,7,3,3,3,3,4,14],
-			'walls': [,,,,,,,,6,],
+			'walls': [,,,,,6,6,6,6,],
 			},
 	],
+
+	'features': {
+		'8': [0, 0, 15],
+		'7': [0, 0, 16, 17, 18],
+		'2': [19, 20, 21, 22, 23, 24, 25],
+		'3': [19, 21, 25, 26, 27],
+		'13': [20, 26],
+		'10': [0, 0, 0, 0, 28],
+	},
 };
 var tileAliases = {
 	'0': 'tile_sea',
@@ -193,6 +202,21 @@ var tileAliases = {
 	'12': 'tile_pines',
 	'13': 'tile_drygrass',
 	'14': 'tile_lava',
+
+	'15': 'tile_whirl',
+	'16': 'tile_shell_1',
+	'17': 'tile_shell_2',
+	'18': 'tile_shell_3',
+	'19': 'tile_weed',
+	'20': 'tile_bush',
+	'21': 'tile_pebbles',
+	'22': 'tile_flower_1',
+	'23': 'tile_flower_2',
+	'24': 'tile_flower_3',
+	'25': 'tile_dryleaves',
+	'26': 'tile_deadbush',
+	'27': 'tile_fossil',
+	'28': 'tile_snowman',
 };
 
 function init() {
@@ -262,7 +286,15 @@ function tileByHeight(biom, height, wallmode) {
 	var max = 2 / biom.tiles.length;
 	var v = Math.floor(height / max);
 	var tile = biom.tiles[v];
-	if (wallmode) tile = biom.walls[v];
+	var ftile = tile;
+	if (wallmode) {
+		tile = biom.walls[v];
+		if (!tile) {
+			var feat = terrainGenerator.features[ftile];
+			if (feat) feat = read(feat);
+			if (feat && rand(1,10) == 1) tile = feat;
+		}
+	}
 	return tile;
 }
 function newWorld() {
@@ -299,7 +331,7 @@ function createEWMap() {
 			var docerw = document.createElement('wall');
 			docerw.id = 'wall_'+w+'_'+h;
 			docerw.style.left = (w * twidth)+'px';
-			docerw.style.top = (h * theight)+'px';
+			docerw.style.top = ((h-1) * theight)+'px';
 
 			doc('layer_bottom').appendChild(docert);
 			doc('layer_wall').appendChild(docerw);
