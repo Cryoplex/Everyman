@@ -1,5 +1,5 @@
 //Changelog
-var changelog = ['a', 'ax'];
+var changelog = ['a', 'ax', 'af'];
 
 //Variable declarations
 var everyworld;
