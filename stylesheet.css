@@ -282,6 +282,8 @@ layer {
 	top: 0px;
 	left: 0px;
 	font-size: 8px;
+	transition: left 0.2s, top 0.2s;
+	cursor: pointer;
 }
 .myGuy {
 	animation: high 1s infinite;
@@ -1168,6 +1170,14 @@ meter {
 		background-position: -240px -72px;
 	}
 }
+.shadow {
+	filter: brightness(0);
+	-webkit-filter: brightness(0);
+	transform: scaleY(-1);
+	-webkit-transform: scaleY(-1);
+
+	opacity: 0.2;
+}
 .tile_grass {
 	background-position: -504px 0px;
 }
@@ -1240,7 +1250,7 @@ meter {
 	background-position: -792px 0px;
 }
 .tile_lava {
-	background-position: -814px 0px;
+	background-position: -816px 0px;
 }
 .tile_whirl {
 	height: 24px;
@@ -1296,6 +1306,72 @@ meter {
 }
 .tile_snowman {
 	background-position: -1152px 0px;
+}
+.tile_rain {
+	background-position: -1176px 0px;
+	animation: rain 3s infinite steps(32);
+}
+.overlay {
+	pointer-events: none;
+}
+@keyframes rain {
+	0% {
+		background-position: -1176px 0px;
+	}
+	25% {
+		background-position: -1176px 48px;
+	}
+	50% {
+		background-position: -1176px 96px;
+	}
+	75% {
+		background-position: -1176px 144px;
+	}
+	100% {
+		background-position: -1176px 192px;
+	}
+}
+.tile_thunder {
+	background-position: -1200px 0px;
+	animation: thunder 1s infinite steps(32);
+}
+@keyframes thunder {
+	0% {
+		background-position: -1200px 0px;
+	}
+	25% {
+		background-position: -1200px 48px;
+	}
+	50% {
+		background-position: -1200px 96px;
+	}
+	75% {
+		background-position: -1200px 144px;
+	}
+	100% {
+		background-position: -1200px 192px;
+	}
+}
+.tile_snowy {
+	background-position: -1224px 0px;
+	animation: snowy 10s infinite steps(32);
+}
+@keyframes snowy {
+	0% {
+		background-position: -1224px 0px;
+	}
+	25% {
+		background-position: -1224px 48px;
+	}
+	50% {
+		background-position: -1224px 96px;
+	}
+	75% {
+		background-position: -1224px 144px;
+	}
+	100% {
+		background-position: -1224px 192px;
+	}
 }
 bar {
 	border-radius: 8px;
