@@ -1,10 +1,11 @@
 //Changelog
-var changelog = ['a', 'ax', 'af', 'af humans'];
+var changelog = ['a', 'ax', 'af', 'af humans', 'ax zones'];
 
 //Variable declarations
 var everyworld;
 var lastlog = [];
 var tickList = [];
+var zonelist = [];
 var twidth = 24;
 var theight = 24;
 var selectedChar = -1;
@@ -189,6 +190,7 @@ var terrainGenerator = {
 	},
 };
 var block = {
+	'0': false,
 	'1': true,
 	'5': true,
 	'6': true,
@@ -200,6 +202,21 @@ var block = {
 	'20': true,
 	'26': true,
 	'28': true,
+
+	'29': true, 
+	'30': true, 
+	'31': true, 
+	'32': true, 
+	'33': true, 
+	'34': true, 
+	'35': true, 
+	'36': true, 
+	'37': true, 
+	'38': true, 
+	'39': true, 
+	'40': true, 
+	'41': true, 
+	'42': true, 
 }
 var tileAliases = {
 	'0': 'tile_sea',
@@ -232,11 +249,40 @@ var tileAliases = {
 	'26': 'tile_deadbush',
 	'27': 'tile_fossil',
 	'28': 'tile_snowman',
+
+	'29': 'tile_ore_Cd',
+	'30': 'tile_ore_Hg',
+	'31': 'tile_ore_Pb',
+	'32': 'tile_ore_As',
+	'33': 'tile_ore_Mn',
+	'34': 'tile_ore_Cr',
+	'35': 'tile_ore_Co',
+	'36': 'tile_ore_Ni',
+	'37': 'tile_ore_Cu',
+	'38': 'tile_ore_Zn',
+	'39': 'tile_ore_Se',
+	'40': 'tile_ore_Ag',
+	'41': 'tile_ore_Sb',
+	'42': 'tile_ore_Tl',
+
+	'43': 'tile_oref_Cd',
+	'44': 'tile_oref_Hg',
+	'45': 'tile_oref_Pb',
+	'46': 'tile_oref_As',
+	'47': 'tile_oref_Mn',
+	'48': 'tile_oref_Cr',
+	'49': 'tile_oref_Co',
+	'50': 'tile_oref_Ni',
+	'51': 'tile_oref_Cu',
+	'52': 'tile_oref_Zn',
+	'53': 'tile_oref_Se',
+	'54': 'tile_oref_Ag',
+	'55': 'tile_oref_Sb',
+	'56': 'tile_oref_Tl',
 };
 
 var technology = {
 	'0': {'name': 'Prehistory', 'requires': [], 'desc': 'Starting technology. NPC will roam in search for food to survive.'},
-
 	'1': {'name': 'Animal Taming', 'requires': [0], 'desc': 'Will make possible to tame wild animals.'},
 	'2': {'name': 'Agriculture', 'requires': [0], 'desc': 'Allows the gathering and planting of seeds.'},
 	'3': {'name': 'Fire', 'requires': [0], 'desc': 'Your people will discover fire. Enabling cooking.'},
@@ -249,13 +295,11 @@ var technology = {
 };
 var jobs = [
 	//Basic Jobs
-	{'type': 'fir', 'name': 'Fisher', 'requires': [0]},
-
-	{'type': 'com', 'name': 'Shaman', 'requires': [0]},
-	{'type': 'com', 'name': 'Gatherer', 'requires': [0]},
-	{'type': 'com', 'name': 'Builder', 'requires': [0]},
-	{'type': 'com', 'name': 'Scientist', 'requires': []},
-
+	{'type': 'fir', 'name': 'Fisher', 'requires': [0], 'tasks': ['fish']},
+	{'type': 'com', 'name': 'Shaman', 'requires': [0], 'tasks': ['heal']},
+	{'type': 'com', 'name': 'Gatherer', 'requires': [0], 'tasks': ['pickup']},
+	{'type': 'com', 'name': 'Builder', 'requires': [0], 'tasks': ['build', 'clean']},
+	{'type': 'com', 'name': 'Scientist', 'requires': [], 'tasks': ['research']},
 	{'type': 'fir', 'name': 'Rancher', 'requires': [1]},
 	{'type': 'fir', 'name': 'Farmer', 'requires': [2]},
 	{'type': 'fir', 'name': 'Forester', 'requires': [4]},
@@ -289,6 +333,27 @@ function closer(arr, value) {
 function regenTile(map, x, y) {
 
 }
+function getOre(type) {
+	var ores = [
+	'stone', 'cadmium', 'mercury', 'lead', 'arsenic', 'manganese', 'chromium', 'cobalt', 'nickel', 'copper', 'zinc', 'selenium', 'silver', 'antimony', 'thallium'
+	];
+	var wallores = [
+	6, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42
+	];
+	var floorores = [
+	4, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56
+	];
+	var weight = [1, 0.0156, 0.0151, 0.02702, 0.0181, 0.0833, 0.0454, 0.03125, 0.0416, 0.0384, 0.04, 0.0149, 0.0153, 0.0161, 0.016];
+	var total = 0;
+	for (var w in weight) total += weight[w];
+	var r = Math.random()*total;
+	var sum = 0;
+	var arr = (type == 'floor') ? floorores : wallores;
+	for (var o in ores) {
+		sum += weight[o];
+		if (r <= sum) return arr[o];
+	}
+}
 function newMap(height, width) {
 	var noise = new SimplexNoise();
 	var map = [];
@@ -308,8 +373,9 @@ function newMap(height, width) {
 			var n1 = noise.noise(rw, rh);
 			var n2 = noise.noise(rw * 2, rh * 2) / 2;
 			var n3 = noise.noise(rw * 3, rh * 3) / 3;
+			var n4 = noise.noise(rw * 4, rh * 4) / 4;
 
-			var n = n1 + n2 + n3;
+			var n = n1 + n2 + n3 + n4;
 			if (n < -1) n = -1;
 			if (n > 0.99) n = 0.99;
 			li.push(n);
@@ -338,9 +404,11 @@ function tileByHeight(biom, height, wallmode) {
 	var max = 2 / biom.tiles.length;
 	var v = Math.floor(height / max);
 	var tile = biom.tiles[v];
+	if (tile == 4) tile = getOre('floor');
 	var ftile = tile;
 	if (wallmode) {
 		tile = biom.walls[v];
+		if (tile == 6) tile = getOre('wall');
 		if (!tile) {
 			var feat = terrainGenerator.features[ftile];
 			if (feat) feat = read(feat);
@@ -363,12 +431,78 @@ function newWorld() {
 	everyworld.walls = map.walls;
 	everyworld.temperature = map.temperature;
 	everyworld.tech = [true];
-	everyworld.zones = [{'type': 'warehouse', 'start': {}, 'end': {}, 'color': 'rgba(128, 255, 0, 0.1)'}];
-	everyworld.tasks = [];
+	everyworld.meta = [];
+
 
 	loadWorld();
-	for (var x = 0; x < 10; x++) spawnHuman();
+	var bs = bestSpawn(camera.x, camera.y);
+	for (var x = 0; x < 10; x++) spawnHuman(bs.x, bs.y);
+	addZone(0, {'x': bs.x-1, 'y': bs.y-1}, {'x': bs.x+2, 'y': bs.y+2});
+
 	ticker();
+}
+function tickTile(x, y, abs) {
+	var absx = camera.x - Math.floor(range.x / 2) + x;
+	var absy = camera.y - Math.floor(range.y / 2) + y;
+
+	if (abs) {
+		absx = x;
+		absy = y;
+	}
+
+	var floor = whatsHere(everyworld.map, absx, absy);
+	var wall = whatsHere(everyworld.walls, absx, absy);
+	var meta = changeMeta(absx, absy, 'get');
+
+	var iswater = (floor == 1 || floor == 8 || floor == 0);
+
+	if (iswater) {
+		var fish = meta.fish;
+		if (!fish) fish = 0;
+		if (rand(1,100) == 1) changeMeta(absx, absy, 'fish', fish+1);
+	}
+	
+
+	//Spreading tiles
+	var rside = rand(0,3);
+	var dir = directions[rside];
+	var rx = x+dir.x;
+	var ry = y+dir.y;
+
+	var tx = absx+dir.x;
+	var ty = absy+dir.y;
+
+	var therefloor = whatsHere(everyworld.map, tx, ty);
+	var therewall = whatsHere(everyworld.walls, tx, ty);
+	var theremeta = changeMeta(tx, ty, 'get');
+	if (rx > 0 && ry > 0 && rx < range.x && ry < range.y && rand(0,1) && !theremeta.progress) {
+		var therewater = (therefloor == 1 || therefloor == 0 || therefloor == 8);
+
+		if (meta.fish > 0 && therewater) {
+			var hf = meta.fish || 0;
+			var tf = theremeta.fish || 0;
+			changeMeta(absx, absy, 'fish', hf-1);
+			changeMeta(tx, ty, 'fish', tf+1);
+		}
+
+		if (floor == '9' && therewater) {
+			everyworld.map[ty][tx] = 9;
+		}
+		if (iswater && therefloor == '9') {
+			everyworld.map[ty][tx] = 0;
+		}
+		if (floor == '9' && meta.fish > 0) {
+			meta.fish--;
+		}
+
+		setTimeout(function() {
+			tickTile(rx, ry, abs);
+		}, 100);
+	}
+	if (abs) return;
+
+	updateEWMap(x, y);
+	updateShadow(x, y);
 }
 function Zone(type, startx, starty, endx, endy) {
 	this.type = type;
@@ -390,6 +524,11 @@ function timePass() {
 
 	updateShadows();
 }
+function updateCamera() {
+	positionAll();
+	drawEWMap();
+	updateShadows();
+}
 function moveCamera(direction) {
 	var d = directions[direction];
 
@@ -405,18 +544,15 @@ function moveCamera(direction) {
 		}
 		//chara.lastTick = 0;
 	}
-
-	drawEWMap();
-	updateShadows();
+	updateCamera();
 }
-function spawnHuman() {
+function spawnHuman(x, y) {
 	if (!everyworld.totalpop) everyworld.totalpop = 0;
 	var id = 'H'+everyworld.totalpop;
 	everyworld.totalpop++;
 	var p = new Person(id, 'human');
-	var bs = bestSpawn(camera.x, camera.y);
-	p.x = bs.x;
-	p.y = bs.y;
+	p.x = x;
+	p.y = y;
 	p.job = getRandomJob();
 	p.hobby = getRandomJob();
 	if (!everyworld.characters) everyworld.characters = [];
@@ -453,7 +589,7 @@ function stepable(x, y) {
 	if (everyworld.map && everyworld.map[y] && everyworld.map[y][x]) {
 		if (block[everyworld.map[y][x]]) return false;
 	}
-	if (!everyworld.map || !everyworld.map[y] || !everyworld.map[y][x]) return false;
+	if (everyworld.map == undefined || everyworld.map[y] == undefined || everyworld.map[y][x] == undefined) return false;
 	return true;
 }
 function tickCharacter(id) {
@@ -551,10 +687,15 @@ function positionCharacter(chara) {
 
 	if (!cdoc) return;
 
+	var top = cdoc.style.top;
+	var left = cdoc.style.left;
+	var ntop = ((absy - 2) * theight)+'px';
+	var nleft = (absx * twidth)+'px';
+
 	cdoc.style.backgroundColor = 'transparent';
 	if (selectedChar == chara.id) cdoc.style.backgroundColor = 'rgba(0, 255, 0, 0.5)';
-	cdoc.style.top = ((absy - 2) * theight)+'px';
-	cdoc.style.left = (absx * twidth)+'px';
+	cdoc.style.top = ntop;
+	cdoc.style.left = nleft;
 	cdoc.style.zIndex = chara.y+2;
 	cdoc.style.backgroundPosition = getBackgroundPosition(chara, 0, chara.walking);
 }
@@ -571,7 +712,15 @@ function moveCharacter(chara, direction) {
 	setTimeout(function() {
 		chara.walking = false;
 		positionCharacter(chara);
-	}, 200);
+	}, 100);
+	if (selectedChar == chara.id) {
+		camera.x = chara.x;
+		camera.y = chara.y;
+		updateCamera();
+	}
+}
+function positionAll() {
+	for (var c in everyworld.characters) positionCharacter(everyworld.characters[c]);
 }
 function ticker() {
 	var now = Date.now();
@@ -579,7 +728,6 @@ function ticker() {
 	for (var x = 0; x < 3; x++) willTick.push(rand(1, everyworld.characters.length) - 1);
 	for (var h in willTick) {
 		var chara = everyworld.characters[tickList[h]];
-		positionCharacter(chara);
 		if (!chara) continue;
 		if (!chara.lastTick) chara.lastTick = 0;
 		var d = now - chara.lastTick;
@@ -589,6 +737,14 @@ function ticker() {
 		tickCharacter(tickList[h]);
 		addToLog('ticked '+tickList[h]+' ('+h+') '+chara.id);
 	}
+
+	var rx = rand(1, range.x) - 1;
+	var ry = rand(1, range.y) - 1;
+	tickTile(rx, ry);
+
+	var rx = rand(1, everyworld.map[0].length) - 1;
+	var ry = rand(1, everyworld.map.length) - 1;
+	tickTile(rx, ry, 1);
 
 	requestAnimationFrame(ticker);
 }
@@ -612,8 +768,9 @@ function createEWMap() {
 
 			var docero = document.createElement('tile');
 			docero.id = 'overlay_'+w+'_'+h;
-			docero.style.left = ((w) * twidth)+'px';
-			docero.style.top = ((h) * theight)+'px';
+			docero.className = 'boldy';
+			docero.style.left = (w * twidth)+'px';
+			docero.style.top = (h * theight)+'px';
 
 			doc('layer_bottom').appendChild(docert);
 			doc('layer_wall').appendChild(docerw);
@@ -646,6 +803,27 @@ function updateShadow(x, y) {
 		docero.style.opacity = 1;
 		docero.style.display = 'inline-block';
 		docero.className = 'tile overlay tile_snowy';
+	}
+
+	if (everyworld.meta[absy] && everyworld.meta[absy][absx]) {
+		docero.innerHTML = '';
+		docero.style.width = twidth+'px';
+		docero.style.height = twidth+'px';
+
+		docero.style.backgroundImage = 'none';
+		docero.style.backgroundColor = 'transparent';
+		docero.style.opacity = 0.8;
+		docero.style.display = 'block';
+		var meta = everyworld.meta[absy][absx];
+		if (meta.bed != undefined) docero.innerHTML += 'bed ';
+		if (meta.science != undefined) docero.innerHTML += 'SO ';
+		if (meta.warehouse != undefined) docero.innerHTML += 'ware ';
+		if (meta.progress != undefined) docero.innerHTML += (meta.progress * 100)+'% ';
+		if (meta.fish) docero.innerHTML += meta.fish+'f ';
+		if (meta.zone != undefined) {
+			var zones = ['#00f', '#f80', '#08f', '#f00', '#0f0'];
+			docero.style.backgroundColor = zones[meta.zone];
+		}
 	}
 
 	var docers = doc('shadow_'+x+'_'+y);
@@ -744,6 +922,61 @@ function drawEWMap() {
 		for (var h = 0; h < range.y; h++) {
 			updateEWMap(w, h);
 		}
+	}
+}
+function addZone(type, start, end) {
+	if (everyworld.zones == undefined) everyworld.zones = [];
+	everyworld.zones.push({
+		'type': type,
+		'start': start,
+		'end': end,
+		'x': half(start.x, end.x),
+		'y': half(start.x, end.y),
+	});
+	for (var x = start.x; x < end.x; x++) {
+		for (var y = start.y; y < end.y; y++) {
+			changeMeta(x, y, 'zone', type);
+			if (type == 0) changeMeta(x, y, 'warehouse', 1);
+		}
+	}
+}
+function changeMeta(x, y, arg, value) {
+	if (everyworld.meta == undefined) {
+		if (arg == 'get') return {};
+		everyworld.meta = [];
+	}
+	if (everyworld.meta[y] == undefined) {
+		if (arg == 'get') return {};
+		everyworld.meta[y] = [];
+	}
+	if (everyworld.meta[y][x] == undefined) {
+		if (arg == 'get') return {};
+		everyworld.meta[y][x] = {};
+	}
+	if (arg == 'get') return everyworld.meta[y][x];
+	everyworld.meta[y][x][arg] = value;
+}
+function getNearest(sx, sy, arg) {
+	var list = [];
+	for (var y = 0; y < everyworld.map.length; y++) {
+		for (var x = 0; x < everyworld.map[0].length; x++) {
+			var meta = changeMeta(x, y, 'get');
+			var dist = sdistance({'x': sx, 'y': sy}, {'x': x, 'y': y});
+			if (meta[arg] != undefined && stepable(x, y)) list.push({'x': x, 'y': y, 'dist': dist});
+		}
+	}
+	list.sort(function(a, b) {
+		return a.dist - b.dist;
+	});
+	return list[0];
+}
+function half(v1, v2) {
+	return Math.ceil((v2 - v1) / 2) + v1;
+}
+function getCityCenter() {
+	for (var z in zonelist) {
+		var zo = zonelist[z];
+		if (zo.type == 'warehouse') return {'x': zo.x, 'y': zo.y};
 	}
 }
 function loadWorld() {

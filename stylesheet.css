@@ -282,7 +282,7 @@ layer {
 	top: 0px;
 	left: 0px;
 	font-size: 8px;
-	transition: left 0.2s, top 0.2s;
+	transition: left 0.2s, top 0.2s steps(3);
 	cursor: pointer;
 }
 .myGuy {
@@ -1372,6 +1372,91 @@ meter {
 	100% {
 		background-position: -1224px 192px;
 	}
+}
+.tile_ore_Cd {
+	background-position: -1248px 0px;
+}
+.tile_ore_Hg {
+	background-position: -1272px 0px;
+}
+.tile_ore_Pb {
+	background-position: -1296px 0px;
+}
+.tile_ore_As {
+	background-position: -1320px 0px;
+}
+.tile_ore_Mn {
+	background-position: -1344px 0px;
+}
+.tile_ore_Cr {
+	background-position: -1368px 0px;
+}
+.tile_ore_Co {
+	background-position: -1392px 0px;
+}
+.tile_ore_Ni {
+	background-position: -1416px 0px;
+}
+.tile_ore_Cu {
+	background-position: -1440px 0px;
+}
+.tile_ore_Zn {
+	background-position: -1464px 0px;
+}
+.tile_ore_Se {
+	background-position: -1488px 0px;
+}
+.tile_ore_Ag {
+	background-position: -1512px 0px;
+}
+.tile_ore_Sb {
+	background-position: -1536px 0px;
+}
+.tile_ore_Tl {
+	background-position: -1560px 0px;
+}
+/* Floor Ores */
+.tile_oref_Cd {
+	background-position: -1248px -48px;
+}
+.tile_oref_Hg {
+	background-position: -1272px -48px;
+}
+.tile_oref_Pb {
+	background-position: -1296px -48px;
+}
+.tile_oref_As {
+	background-position: -1320px -48px;
+}
+.tile_oref_Mn {
+	background-position: -1344px -48px;
+}
+.tile_oref_Cr {
+	background-position: -1368px -48px;
+}
+.tile_oref_Co {
+	background-position: -1392px -48px;
+}
+.tile_oref_Ni {
+	background-position: -1416px -48px;
+}
+.tile_oref_Cu {
+	background-position: -1440px -48px;
+}
+.tile_oref_Zn {
+	background-position: -1464px -48px;
+}
+.tile_oref_Se {
+	background-position: -1488px -48px;
+}
+.tile_oref_Ag {
+	background-position: -1512px -48px;
+}
+.tile_oref_Sb {
+	background-position: -1536px -48px;
+}
+.tile_oref_Tl {
+	background-position: -1560px -48px;
 }
 bar {
 	border-radius: 8px;
