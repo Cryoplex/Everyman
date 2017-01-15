@@ -1,5 +1,5 @@
 //Changelog
-var changelog = ['a', 'ax', 'af', 'af humans', 'ax zones'];
+var changelog = ['a', 'ax', 'af', 'af humans', 'ax zones', 'ax pathfinding updated'];
 
 //Variable declarations
 var everyworld;
