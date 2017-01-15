@@ -1313,6 +1313,7 @@ meter {
 }
 .overlay {
 	pointer-events: none;
+	font-size: 8px;
 }
 @keyframes rain {
 	0% {

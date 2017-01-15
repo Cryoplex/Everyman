@@ -1,5 +1,13 @@
 //Changelog
-var changelog = ['a', 'ax', 'af', 'af humans', 'ax zones', 'ax pathfinding updated'];
+var changelog = [
+'a',
+'ax',
+'af',
+'af humans',
+'ax zones',
+'ax pathfinding updated',
+'ax explore button for testing purposes'
+];
 
 //Variable declarations
 var everyworld;
@@ -641,17 +649,12 @@ function pathFind(from, to) {
 		})
 		var pointer = queue[0];
 
-		var q0 = queue[0] || {'dist': Infinity};
-		var q1 = queue[1] || {'dist': Infinity};
-		var q2 = queue[2] || {'dist': Infinity};
-		console.log('queue0dist', q0.dist, 'queue1dist', q1.dist, 'queue2dist', q2.dist);
 		if (!pointer) break;
 		if (pointer.x == from.x && pointer.y == from.y) break;
 		for (var d = 0; d < 4; d++) {
 			var dir = directions[d];
 			var v = pointer.value + 1 + Math.random();
 			var point = {'x': pointer.x + dir.x, 'y': pointer.y + dir.y, 'value': v};
-			changeMeta(pointer.x+dir.x, pointer.y+dir.y, 'value', v);
 
 			var eligible = true;
 			if (!stepable(point.x, point.y)) eligible = false;
@@ -689,6 +692,7 @@ function pathFind(from, to) {
 			}
 		}
 		path.push(lowest);
+		changeMeta(lowest.x, lowest.y, 'value', v);
 		if (lowest.value == Infinity) break;
 		mover.x = lowest.x;
 		mover.y = lowest.y;
@@ -762,11 +766,15 @@ function ticker() {
 	var ry = rand(1, range.y) - 1;
 	tickTile(rx, ry);
 
-	var rx = rand(1, everyworld.map[0].length) - 1;
-	var ry = rand(1, everyworld.map.length) - 1;
-	tickTile(rx, ry, 1);
+	var r = getRandomPosition();
+	tickTile(r.x, r.y, 1);
 
 	requestAnimationFrame(ticker);
+}
+function getRandomPosition() {
+	var rx = rand(1, everyworld.map[0].length) - 1;
+	var ry = rand(1, everyworld.map.length) - 1;
+	return {'x': rx, 'y': ry};
 }
 function createEWMap() {
 	for (var w = 0; w < range.x; w++) {
@@ -788,9 +796,10 @@ function createEWMap() {
 
 			var docero = document.createElement('tile');
 			docero.id = 'overlay_'+w+'_'+h;
-			docero.className = 'boldy';
+			docero.className = 'boldy overlay';
 			docero.style.left = (w * twidth)+'px';
-			docero.style.top = (h * theight)+'px';
+			docero.style.top = ((h-1) * theight)+'px';
+			docero.style.fontSize = '8px';
 
 			doc('layer_bottom').appendChild(docert);
 			doc('layer_wall').appendChild(docerw);
@@ -827,6 +836,7 @@ function updateShadow(x, y) {
 
 	if (everyworld.meta[absy] && everyworld.meta[absy][absx]) {
 		docero.innerHTML = '';
+		docero.className = 'tile overlay';
 		docero.style.width = twidth+'px';
 		docero.style.height = twidth+'px';
 
@@ -879,7 +889,6 @@ function action(x, y) {
 			}
 		}
 		chara.objective = pathFind(chara, {'x': absx, 'y': absy}).path;
-		console.log(chara.objective);
 	}
 }
 function updateEWMap(x, y) {
@@ -943,6 +952,13 @@ function drawEWMap() {
 		for (var h = 0; h < range.y; h++) {
 			updateEWMap(w, h);
 		}
+	}
+}
+function randomExplore() {
+	for (var c in everyworld.characters) {
+		var chara = everyworld.characters[c];
+		var r = getRandomPosition();
+		chara.objective = pathFind(chara, r).path;
 	}
 }
 function addZone(type, start, end) {
