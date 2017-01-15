@@ -630,14 +630,28 @@ function gps(from, to) {
 function pathFind(from, to) {
 	var t = {'x': to.x, 'y': to.y, 'value': 0};
 	var queue = [t];
-	var qindex = 0;
+	var pathy = [];
 	while (true) {
-		var pointer = queue[qindex];
+		for (var q in queue) {
+			var qu = queue[q];
+			qu.dist = sdistance(qu, from);
+		}
+		queue.sort(function(a, b) {
+			return a.dist - b.dist;
+		})
+		var pointer = queue[0];
+
+		var q0 = queue[0] || {'dist': Infinity};
+		var q1 = queue[1] || {'dist': Infinity};
+		var q2 = queue[2] || {'dist': Infinity};
+		console.log('queue0dist', q0.dist, 'queue1dist', q1.dist, 'queue2dist', q2.dist);
 		if (!pointer) break;
 		if (pointer.x == from.x && pointer.y == from.y) break;
 		for (var d = 0; d < 4; d++) {
 			var dir = directions[d];
-			var point = {'x': pointer.x + dir.x, 'y': pointer.y + dir.y, 'value': pointer.value + 1 + Math.random()};
+			var v = pointer.value + 1 + Math.random();
+			var point = {'x': pointer.x + dir.x, 'y': pointer.y + dir.y, 'value': v};
+			changeMeta(pointer.x+dir.x, pointer.y+dir.y, 'value', v);
 
 			var eligible = true;
 			if (!stepable(point.x, point.y)) eligible = false;
@@ -646,11 +660,18 @@ function pathFind(from, to) {
 				var qu = queue[q];
 				if (point.x == qu.x && point.y == qu.y) eligible = false;
 			}
-			if (eligible) queue.push(point);
+			for (var p in pathy) {
+				var pa = pathy[p];
+				if (point.x == pa.x && point.y == pa.y) eligible = false;
+			}
+			if (eligible) {
+				queue.push(point);
+			}
 		}
-		qindex++;
+		pathy.push(pointer);
+		queue.splice(0, 1);
 	}
-	queue.sort(function(a, b) {
+	pathy.sort(function(a, b) {
 		return a.value - b.value;
 	});
 
@@ -662,8 +683,8 @@ function pathFind(from, to) {
 			var dir = directions[d];
 			var point = {'x': mover.x + dir.x, 'y': mover.y + dir.y};
 
-			for (var q in queue) {
-				var qu = queue[q];
+			for (var q in pathy) {
+				var qu = pathy[q];
 				if (qu.x == point.x && qu.y == point.y && qu.value < lowest.value) lowest = {'value': qu.value, 'x': point.x, 'y': point.y} 
 			}
 		}
@@ -675,7 +696,7 @@ function pathFind(from, to) {
 		if (mover.x == to.x && mover.y == to.y) break;
 	}
 
-	return {'queue': queue, 'path': path};
+	return {'pathy': pathy, 'path': path};
 }
 function order(id) {
 	selectedChar = id;
@@ -735,7 +756,6 @@ function ticker() {
 		chara.lastTick = now;
 
 		tickCharacter(tickList[h]);
-		addToLog('ticked '+tickList[h]+' ('+h+') '+chara.id);
 	}
 
 	var rx = rand(1, range.x) - 1;
@@ -816,6 +836,7 @@ function updateShadow(x, y) {
 		docero.style.display = 'block';
 		var meta = everyworld.meta[absy][absx];
 		if (meta.bed != undefined) docero.innerHTML += 'bed ';
+		if (meta.value != undefined) docero.innerHTML += Math.floor(meta.value)+' ';
 		if (meta.science != undefined) docero.innerHTML += 'SO ';
 		if (meta.warehouse != undefined) docero.innerHTML += 'ware ';
 		if (meta.progress != undefined) docero.innerHTML += (meta.progress * 100)+'% ';
