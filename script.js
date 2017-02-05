@@ -1862,7 +1862,7 @@ function drawCityMap(city) {
 			var sq = city.map[dx][dy];
 			var youAreHere = (player.mapID.x == dx && player.mapID.y == dy) ? 'youAreHere' : '';
 			if (isHome(player, dx, dy)) youAreHere = 'youLiveHere';
-			if (player.job.x == dx && player.job.y == dy && player.job.dueHours > 0) youAreHere = 'youWorkHere';
+			if (player && player.job && player.job.x == dx && player.job.y == dy && player.job.dueHours > 0) youAreHere = 'youWorkHere';
 			//TODO Mostrar un icono especial cuando ese distrito sea tu casa/trabajo, que cambie de color si tu casa está sin pagar, o si tienes trabajo que hacer
 			div += '<div title="District '+dx+'x'+dy+' '+sq.districtName+""+'0'+""+sq.sector+' '+sq.type+'" class="'+sq.type+' cityMapTile '+youAreHere+'" style="top: '+(parseInt(dy) * 10)+'px; left: '+(parseInt(dx) * 10)+'px"></div>';
 		}

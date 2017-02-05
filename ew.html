@@ -22,6 +22,14 @@
 	</div>
 
 	<div id="game_game" style="display: none; width: 960px; height: 600px; display: inline-block; overflow: hidden;">
+		<canvas id="layer_bottom" width="640" height="480"></canvas>
+		<canvas id="layer_wall" width="640" height="480"></canvas>
+		<canvas id="layer_shadow" width="640" height="480"></canvas>
+		<canvas id="layer_overlay" width="640" height="480"></canvas>
+		<canvas id="layer_items" width="640" height="480"></canvas>
+		<canvas id="layer_entities" width="640" height="480"></canvas>
+
+		<!--
 		<layer id="layer_bottom"></layer>
 		<layer id="layer_wall"></layer>
 		<layer id="layer_shadow"></layer>
@@ -29,6 +37,7 @@
 
 		<layer id="layer_items"></layer>
 		<layer id="layer_entities"></layer>
+		-->
 
 		<div style="position: fixed; right: 0px; bottom: 0px">
 			<div class="btn btn-default" onclick="randomExplore()">Explore</div>

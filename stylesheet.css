@@ -10,6 +10,11 @@ logo {
 	margin: auto;
 	display: block;
 }
+canvas {
+	position: absolute;
+	top: 0px;
+	left: 0px;
+}
 menu {
 	width: 40%;
 	left: 30%;
@@ -1311,9 +1316,68 @@ meter {
 	background-position: -1176px 0px;
 	animation: rain 3s infinite steps(32);
 }
+.item_matter {
+	background-image: url(./img_td/matter.png);
+	width: 24px;
+	height: 24px;
+	animation: 6s matter infinite steps(1);
+}
+@keyframes matter {
+	0%, 32%, 48%, 56%, 88% {
+		background-position: 0px 0px;
+	}
+	2%, 33%, 48.5%, 58%, 88.7% {
+		background-position: 0px -24px;
+	}
+	4%, 34%, 49%, 60%, 89.5% {
+		background-position: 0px -48px;
+	}
+	6%, 35%, 49.5%, 62%, 90.2% {
+		background-position: 0px -72px;
+	}
+	8%, 36%, 50%, 64%, 91% {
+		background-position: 0px -96px;
+	}
+	10%, 37%, 50.5%, 66%, 91.7% {
+		background-position: 0px -120px;
+	}
+	12%, 38%, 51%, 68%, 92.5% {
+		background-position: 0px -144px;
+	}
+	14%, 39%, 51.5%, 70%, 93.2% {
+		background-position: 0px -168px;
+	}
+	16%, 40%, 52%, 72%, 94% {
+		background-position: 0px -192px;
+	}
+	18%, 41%, 52.5%, 74%, 94.7% {
+		background-position: 0px -216px;
+	}
+	20%, 42%, 53%, 76%, 95.5% {
+		background-position: 0px -240px;
+	}
+	22%, 43%, 53.5%, 78%, 96.2% {
+		background-position: 0px -264px;
+	}
+	24%, 44%, 54%, 80%, 97% {
+		background-position: 0px -288px;
+	}
+	26%, 45%, 54.5%, 82%, 97.7% {
+		background-position: 0px -312px;
+	}
+	28%, 46%, 55%, 84%, 98.5% {
+		background-position: 0px -336px;
+	}
+	30%, 47%, 55.5%, 86%, 99.25% {
+		background-position: 0px -360px;
+	}
+}
 .overlay {
 	pointer-events: none;
 	font-size: 8px;
+}
+.void {
+	display: none;
 }
 @keyframes rain {
 	0% {
