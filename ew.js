@@ -6,6 +6,7 @@ var changelog = [
 'ax Tiles now drop items upon being destroyed.',
 'ax Tiles change in color at dawn, dusk, night',
 'af Added a bunch of stuff I don\'t want to write here. Food is edible, tiles are placeable and grass spreads',
+'ab bluh bluh bluh'
 ];
 
 //Variable declarations
