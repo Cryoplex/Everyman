@@ -220,7 +220,6 @@ var itemList = [
 	new Item(12, {'name': 'Hamburger (Vegetarian)', 'desc': 'Made with tomato, onion, lettuce and bread.', 'food': true, 'hunger': 20, 'price': 20}),
 	new Item(13, {'name': 'Hamburger (Meat)', 'desc': 'Hamburger with steak and ketchup.', 'food': true, 'hunger': 30, 'price': 32}),
 	new Item(14, {'name': 'Steak', 'desc': 'Edible. Harvested by farmers.', 'food': true, 'hunger': 10, 'price': 12}),
-
 	new Item(15, {'name': 'Coffee Powder', 'desc': 'Harvested by farmers', 'food': true, 'hunger': 1, 'price': 3}),
 	new Item(16, {'name': 'Coffee', 'desc': 'Made with Coffee Powder lol', 'food': true, 'hunger': 3, 'energy': 15, 'price': 20}),
 ];
@@ -1107,7 +1106,7 @@ function newLayer(width, height, empty, lay, type, variation) {
 						if (w == 11 || w == 19) toadd = 'tile_shop_work_door';
 					}
 					if ((w == 6 || w == 13) && h < (height - 1) && h > 15) {
-						if (h < 18) toadd = 'tile_shop_desk'; 
+						if (h < 18) toadd = 'tile_shop_desk';
 						if (w == 6 && h > 17) toadd = 'tile_outerwall';
 						if (h == 16) toadd = 'tile_shop_desk_machine';
 						if (h == 19 && w == 6) toadd = 'tile_work_door';
@@ -1280,7 +1279,7 @@ function buildBuilding(wherex, wherey) {
 
 	placeBuilding(here, size(7, 7, 2), block, tileset);
 
-	addPerson('npc', wherex, wherey); 
+	addPerson('npc', wherex, wherey);
 }
 function getFamilyOf(guy, all) {
 	if (!all) var l = '<b>Family of '+guy.name+' '+guy.family+'</b><br><br>';
@@ -2474,7 +2473,7 @@ function displayCrime(guy, peek) {
 function tickCrime(guy) {
 	for (var c in guy.crime) {
 		var crimeTier = crimes[c].tier;
-		
+
 		var toreduce = 1 - (0.1 / Math.abs((crimeTier + 1) * (1 + displayCrime(player, 'wanted'))));
 
 		guy.crime[c] *= toreduce;
@@ -3082,7 +3081,7 @@ function tickPeople(id, force) {
 	var person = everyman.people[id];
 	if (person == undefined) return;
 	var d = new Date();
-	
+
 	if (person.lastMove > (totalticker * 10) || force) person.lastMove = (totalticker - 1);
 
 	if (totalticker < person.lastMove) {
@@ -3392,7 +3391,7 @@ function payCheck(guy) {
 	guy.job.workedHours = 0;
 	guy.job.nextPaycheck = new EMDate(guy.job.payday, 0, 0);
 
-	
+
 	var eg = (g) ? 'Good Job! ': '';
 
 	if (guy == player && check > 0) notification(eg+'You have been paid $'+check+' for your work.');
@@ -3668,7 +3667,7 @@ function useItem(id, who, peek, all) {
 	}
 	var amtouse = 1;
 	if (player.allmode) amtouse = amt;
-	
+
 	if (amt > 0) {
 		//Can use item
 		var item = itemList[id];
@@ -3901,36 +3900,6 @@ function talkTo(id, act) {
 function seeStats(id) {
 	showNPCInfo(everyman.people[id]);
 }
-function getNPCValue(guy, numode) {
-	if (numode) guy = {'age': guy};
-	var youngMod = Math.pow(1.08, (8 - guy.age));
-
-	var base = 62000 * youngMod;
-
-	base += guy.age;
-	return base;
-}
-function showNPCStats(guy) {
-	var sns = 'Value: '+getNPCValue(guy)+'<br>';
-
-	if (typeof guy != 'object') return guy;
-
-	for (var e in guy) {
-		var param = guy[e];
-		if (typeof param == 'object' && e != 'element') {
-			sns += '<b>'+e+'</b><br>';
-			if (!par) continue;
-			var par = param[ee];
-			if (typeof par == 'number') par = round(par);
-			for (var ee in param) sns += '<ind><i>'+ee+'</i> '+par+'</ind><br>';
-			continue;
-		}
-		var par = guy[e];
-		if (typeof par == 'number') par = round(par);
-		sns += '<b>'+e+'</b> '+par+'<br>';
-	}
-	return sns;
-}
 function canUseTile(tileObject) {
 	var d = new Date();
 	d = d.valueOf();
@@ -3964,7 +3933,7 @@ function showNPCInfo(guy) {
 	var g = (guy.gender == 0) ? 'Man' : 'Woman';
 	message += '<statd><b>Gender</b>: '+g+'</statd>';
 	message += '<statd><b>Job</b>: '+getMyJobName(guy)+'</statd>';
-	
+
 	message += '<statd><b>Karma</b>: '+guy.karma+'</statd>';
 	message += '<statd><b>Money</b>: $'+guy.money+'</statd>';
 	message += '<statd><br></statd>';

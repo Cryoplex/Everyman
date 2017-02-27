@@ -1,24 +1,36 @@
 //Changelog
 var changelog = [
-'a',
-'ax',
-'af',
-'af humans',
-'ax zones',
-'ax pathfinding updated',
-'ax explore button for testing purposes'
+'a','a','a','a',
+'ax Spawn locaion is now random.',
+'af Added tile destruction, press M to mine and J to dig.',
+'ax Tiles now drop items upon being destroyed.',
+'ax Tiles change in color at dawn, dusk, night',
+'af Added a bunch of stuff I don\'t want to write here. Food is edible, tiles are placeable and grass spreads',
 ];
 
 //Variable declarations
-var everyworld;
+var everyworld, player, currentMenu, sprites, icons, layers, mapw, maph;
+
+var asciimode = false;
+var bigmenu = false;
+
 var lastlog = [];
 var tickList = [];
 var zonelist = [];
+var nearEntities = [];
+
+var camera = {'x': 0, 'y': 0};
+var pointer = {'x': 0, 'y': 0};
+var range = {'x': 26, 'y': 18};
+
 var twidth = 24;
 var theight = 24;
-var selectedChar = -1;
-var sprites;
-var layers;
+var canvaswidth = 624;
+var canvasheight = 432;
+var entityMapUpdate = 250;
+var loadrange = 0;
+
+//Config
 var directions = [
 	{'x': 0, 'y': -1}, //Top
 	{'x': 1, 'y': 0}, //Right
@@ -30,268 +42,367 @@ var directions = [
 	{'x': -1, 'y': 1}, //Bottomleft
 	{'x': -1, 'y': -1}, //Topleft
 ];
-var camera = {'x': 20, 'y': 20};
-var range = {'x': 32, 'y': 16};
-
-var loadrange = 0;
-
-//Config
 var terrainGenerator = {
-	'noise': 0.02,
+	'noise': 0.03,
 
 	'biomes': [
-			{'name': 'dryplains',
-			'tiles': [8,1,0,7,3,3,3,3,4,4],
-			'walls': [,,,,,,,,,],
-			},
-			{'name': 'dryplains_t1',
-			'tiles': [8,1,9,7,3,3,3,3,3,4],
-			'walls': [,,,,,,,,,6],
-			},
-			{'name': 'dryplains_t2',
-			'tiles': [8,9,9,7,3,3,3,3,3,3],
-			'walls': [,,,,,,,,5,6],
-			},
-			{'name': 'dryplains_t3',
-			'tiles': [9,9,9,7,3,3,3,3,10,10],
-			'walls': [,,,,,,,,5,6],
-			},
-			{'name': 'dryplains_t4',
-			'tiles': [9,9,9,7,3,3,10,10,10,10],
-			'walls': [,,,,,,,,5,6],
-			},
-			{'name': 'dryplains_t5',
-			'tiles': [9,9,9,7,3,10,10,10,10,10],
-			'walls': [,,,,,,,,5,6],
-			},
-			{'name': 'tundra',
-			'tiles': [9,9,9,7,10,10,10,10,10,10],
-			'walls': [,,,,,,,,5,6],
-			},
-			{'name': 'tundra_t1',
-			'tiles': [9,9,9,7,10,10,10,10,10,10],
-			'walls': [,,,,,,,,11,6],
-			},
-			{'name': 'taiga',
-			'tiles': [9,9,9,7,10,10,10,10,10,10],
-			'walls': [,,,,,,,,11,12],
-			},
-			{'name': 'taiga_t1',
-			'tiles': [8,9,9,7,10,10,10,10,10,4],
-			'walls': [,,,,,,,,,12],
-			},
-			{'name': 'taiga_t2',
-			'tiles': [8,1,9,7,10,10,10,10,4,4],
-			'walls': [,,,,,,,,,],
-			},
-			{'name': 'taiga_t3',
-			'tiles': [8,1,0,7,2,10,10,2,4,4],
-			'walls': [,,,,,,,,,],
-			},
-			{'name': 'plains',
-			'tiles': [8,1,0,7,2,2,2,2,4,4],
-			'walls': [,,,,,,,,,],
-			},
-			{'name': 'plains_t1',
-			'tiles': [8,1,0,7,2,2,2,2,2,4],
-			'walls': [,,,,,,,,,12],
-			},
-			{'name': 'forest',
-			'tiles': [8,1,0,7,2,2,2,2,2,2],
-			'walls': [,,,,,,,,11,12],
-			},
-			{'name': 'jungle',
-			'tiles': [8,1,0,7,2,2,2,2,2,2],
-			'walls': [,,,,,,,,12,12],
-			},
-			{'name': 'forest_t1',
-			'tiles': [8,1,0,7,2,2,2,2,4,4],
-			'walls': [,,,,,,,,11,5],
-			},
-			{'name': 'forest_t2',
-			'tiles': [8,1,0,7,2,2,4,4,4,4],
-			'walls': [,,,,,,,,5,5],
-			},
-			{'name': 'plateau',
-			'tiles': [8,1,0,7,4,4,4,4,4,4],
-			'walls': [,,,,,,,,5,5],
-			},
-			{'name': 'plateau_t2',
-			'tiles': [8,1,0,7,7,4,4,4,4,4],
-			'walls': [,,,,,,,,5,6],
-			},
-			{'name': 'plateau_t3',
-			'tiles': [8,1,0,7,7,7,4,4,4,4],
-			'walls': [,,,,,,,,6,6],
-			},
-			{'name': 'plateau_t4',
-			'tiles': [8,1,0,7,7,7,7,7,4,4],
-			'walls': [,,,,,,,,6,6],
-			},
-			{'name': 'desert',
-			'tiles': [8,1,0,7,7,7,7,7,7,7],
-			'walls': [,,,,,,,,6,6],
-			},
-			{'name': 'desert_t1',
-			'tiles': [8,1,0,7,7,7,7,7,13,13],
-			'walls': [,,,,,,,,,6],
-			},
-			{'name': 'desert_t2',
-			'tiles': [8,1,0,7,7,7,13,13,13,13],
-			'walls': [,,,,,,,,,11],
-			},
-			{'name': 'savanna',
-			'tiles': [8,1,0,7,13,13,13,13,13,13],
-			'walls': [,,,,,,,,,11],
-			},
-			{'name': 'savanna_t1',
-			'tiles': [8,1,0,7,4,4,13,13,13,13],
-			'walls': [,,,,,,,,,6],
-			},
-			{'name': 'savanna_t2',
-			'tiles': [8,1,0,7,4,4,4,4,13,13],
-			'walls': [,,,,,,,,6,6],
-			},
-			{'name': 'hell',
-			'tiles': [8,1,0,3,4,4,14,14,4,4],
-			'walls': [,,,,,,,,6,6],
-			},
-			{'name': 'hell_t1',
-			'tiles': [1,1,0,3,4,4,14,14,4,4],
-			'walls': [,,,,,,,,6,6],
-			},
-			{'name': 'hell_t2',
-			'tiles': [1,0,0,3,4,4,14,4,4,4],
-			'walls': [,,,,,,,,6,6],
-			},
-			{'name': 'mountain',
-			'tiles': [0,0,0,3,4,4,4,4,4,4],
-			'walls': [,,,,,,,6,6,6],
-			},
-			{'name': 'mountain_t1',
-			'tiles': [1,1,0,7,4,4,4,4,4,4],
-			'walls': [,,,,,,6,6,6,6],
-			},
-			{'name': 'mountain_t2',
-			'tiles': [8,1,0,7,3,3,4,4,4,4],
-			'walls': [,,,,,6,6,6,6,6],
-			},
-			{'name': 'mountain_t3',
-			'tiles': [8,1,0,7,3,3,3,3,4,4],
-			'walls': [,,,,,6,6,6,6,6],
-			},
-			{'name': 'hotsprings',
-			'tiles': [8,1,0,7,3,3,3,3,4,0],
-			'walls': [,,,,,6,6,6,6,],
-			},
-			{'name': 'volcano',
-			'tiles': [8,1,0,7,3,3,3,3,4,14],
-			'walls': [,,,,,6,6,6,6,],
-			},
+		{'name': 'ocean',
+		'tiles': [8,1,0,7,7,7,7,7,7,7],
+		'walls': [,,,,,,,,,],
+		},
+		{'name': 'desert',
+		'tiles': [0,0,0,13,66,66,66,66,66,66],
+		'walls': [,,,,,,,,5,6],
+		},
+		{'name': 'plains',
+		'tiles': [0,0,0,77,77,77,77,77,3,4],
+		'walls': [,,,,,,,,5,6],
+		},
+		{'name': 'forest',
+		'tiles': [1,1,0,2,2,2,2,2,2,2],
+		'walls': [,,,,,,,,11,6],
+		},
+		{'name': 'jungle',
+		'tiles': [1,1,0,69,69,69,69,69,69,69],
+		'walls': [,,,,,,,,63,6],
+		},
+		{'name': 'volcano',
+		'tiles': [1,1,0,3,3,3,3,3,4,14],
+		'walls': [,,,,,,,,6,],
+		},
+		{'name': 'swamp',
+		'tiles': [73,73,73,72,72,72,72,72,72,72],
+		'walls': [,,,,,,,,64,6],
+		},
+		{'name': 'taiga',
+		'tiles': [9,9,9,10,10,10,10,10,10,10],
+		'walls': [,,,,,,,,12,6],
+		},
+		{'name': 'tundra',
+		'tiles': [9,9,9,10,10,10,10,10,10,10],
+		'walls': [,,,,,,,,5,6],
+		}
 	]
 };
+var fixstats = ['endurance', 'strength', 'dexterity', 'agility', 'intelligence', 'wisdom', 'luck', 'charisma'];
+var dynstats = ['hp', 'mp', 'energy', 'hunger', 'battery'];
 var tiles = {
-	"0":{"sprite":"tile_sea","block":false, 'set': 'water', 'tpos': [10,0]},
-	"1":{"sprite":"tile_deepsea","block":true, 'set': 'water', 'tpos': [24,0]},
-	"2":{"sprite":"tile_grass","features":[19,20,21,22,23,24,25], 'tpos': [21,0]},
-	"3":{"sprite":"tile_dirt","features":[19,21,25,26,27], 'tpos': [22,0]},
-	"4":{"sprite":"tile_stonew", 'tpos': [23,0]},
-	"5":{"sprite":"tile_grasspillar","block":true, 'set': 'dirt', 'tpos': [25,0]},
-	"6":{"sprite":"tile_stonepillar","block":true, 'set': 'stone', 'tpos': [26,0]},
-	"7":{"sprite":"tile_sand","features":[0,0,16,17,18], 'tpos': [27,0]},
-	"8":{"sprite":"tile_abyss","block":true,"features":[0,0,15], 'set': 'water', 'tpos': [28,0]},
-	"9":{"sprite":"tile_ice", 'tpos': [29,0]},
-	"10":{"sprite":"tile_snow","features":[0,0,0,0,28,57], 'tpos': [30,0]},
-	"11":{"sprite":"tile_pine","block":true, 'set': 'tree', 'tpos': [31,0]},
-	"12":{"sprite":"tile_pines","block":true, 'set': 'tree', 'tpos': [32,0]},
-	"13":{"sprite":"tile_drygrass","features":[20,26], 'tpos': [33,0]},
-	"14":{"sprite":"tile_lava","block":true, 'tpos': [34,0]},
-	"15":{"sprite":"tile_whirl","block":true, 'tpos': [35,0]},
-	"16":{"sprite":"tile_shell_1", 'tpos': [36,0]},
-	"17":{"sprite":"tile_shell_2", 'tpos': [37,0]},
-	"18":{"sprite":"tile_shell_3", 'tpos': [38,0]},
-	"19":{"sprite":"tile_weed", 'tpos': [42,0]},
-	"20":{"sprite":"tile_bush","block":true, 'tpos': [43,0]},
-	"21":{"sprite":"tile_pebbles", 'tpos': [44,0]},
-	"22":{"sprite":"tile_flower_1", 'tpos': [39,0]},
-	"23":{"sprite":"tile_flower_2", 'tpos': [40,0]},
-	"24":{"sprite":"tile_flower_3", 'tpos': [41,0]},
-	"25":{"sprite":"tile_dryleaves", 'tpos': [45,0]},
-	"26":{"sprite":"tile_deadbush","block":true, 'tpos': [46,0]},
-	"27":{"sprite":"tile_fossil", 'tpos': [47,0]},
-	"28":{"sprite":"tile_snowman","block":true, 'tpos': [48,0]},
-	"29":{"sprite":"tile_ore_Cd","block":true, 'set': 'stone', 'tpos': [52,0]},
-	"30":{"sprite":"tile_ore_Hg","block":true, 'set': 'stone', 'tpos': [53,0]},
-	"31":{"sprite":"tile_ore_Pb","block":true, 'set': 'stone', 'tpos': [54,0]},
-	"32":{"sprite":"tile_ore_As","block":true, 'set': 'stone', 'tpos': [55,0]},
-	"33":{"sprite":"tile_ore_Mn","block":true, 'set': 'stone', 'tpos': [56,0]},
-	"34":{"sprite":"tile_ore_Cr","block":true, 'set': 'stone', 'tpos': [57,0]},
-	"35":{"sprite":"tile_ore_Co","block":true, 'set': 'stone', 'tpos': [58,0]},
-	"36":{"sprite":"tile_ore_Ni","block":true, 'set': 'stone', 'tpos': [59,0]},
-	"37":{"sprite":"tile_ore_Cu","block":true, 'set': 'stone', 'tpos': [60,0]},
-	"38":{"sprite":"tile_ore_Zn","block":true, 'set': 'stone', 'tpos': [61,0]},
-	"39":{"sprite":"tile_ore_Se","block":true, 'set': 'stone', 'tpos': [62,0]},
-	"40":{"sprite":"tile_ore_Ag","block":true, 'set': 'stone', 'tpos': [63,0]},
-	"41":{"sprite":"tile_ore_Sb","block":true, 'set': 'stone', 'tpos': [64,0]},
-	"42":{"sprite":"tile_ore_Tl","block":true, 'set': 'stone', 'tpos': [65,0]},
-	"43":{"sprite":"tile_oref_Cd", 'tpos': [52,2]},
-	"44":{"sprite":"tile_oref_Hg", 'tpos': [53,2]},
-	"45":{"sprite":"tile_oref_Pb", 'tpos': [54,2]},
-	"46":{"sprite":"tile_oref_As", 'tpos': [55,2]},
-	"47":{"sprite":"tile_oref_Mn", 'tpos': [56,2]},
-	"48":{"sprite":"tile_oref_Cr", 'tpos': [57,2]},
-	"49":{"sprite":"tile_oref_Co", 'tpos': [58,2]},
-	"50":{"sprite":"tile_oref_Ni", 'tpos': [59,2]},
-	"51":{"sprite":"tile_oref_Cu", 'tpos': [60,2]},
-	"52":{"sprite":"tile_oref_Zn", 'tpos': [61,2]},
-	"53":{"sprite":"tile_oref_Se", 'tpos': [62,2]},
-	"54":{"sprite":"tile_oref_Ag", 'tpos': [63,2]},
-	"55":{"sprite":"tile_oref_Sb", 'tpos': [64,2]},
-	"56":{"sprite":"tile_oref_Tl", 'tpos': [65,2]},
-	"57":{"sprite":"item_matter", 'tpos': [0,0]}
+	"floors":[],
+	"walls":[],
+	"0":{"sprite":"tile_sea",'floor':'true',"block":false, 'set': 'water',
+	'tpos': [10,0], 'color': '#4EABD2', 'ascii': '~', 'status': 7, 'fills': true},
+	"1":{"sprite":"tile_deepsea",'floor':'true',"block":true, 'set': 'water', 'tpos': [24,0], 'color': '#3F8CAA', 'ascii': '~'},
+	"2":{"sprite":"tile_grass",'floor':'true',
+	"features":[19,20,21,22,23,24,25,59,61], 'tpos': [21,0], 'color': '#88CC00',
+	'ascii': '_', 'resistance': 10, 'mine': [[0,1], [16,10]], 'hole': 78,
+	'spreads': [3]},
+
+	"3":{"sprite":"tile_dirt",'floor':'true',"features":[19,21,25,26,27], 'tpos': [22,0], 'color': '#C89122', 'ascii': '_', 'resistance': 10, 'mine': [[0,1]], 'hole': 79},
+	"4":{"sprite":"tile_stonew",'floor':'true', 'tpos': [23,0], 'color': '#DCCEB2', 'ascii': '_', 'resistance': 100, 'mine': [[2,1]], 'hole': 80},
+	"5":{"sprite":"tile_grasspillar","block":true, 'set': 'dirt', 'tpos': [25,0], 'color': '#A0741C', 'ascii': '#', 'resistance': 10, 'mine': [[0,1]]},
+	"6":{"sprite":"tile_stonepillar","block":true, 'set': 'stone', 'tpos': [26,0], 'color': '#EDF3F6', 'ascii': '#', 'resistance': 100, 'mine': [[2,1], [2,3], [20,3]]},
+	"7":{"sprite":"tile_sand",'floor':'true',"features":[0,0,16,17,18,65], 'tpos': [27,0], 'color': '#E6D684', 'ascii': '_', 'resistance': 5, 'mine': [[1,1], [17,10], [18,10]], 'hole': 81},
+	"8":{"sprite":"tile_abyss",'floor':'true',"block":true,"features":[0,0,15], 'set': 'water', 'tpos': [28,0], 'color': '#29586E', 'ascii': '~'},
+	"9":{"sprite":"tile_ice",'floor':'true', 'tpos': [29,0], 'color': '#7FD7FF',
+	'ascii': '_', 'status': 8, 'resistance': -50, 'mine': [[]], 'hole': 0, 'spreads': [0]},
+	"10":{"sprite":"tile_snow",'floor':'true',"features":[0,0,0,0,0,0,0,0,28],
+	'tpos': [30,0], 'color': '#F7FDFF', 'ascii': '_', 'resistance': 10,
+	'mine': [[0,1]], 'hole': 79, 'spreads': [3]},
+
+	"11":{"sprite":"tile_pine","block":true, 'set': 'tree', 'tpos': [31,0], 'color': '#188C18', 'ascii': 'A', 'resistance': 30, 'mine': [[3,1], [3,3], [23,3]]},
+	"12":{"sprite":"tile_pines","block":true, 'set': 'tree', 'tpos': [32,0], 'color': '#C0D7E0', 'ascii': 'A', 'resistance': 30, 'mine': [[3,1], [3,3], [23,3]]},
+	"13":{"sprite":"tile_drygrass",'floor':'true',"features":[20,26,65],
+	'tpos': [33,0], 'color': '#CCAA00', 'ascii': '_', 'resistance': 10,
+	'mine': [[0,1], [16,20]], 'hole': 82, 'spreads': [3]},
+
+	"14":{"sprite":"tile_lava",'floor':'true', 'tpos': [34,0], 'features': [75,74],
+	'fchance': 1, 'color': '#FF6C23', 'ascii': '~', 'status': 10, 'fills': true},
+
+	"15":{"sprite":"tile_whirl","block":true, 'tpos': [35,0], 'color': '#D7F3FF', 'ascii': '@'},
+	"16":{"sprite":"tile_shell_1", 'tpos': [36,0], 'color': '#FFD57F', 'ascii': 'c', 'resistance': -50, 'mine': [[18,1]]},
+	"17":{"sprite":"tile_shell_2", 'tpos': [37,0], 'color': '#BFD5FF', 'ascii': 'c', 'resistance': -50, 'mine': [[17,1]]},
+	"18":{"sprite":"tile_shell_3", 'tpos': [38,0], 'color': '#3A783A', 'ascii': 'y', 'resistance': -50, 'mine': [[19,1]]},
+	"19":{"sprite":"tile_weed", 'tpos': [42,0], 'spreads': [2,13,3,69,72,77], 'color': '#66AA00', 'ascii': ',', 'resistance': -25},
+	"20":{"sprite":"tile_bush","block":true, 'tpos': [43,0], 'color': '#66AA00', 'ascii': 'o', 'resistance': 1, 'mine': [[11,2], [11,4], [16,1], [16,4]]},
+	"21":{"sprite":"tile_pebbles", 'tpos': [44,0], 'color': '#658C8C', 'ascii': '.', 'resistance': -50, 'mine': [[20,1]]},
+	"22":{"sprite":"tile_f_bluflower", 'tpos': [39,0], 'flower': true, 'breeds': [22, 89], 'color': '#1D1DDC', 'ascii': '+', 'resistance': -25},
+	"23":{"sprite":"tile_f_cottonflower", 'tpos': [40,0], 'flower': true, 'breeds': [23, 90], 'color': '#FFFFFF', 'ascii': '+', 'resistance': -25},
+	"24":{"sprite":"tile_f_fireflower", 'tpos': [41,0], 'flower': true, 'breeds': [24, 91], 'color': '#DC1B1B', 'ascii': '+', 'resistance': -25},
+	"25":{"sprite":"tile_dryleaves", 'tpos': [45,0], 'color': '#C8792A', 'ascii': '=', 'resistance': -100},
+	"26":{"sprite":"tile_deadbush","block":true, 'tpos': [46,0], 'color': '#E68B2F', 'ascii': 'o', 'resistance': -25, 'mine': [[16,4]]},
+	"27":{"sprite":"tile_fossil", 'tpos': [47,0], 'color': '#A1A1A1', 'ascii': '%', 'resistance': 1, 'mine': [[21,1], [22,5], [22,5], [22,5], [22,5]]},
+	"28":{"sprite":"tile_snowman","block":true, 'tpos': [48,0], 'color': '#EFFBFF', 'ascii': '8', 'resistance': 1, 'mine': [[12,1]]},
+	"29":{"sprite":"tile_ore_Cd","block":true, 'set': 'stone', 'tpos': [52,0], 'color': '#DCCEB2', 'ascii': '&', 'resistance': 120, 'mine': [[5,1], [2,4], [2,4], [20,4]]},
+	"30":{"sprite":"tile_ore_Hg","block":true, 'set': 'stone', 'tpos': [53,0], 'color': '#DCCEB2', 'ascii': '&', 'resistance': 120, 'mine': [[5,1], [2,4], [2,4], [20,4]]},
+	"31":{"sprite":"tile_ore_Pb","block":true, 'set': 'stone', 'tpos': [54,0], 'color': '#DCCEB2', 'ascii': '&', 'resistance': 120, 'mine': [[5,1], [2,4], [2,4], [20,4]]},
+	"32":{"sprite":"tile_ore_As","block":true, 'set': 'stone', 'tpos': [55,0], 'color': '#DCCEB2', 'ascii': '&', 'resistance': 120, 'mine': [[5,1], [2,4], [2,4], [20,4]]},
+	"33":{"sprite":"tile_ore_Mn","block":true, 'set': 'stone', 'tpos': [56,0], 'color': '#DCCEB2', 'ascii': '&', 'resistance': 120, 'mine': [[5,1], [2,4], [2,4], [20,4]]},
+	"34":{"sprite":"tile_ore_Cr","block":true, 'set': 'stone', 'tpos': [57,0], 'color': '#DCCEB2', 'ascii': '&', 'resistance': 120, 'mine': [[5,1], [2,4], [2,4], [20,4]]},
+	"35":{"sprite":"tile_ore_Co","block":true, 'set': 'stone', 'tpos': [58,0], 'color': '#DCCEB2', 'ascii': '&', 'resistance': 120, 'mine': [[5,1], [2,4], [2,4], [20,4]]},
+	"36":{"sprite":"tile_ore_Ni","block":true, 'set': 'stone', 'tpos': [59,0], 'color': '#DCCEB2', 'ascii': '&', 'resistance': 120, 'mine': [[5,1], [2,4], [2,4], [20,4]]},
+	"37":{"sprite":"tile_ore_Cu","block":true, 'set': 'stone', 'tpos': [60,0], 'color': '#DCCEB2', 'ascii': '&', 'resistance': 120, 'mine': [[4,1], [2,4], [2,4], [20,4]]},
+	"38":{"sprite":"tile_ore_Zn","block":true, 'set': 'stone', 'tpos': [61,0], 'color': '#DCCEB2', 'ascii': '&', 'resistance': 120, 'mine': [[5,1], [2,4], [2,4], [20,4]]},
+	"39":{"sprite":"tile_ore_Se","block":true, 'set': 'stone', 'tpos': [62,0], 'color': '#DCCEB2', 'ascii': '&', 'resistance': 120, 'mine': [[5,1], [2,4], [2,4], [20,4]]},
+	"40":{"sprite":"tile_ore_Ag","block":true, 'set': 'stone', 'tpos': [63,0], 'color': '#DCCEB2', 'ascii': '&', 'resistance': 120, 'mine': [[5,1], [2,4], [2,4], [20,4]]},
+	"41":{"sprite":"tile_ore_Sb","block":true, 'set': 'stone', 'tpos': [64,0], 'color': '#DCCEB2', 'ascii': '&', 'resistance': 120, 'mine': [[5,1], [2,4], [2,4], [20,4]]},
+	"42":{"sprite":"tile_ore_Tl","block":true, 'set': 'stone', 'tpos': [65,0], 'color': '#DCCEB2', 'ascii': '&', 'resistance': 120, 'mine': [[5,1], [2,4], [2,4], [20,4]]},
+	"43":{"sprite":"tile_oref_Cd",'floor':'true', 'tpos': [52,2], 'color': '#DCCEB2', 'ascii': '&', 'resistance': 120, 'mine': [[5,1], [2,2], [20,3]], 'hole': 80},
+	"44":{"sprite":"tile_oref_Hg",'floor':'true', 'tpos': [53,2], 'color': '#DCCEB2', 'ascii': '&', 'resistance': 120, 'mine': [[5,1], [2,2], [20,3]], 'hole': 80},
+	"45":{"sprite":"tile_oref_Pb",'floor':'true', 'tpos': [54,2], 'color': '#DCCEB2', 'ascii': '&', 'resistance': 120, 'mine': [[5,1], [2,2], [20,3]], 'hole': 80},
+	"46":{"sprite":"tile_oref_As",'floor':'true', 'tpos': [55,2], 'color': '#DCCEB2', 'ascii': '&', 'resistance': 120, 'mine': [[5,1], [2,2], [20,3]], 'hole': 80},
+	"47":{"sprite":"tile_oref_Mn",'floor':'true', 'tpos': [56,2], 'color': '#DCCEB2', 'ascii': '&', 'resistance': 120, 'mine': [[5,1], [2,2], [20,3]], 'hole': 80},
+	"48":{"sprite":"tile_oref_Cr",'floor':'true', 'tpos': [57,2], 'color': '#DCCEB2', 'ascii': '&', 'resistance': 120, 'mine': [[5,1], [2,2], [20,3]], 'hole': 80},
+	"49":{"sprite":"tile_oref_Co",'floor':'true', 'tpos': [58,2], 'color': '#DCCEB2', 'ascii': '&', 'resistance': 120, 'mine': [[5,1], [2,2], [20,3]], 'hole': 80},
+	"50":{"sprite":"tile_oref_Ni",'floor':'true', 'tpos': [59,2], 'color': '#DCCEB2', 'ascii': '&', 'resistance': 120, 'mine': [[5,1], [2,2], [20,3]], 'hole': 80},
+	"51":{"sprite":"tile_oref_Cu",'floor':'true', 'tpos': [60,2], 'color': '#DCCEB2', 'ascii': '&', 'resistance': 120, 'mine': [[4,1], [2,2], [20,3]], 'hole': 80},
+	"52":{"sprite":"tile_oref_Zn",'floor':'true', 'tpos': [61,2], 'color': '#DCCEB2', 'ascii': '&', 'resistance': 120, 'mine': [[5,1], [2,2], [20,3]], 'hole': 80},
+	"53":{"sprite":"tile_oref_Se",'floor':'true', 'tpos': [62,2], 'color': '#DCCEB2', 'ascii': '&', 'resistance': 120, 'mine': [[5,1], [2,2], [20,3]], 'hole': 80},
+	"54":{"sprite":"tile_oref_Ag",'floor':'true', 'tpos': [63,2], 'color': '#DCCEB2', 'ascii': '&', 'resistance': 120, 'mine': [[5,1], [2,2], [20,3]], 'hole': 80},
+	"55":{"sprite":"tile_oref_Sb",'floor':'true', 'tpos': [64,2], 'color': '#DCCEB2', 'ascii': '&', 'resistance': 120, 'mine': [[5,1], [2,2], [20,3]], 'hole': 80},
+	"56":{"sprite":"tile_oref_Tl",'floor':'true', 'tpos': [65,2], 'color': '#DCCEB2', 'ascii': '&', 'resistance': 120, 'mine': [[5,1], [2,2], [20,3]], 'hole': 80},
+	"57":{"sprite":"item_matter", 'tpos': [0,0], 'color': '#ffffff', 'ascii': ''},
+	"58":{"sprite":"cursor","block":false, 'tpos': [11,0], 'color': '#000000', 'ascii': 'O'},
+	"59":{"sprite":"shroom","block":false, 'tpos': [66,0], 'spreads': [2,69,72,77], 'color': '#F05656', 'ascii': 't', 'resistance': -50, 'mine': [[13,1]]},
+	"60":{"sprite":"fern","block":false, 'tpos': [67,0], 'spreads': [2,69,72,77], 'color': '#4FA04F', 'ascii': 'A', 'resistance': -25, 'mine': [[14,1]]},
+	"61":{"sprite":"log","block":true, 'tpos': [68,0], 'color': '#8C6516', 'ascii': '-', 'resistance': -10, 'mine': [[3,1]]},
+	"62":{"sprite":"oak","block":true, 'tpos': [69,0], 'color': '#2FC82F', 'ascii': 'T', 'resistance': 30, 'mine': [[3,1], [3,3], [23,3]]},
+	"63":{"sprite":"jungletree","block":true, 'tpos': [70,0], 'color': '#639623', 'ascii': 'T', 'resistance': 30, 'mine': [[3,1], [3,3], [23,3]]},
+	"64":{"sprite":"deadtree","block":true, 'tpos': [71,0], 'color': '#8C6516', 'ascii': 'Y', 'resistance': 20, 'mine': [[23,1], [3,3], [23,3]]},
+	"65":{"sprite":"palm","block":true, 'tpos': [72,0], 'color': '#B8DC00', 'ascii': '7', 'resistance': 30, 'mine': [[3,1], [3,3], [23,3]]},
+	"66":{"sprite":"tile_sand",'floor':'true',"features":[0,0,0,0,27,26,67,68], 'tpos': [27,0], 'color': '#E6D684', 'ascii': '_', 'status': 11, 'resistance': 5, 'mine': [[1,1]], 'hole': 81},
+	"67":{"sprite":"cactus","block":true, 'tpos': [73,0], 'spreads': [7, 66], 'color': '#97C82C', 'ascii': 'µ', 'resistance': 5, 'mine': [[7,1]]},
+	"68":{"sprite":"saffron", 'tpos': [74,0], 'color': '#AA80E5', 'ascii': 'w', 'resistance': -25, 'mine': [[15,1]]},
+	"69":{"sprite":"jungle_grass",'floor':'true',
+	'features':[11,19,20,22,23,24,60,61,62,63,70,71], 'fchance': 2, 'tpos': [75,0],
+	'color': '#5A781A', 'ascii': '_', 'resistance': 10, 'mine': [[0,1], [16,3]],
+	'hole': 83, 'spreads': [3]},
+
+	"70":{"sprite":"jungle_plant","block":true, 'tpos': [76,0], 'spreads': [69], 'color': '#34DC34', 'ascii': 'x', 'resistance': 5},
+	"71":{"sprite":"rafflesia","block":true, 'tpos': [77,0], 'color': '#DC0000', 'ascii': 'X', 'resistance': 10},
+	"72":{"sprite":"swamp_grass",'floor':'true', 'tpos': [78,0],
+	'features': [64,60,59,27], 'color': '#6B6578', 'ascii': '_', 'resistance': 10,
+	'mine': [[0,1], [16,10]], 'hole': 84, 'spreads': [3]},
+	"73":{"sprite":"swamp_water",'floor':'true', 'tpos': [79,0], 'features': [64], 'color': '#50388C', 'ascii': '~', 'status': 12},
+	"74":{"sprite":"crater", 'block': true, 'tpos': [80,0], 'color': '#121314', 'ascii': '#'},
+	"75":{"sprite":"lavapillar", 'tpos': [81,0], 'color': '#FF2323', 'ascii': '#'},
+	"76":{"sprite":"UNUSED",'tpos': [0,0], 'color': '#faf', 'ascii': ''},
+	"77":{"sprite":"turf",'floor':'true', 'tpos': [82,0], 'features': [0, 62, 22, 23, 24],
+	'color': '#AEFF00', 'ascii': '_', 'resistance': 10, 'mine': [[0,1], [16,10]],
+	'hole': 78, 'spreads': [3]},
+
+	"78":{"sprite":"hole_grass",'floor':'true', 'isHole': true, 'tpos': [21,2],
+	'color': '#140D02', 'ascii': 'O'},
+	"79":{"sprite":"hole_dirt",'floor':'true', 'isHole': true, 'tpos': [22,2],
+	'color': '#140D02', 'ascii': 'O'},
+	"80":{"sprite":"hole_stone",'floor':'true', 'isHole': true, 'tpos': [23,2],
+	'color': '#1E1B18', 'ascii': 'O'},
+	"81":{"sprite":"hole_sand",'floor':'true', 'isHole': true, 'tpos': [27,2],
+	'color': '#282310', 'ascii': 'O'},
+	"82":{"sprite":"hole_drygrass",'floor':'true', 'isHole': true, 'tpos': [33,2],
+	'color': '#140D02', 'ascii': 'O'},
+	"83":{"sprite":"hole_jungle",'floor':'true', 'isHole': true, 'tpos': [75,2],
+	'color': '#140D02', 'ascii': 'O'},
+	"84":{"sprite":"hole_swamp",'floor':'true', 'isHole': true, 'tpos': [78,2],
+	'color': '#140D02', 'ascii': 'O'},
+
+	"85":{"sprite":"stone_wall","block":true, 'set': 'stone', 'tpos': [17,2],
+	'color': '#ADB2B4', 'ascii': '#', 'resistance': 80, 'mine': [[2,1]]},
+	"86":{"sprite":"stone_floor","block":false, 'floor': true, 'set': 'stone', 'tpos': [17,0],
+	'color': '#D9DFE2', 'ascii': 'x', 'resistance': 80, 'mine': [[2,1]]},
+
+	"87":{"sprite":"wood_wall","block":true, 'set': 'wood', 'tpos': [18,2],
+	'color': '#64480F', 'ascii': '#', 'resistance': 15, 'mine': [[3,1]]},
+	"88":{"sprite":"wood_floor","block":false, 'floor': true, 'set': 'wood', 'tpos': [18,0],
+	'color': '#B4811C', 'ascii': '=', 'resistance': 15, 'mine': [[3,1]]},
+
+	"89":{"sprite":"tile_f_cyanflower", 'tpos': [39,2], 'flower': true, 'breeds': [22, 89], 'color': '#22FFFF', 'ascii': '+', 'resistance': -25},
+	"90":{"sprite":"tile_f_dandelion", 'tpos': [40,2], 'flower': true, 'breeds': [23, 90], 'color': '#DCDC1A', 'ascii': '+', 'resistance': -25},
+	"91":{"sprite":"tile_f_hinaflower", 'tpos': [41,2], 'flower': true, 'breeds': [24, 91], 'color': '#DC1BDC', 'ascii': '+', 'resistance': -25},
 };
+var items = {
+	//Unimplemented
+	'0': {'name': 'Dirt', 'desc': 'Found anywhere, used to fill holes.', 'price': 0, 'stack': true, 'tpos': [0,0], 'place': {'floor': 3}},
+	'1': {'name': 'Sand', 'desc': 'Found in deserts and beaches, used to fill holes.', 'price': 0, 'stack': true, 'tpos': [1,0], 'place': {'floor': 66}},
+	'2': {'name': 'Rocks', 'desc': 'Obtained when mining stone.', 'price': 0, 'stack': true, 'tpos': [2,0], 'place': {'floor': 86, 'wall': 85}},
+	'3': {'name': 'Wood', 'desc': 'A common renewable resource.', 'price': 2, 'stack': true, 'tpos': [3,0], 'place': {'floor': 88, 'wall': 87}},
+	'4': {'name': 'Copper', 'desc': 'Common metal found sometimes inside stone.', 'price': 3, 'stack': false, 'tpos': [4,0]},
+	'5': {'name': 'Metal', 'desc': 'Found sometimes inside stone.', 'price': 5, 'stack': false, 'tpos': [5,0]},
+	'6': {'name': 'Gold', 'desc': 'Rare metal found sometimes inside stone.', 'price': 7, 'stack': false, 'tpos': [6,0]},
+	'7': {'name': 'Cactus', 'desc': 'Spiky and pricky and itchy and stuff. Be careful touching this.', 'price': 1, 'stack': false, 'tpos': [7,0]},
+	'8': {'name': 'Tomato', 'desc': 'Edible fruit. Yes, fruit.', 'food': true, 'consumable': true, 'hunger': 15, 'price': 1, 'stack': false, 'tpos': [0,1]},
+	'9': {'name': 'Fish', 'desc': 'Obtained from fishing in water.', 'food': true, 'consumable': true, 'hunger': 30, 'status': [[15, 1]], 'price': 8, 'stack': false, 'tpos': [1,1]},
+	'10': {'name': 'Shrimp', 'desc': 'Obtained from fishing in deep water.', 'food': true, 'consumable': true, 'hunger': 24, 'status': [[15, 1]], 'price': 16, 'stack': false, 'tpos': [2,1]},
+	'11': {'name': 'Berries', 'desc': 'Edible fruit that grows in bushes.', 'food': true, 'consumable': true, 'hunger': 6, 'price': 2, 'stack': false, 'tpos': [3,1]},
+	'12': {
+		'name': 'Carrot',
+		'desc': 'How dare you dismantling a helpless snowman to strip him of its carrot?!',
+		'food': true, 'consumable': true, 'hunger': 6, 'price': 3, 'stack': false, 'tpos': [4,1]
+	},
+	'13': {
+		'name': 'Mushroom',
+		'desc': 'I\'m pretty sure this one is poisonous.',
+	    'food': true, 'consumable': true, 'hunger': 6, 'price': 2, 'stack': false, 'tpos': [5,1], 'status': [[12, 1]]
+	},
+	'14': {
+		'name': 'Fern',
+		'desc': 'You can eat this if you have nothing more to eat.',
+		'food': true, 'consumable': true, 'hunger': 3, 'price': 0, 'stack': false, 'tpos': [6,1]
+	},
+	'15': {
+		'name': 'Saffron',
+		'desc': 'A spicy spice found in deserts. Makes food spicy with spicy spiciness.',
+		'food': true, 'condiment': true, 'hunger': 1, 'price': 8, 'stack': false, 'tpos': [7,1]
+	},
+	'16': {
+		'name': 'Seeds',
+		'desc': 'Woah! Seeds! Guess what kind of plant are them.',
+		'price': 0, 'stack': true, 'tpos': [0,2]
+	},
+	'17': {
+		'name': 'Conch',
+		'desc': 'You can hear the sea if you place this in your ear.',
+		'price': 3, 'stack': true, 'tpos': [1,2]
+	},
+	'18': {
+		'name': 'Seashell',
+		'desc': 'Not bourne again shell.',
+		'price': 3, 'stack': true, 'tpos': [2,2]
+	},
+	'19': {
+		'name': 'Seaweed',
+		'desc': 'Never ever smoke this, are you crazy?',
+		'price': 0, 'stack': true, 'tpos': [3,2]
+	},
+	'20': {
+		'name': 'Stone',
+		'desc': 'Useful for primitive tools, or as a throwing weapon maybe.',
+		'price': 0, 'stack': true, 'tpos': [4,2]
+	},
+	'21': {
+		'name': 'Skull',
+		'desc': 'Creepy.',
+		'price': 0, 'stack': true, 'tpos': [5,2]
+	},
+	'22': {
+		'name': 'Bone',
+		'desc': 'Handle for primitive tools and a weapon too.',
+		'price': 0, 'stack': true, 'tpos': [6,2]
+	},
+	'23': {
+		'name': 'Twig',
+		'desc': 'Wave this to feel like a magician. Nothing will happen tho.',
+		'price': 0, 'stack': true, 'tpos': [7,2]
+	},
+}
+var roles = [
+	{'name': 'Warrior', 'set': 'Physical', 'branch': 'Melee', 'primary': 'strength', 'secondary': 'endurance', 'average': ['dexterity', 'agility']},
+	{'name': 'Knight', 'set': 'Physical', 'branch': 'Protection', 'primary': 'endurance', 'secondary': 'strength', 'average': ['dexterity', 'agility']},
 
-var technology = {
-	'0': {'name': 'Prehistory', 'requires': [], 'desc': 'Starting technology. NPC will roam in search for food to survive.'},
-	'1': {'name': 'Animal Taming', 'requires': [0], 'desc': 'Will make possible to tame wild animals.'},
-	'2': {'name': 'Agriculture', 'requires': [0], 'desc': 'Allows the gathering and planting of seeds.'},
-	'3': {'name': 'Fire', 'requires': [0], 'desc': 'Your people will discover fire. Enabling cooking.'},
-	'4': {'name': 'Basic Stone Work', 'requires': [0], 'desc': 'Enables the use of basic tools for chopping trees and mining.'},
-	'5': {'name': 'Smelting', 'requires': [3], 'desc': 'Requires the discovery of Fire. Your people will be able to use furnaces for smelting and cooking purposes.'},
-	'6': {'name': 'Currency: Sea Shells', 'requires': [0], 'desc': 'Allows the use of sea shells as currency. Unlocks shops.'},
-	'7': {'name': 'Spears', 'requires': [4], 'desc': 'Unlocks spears used as weapons for hunting.'},
+	{'name': 'Shooter', 'set': 'Physical', 'branch': 'Ranged', 'primary': 'dexterity', 'secondary': 'agility', 'average': ['strength', 'endurance']},
+	{'name': 'Thief', 'set': 'Physical', 'branch': 'Stealth', 'primary': 'agility', 'secondary': 'dexterity', 'average': ['strength', 'endurance']},
 
-	'8': {'name': '*Law Code', 'requires': [0,1,2,3,4,5,6,7], 'desc': 'test.'},
+	{'name': 'Wizard', 'set': 'Mental', 'branch': 'Damage', 'primary': 'intelligence', 'secondary': 'wisdom', 'average': ['charisma', 'luck']},
+	{'name': 'Sorcerer', 'set': 'Mental', 'branch': 'Status', 'primary': 'wisdom', 'secondary': 'intelligence', 'average': ['charisma', 'luck']},
+
+	{'name': 'Trainer', 'set': 'Mental', 'branch': 'Familiar', 'primary': 'charisma', 'secondary': 'luck', 'average': ['intelligence', 'wisdom']},
+	{'name': 'Gambler', 'set': 'Mental', 'branch': 'Randomness', 'primary': 'luck', 'secondary': 'charisma', 'average': ['intelligence', 'wisdom']},
+
+	{'name': 'Random', 'primary': 'random'},
+	{'name': 'Manual', 'primary': 'manual'},
+];
+var statuses = {
+	'0':
+	{'name': 'Comatose', 'desc': 'HP reached zero and this unit is forced to sleep.',
+	'type': 'physical', 'value': -1, 'duration': 1440, 'sleep': true,
+	'effect': {'set': '', 'target': '', 'strength': 1}
+	},
+	'1':
+	{'name': 'Full', 'desc': 'HP regeneration increased.',
+	'type': 'physical', 'value': 1, 'duration': 5,
+	'effect': {'set': '', 'target': '', 'strength': 0}
+	},
+	'2':
+	{'name': 'Sad', 'desc': 'Stat regeneration halved.',
+	'type': 'mental', 'value': -1, 'duration': 10,
+	'effect': {'set': 'none', 'target': 'none', 'strength': 0}
+	},
+	'3':
+	{'name': 'Happy', 'desc': 'Stat regeneration increased.',
+	'type': 'mental', 'value': 1, 'duration': 5,
+	'effect': {'set': 'none', 'target': 'none', 'strength': 0}
+	},
+	'4':
+	{'name': 'Hungry', 'desc': 'Natural HP recovery disabled.',
+	'type': 'physical', 'value': -1, 'duration': 10,
+	'effect': {'set': 'none', 'target': 'none', 'strength': 0}
+	},
+	'5':
+	{'name': 'Tired', 'desc': 'All stats halved.',
+	'type': 'physical', 'value': -1, 'duration': 10,
+	'effect': {'set': 'none', 'target': 'none', 'strength': 0}
+	},
+	'6':
+	{'name': 'Starving', 'desc': 'HP regeneration disabled.',
+	'type': 'physical', 'value': -1, 'duration': 10,
+	'effect': {'set': 'none', 'target': 'none', 'strength': 0}
+	},
+	'7':
+	{'name': 'Wet', 'desc': 'Reduces endurance, watch out for colds.',
+	'type': 'physical', 'value': -1, 'duration': 15, 'negates': 10,
+	'effect': {'set': 'none', 'target': 'none', 'strength': 0}
+	},
+	'8':
+	{'name': 'Chill', 'desc': 'Reduces dexterity and agility.',
+	'type': 'physical', 'value': -1, 'duration': 15, 'negates': 11,
+	'effect': {'set': 'none', 'target': 'none', 'strength': 0}
+	},
+	'9':
+	{'name': 'Cold', 'desc': 'Common virus. Reduces strength and agility and makes the user tired.',
+	'type': 'physical', 'value': -1, 'duration': 15,
+	'effect': {'set': '', 'target': '', 'strength': 0}
+	},
+	'10':
+	{'name': 'On Fire', 'desc': 'Flames engulf this unit, cured by stepping onto water or over time.',
+	'type': 'physical', 'value': -1, 'duration': 15,
+	'effect': {'set': 'decrease', 'target': 'hp', 'strength': 5}
+	},
+	'11':
+	{'name': 'Hot', 'desc': 'This unit sweats constantly, increasing hunger.',
+	'type': 'physical', 'value': -1, 'duration': 15, 'negates': 8,
+	'effect': {'set': '', 'target': '', 'strength': 0}
+	},
+	'12':
+	{'name': 'Poison', 'desc': 'This unit is poisoned, causing damage over time.',
+	'type': 'physical', 'value': -1, 'duration': 15,
+	'effect': {'set': 'decrease', 'target': 'hp', 'strength': 4}
+	},
+	'13':
+	{'name': 'Rested', 'desc': 'All stats x1.5',
+	'type': 'physical', 'value': 1, 'duration': 5,
+	'effect': {'set': 'none', 'target': 'none', 'strength': 1}
+	},
+	'14':
+	{'name': 'Sleeping', 'desc': 'Energy regenerates over time.',
+	'type': 'mental', 'value': 0, 'duration': 360, 'stop': 'energy', 'sleep': true,
+	'effect': {'set': '', 'target': '', 'strength': 0}
+	},
+	'15':
+	{'name': 'Raw Food', 'desc': 'Just ate raw food, that is not good.',
+	'type': 'physical', 'value': -1, 'duration': 15,
+	'effect': {'set': '', 'target': '', 'strength': 0}
+	},
 };
-var jobs = [
-	//Basic Jobs
-	{'type': 'com', 'name': 'Scientist', 'requires': [], 'tasks': ['research']},
+function toLog(text) {
+	debug_interns.innerHTML += '['+Date.now().toString(36).toUpperCase()+']'+text+'<br>';
 
-	{'type': 'fir', 'name': 'Fisher', 'requires': [0], 'tasks': ['fish']},
-	{'type': 'com', 'name': 'Shaman', 'requires': [0], 'tasks': ['heal']},
-	{'type': 'com', 'name': 'Gatherer', 'requires': [0], 'tasks': ['pickup']},
-	{'type': 'com', 'name': 'Builder', 'requires': [0], 'tasks': ['build', 'clean']},
-	{'type': 'fir', 'name': 'Rancher', 'requires': [1]},
-	{'type': 'fir', 'name': 'Farmer', 'requires': [2]},
-	{'type': 'fir', 'name': 'Forester', 'requires': [4]},
-	{'type': 'fir', 'name': 'Miner', 'requires': [4]},
-	{'type': 'sec', 'name': 'Cooker', 'requires': [3]},
-	{'type': 'sec', 'name': 'Baker', 'requires': [5]},
-	{'type': 'sec', 'name': 'Butcher', 'requires': [4]},
-	{'type': 'sec', 'name': 'Woodworker', 'requires': [4]},
-	{'type': 'sec', 'name': 'Smelter', 'requires': [5]},
-	{'type': 'sec', 'name': 'Blacksmith', 'requires': [5]},
-	{'type': 'thi', 'name': 'Shopkeeper', 'requires': [6]},
-	{'type': 'fir', 'name': 'Hunter', 'requires': [7]},
-	{'type': 'com', 'name': 'Soldier', 'requires': [8]},
-]
-
+	debug_interns.scrollTop = debug_interns.scrollHeight;
+}
 function init() {
 	var ver = changes().latestVersion;
 	document.title = 'Everyworld '+ver;
-	addToLog('Changing title to '+document.title);
+	toLog('Changing title to '+document.title);
 
-	addToLog('Generating spritesheet');
+	toLog('Generating spritesheet');
 	sprites = new Spritesheet('tiles', []);
 	for (var t in tiles) {
 		var x = 0, y = 0;
@@ -300,10 +411,12 @@ function init() {
 		var y = (tile.tpos && tile.tpos[1]) ? tile.tpos[1] : 0;
 
 		sprites.positions[t] = [x, y];
-		addToLog('Sprite for '+tile.sprite+' added at x:'+x+' y:'+y);
 	}
+	toLog('Generating iconsheet');
+	icons = new Spritesheet('icons', []);
 
-	addToLog('Getting context of layers');
+
+	toLog('Getting context of layers');
 	layers = {
 		'bottom': getc('layer_bottom'),
 		'wall': getc('layer_wall'),
@@ -313,8 +426,17 @@ function init() {
 		'entities': getc('layer_entities'),
 	}
 
+	toLog('Making floors/walls dictionary');
+	for (var t in tiles) {
+		if (-t == NaN) continue;
+		var tile = tiles[t];
+		if (tile.floor) tiles.floors.push(t);
+		if (!tile.floor) tiles.walls.push(t);
+	}
+	toLog('Found '+tiles.floors.length+' floors and '+tiles.walls.length+' walls.');
+
 	contbutton.style.opacity = (everyworld) ? 1 : 0.5;
-	addToLog('everyworld is '+typeof everyworld);
+	toLog('everyworld is '+typeof everyworld);
 }
 function getc(id) {
 	return doc(id).getContext('2d');
@@ -328,15 +450,18 @@ function closer(arr, value) {
 function Spritesheet(type, positions){
 	var img = new Image();
 	img.src = 'img_td/tiles.png';
+	if (type == 'icons') img.src = 'img_td/icons.png';
 
 	this.img = img;
 	this.width = twidth
 	this.height = theight * 2;
+	if (type == 'icons') this.height = twidth;
 	this.positions = positions;
 }
 Spritesheet.prototype = {
-	draw: function(wherecontext, id, x, y){
-		var pos = this.positions[id];
+	draw: function(wherecontext, id, x, y, posmode){
+		if (!posmode) var pos = this.positions[id];
+		if (posmode) var pos = id;
 		wherecontext.drawImage(
 			this.img,
 			(pos[0] * twidth),
@@ -349,29 +474,224 @@ Spritesheet.prototype = {
 			);
 	}
 };
+function pad(string, size=1) {
+	string = string.toString();
+	while (string.length < size) string = '0'+string;
+	return string;
+}
+function randomID() {
+	var d = b62e(Date.now()) + pad(b62e(rand(0,Math.pow(62,3))),3);
+	return d;
+}
 function drawSprite(layer, spriteID, x, y) {
 	sprites.draw(layers[layer], spriteID, x, y);
 }
-function drawSpriteMap(x, y) {
+function drawIcon(layer, iconPos, x, y) {
+	icons.draw(layers[layer], iconPos, x, y, true);
+}
+function changeMinimapZoom() {
+	everyworld.config.minimapSize--;
+	if (!everyworld.config.minimapSize) everyworld.config.minimapSize = 4;
+	drawMinimap();
+}
+function displayStatus(close) {
+	lb_status.style.display = (close) ? 'none' : 'inline-block';
+	lb_status.innerHTML = drawStatus();
+}
+function drawStatus() {
+	var l = '<table class="statTable" style="width: 100%">';
+	l += '<tr><th>Name</th><th colspan="5">Description</th><th>Turns</th></tr>';
+	for (var s in player.status) {
+		var dur = player.status[s];
+		if (dur > 0) {
+			var value = statuses[s].value;
+			var cl = (value < 0) ? 'danger2' : '';
+			if (value > 0) cl = 'safe';
+			l += '<tr><td class="'+cl+'">'+statuses[s].name+'</td><td colspan="5">'+statuses[s].desc+'</td><td>'+dur+'</td></tr>';
+		}
+	}
+	l += '</table>';
+	return l;
+}
+function increaseStat(stat) {
+	if (player.statPoints) {
+		var oldhp = getMaxStat(player, 'hp');
+		var oldmp = getMaxStat(player, 'mp');
+		player.statPoints--;
+		player[stat]++;
+		var diffhp = getMaxStat(player, 'hp') - oldhp;
+		var diffmp = getMaxStat(player, 'mp') - oldmp;
+		if (diffhp) heal(player, 'hp', diffhp);
+		if (diffmp) heal(player, 'mp', diffmp);
+		updateStat(stat);
+	}
+}
+function updateStat(what) {
+	var wheres = {
+		'strength': 'stat_str', 'endurance': 'stat_end', 'dexterity': 'stat_dex', 'agility': 'stat_agi',
+		'charisma': 'stat_cha', 'luck': 'stat_luc', 'intelligence': 'stat_int', 'wisdom': 'stat_wis',
+	}
+	var whered = {
+		'hp': ['stat_hp', [0, 120]],
+		'mp': ['stat_mp', [200, 200]],
+		'hunger': ['stat_hun', [0, 0]],
+		'energy': ['stat_ene', [180, 180]],
+		'battery': ['stat_bat', [60, 60]],
+	}
+	if (wheres[what]) {
+		doc(wheres[what]).innerHTML = getMaxStat(player, what);
+		var sp = player.statPoints;
+		doc('inc_'+wheres[what]).className = (sp) ? 'upgradeable noselect' : 'non_upgradeable noselect';
+	}
+	if (whered[what]) {
+		var ww = whered[what];
+		doc(ww[0]).innerHTML = bar(player[what], getMaxStat(player, what), ww[1][0], ww[1][1]);
+	}
+}
+function drawStats() {
+	if (statable.style.opacity != 1) statable.style.opacity = 1;
+	lb_stats.style.backgroundColor = (player.gender == 0) ? 'hsl(180,50%,50%)' : 'hsl(300,50%,50%)';
+	stat_name.innerHTML = player.name+' '+player.family;
+
+	stat_money.innerHTML = shortNum(player.money)+' $';
+
+	stat_level.innerHTML = player.level;
+
+	stat_stp.innerHTML = player.statPoints;
+
+	for (var s in fixstats) updateStat(fixstats[s]);
+	for (var d in dynstats) updateStat(dynstats[d]);
+
+	stat_exp.innerHTML = bar(player.xp, expForNextLevel(player.level), 30);
+
+	lb_status.innerHTML = drawStatus();
+}
+function drawMinimap() {
+	var ctx = getc('minimap');
+
+	var tsize = everyworld.config.minimapSize || 4;
+	var range = Math.floor(144/tsize/2);
+
+	var minx = pointer.x - range;
+	var maxx = pointer.x + range;
+	var miny = pointer.y - range;
+	var maxy = pointer.y + range;
+
+	for (var x = minx; x < maxx; x++) {
+		for (var y = miny; y < maxy; y++) {
+			var relx = x - pointer.x + range;
+			var rely = y - pointer.y + range;
+
+			var t = whatsHere(everyworld.walls, x, y) || whatsHere(everyworld.map, x, y);
+
+			var color = (tiles[t]) ? tiles[t].color : '#000';
+			ctx.fillStyle = color;
+			if (pointer.x == x && pointer.y == y) ctx.fillStyle = '#000';
+			ctx.fillRect(relx*tsize, rely*tsize, tsize, tsize);
+		}
+	}
+}
+function drawASCIITile(layer, id, x, y) {
+	var isBottom = (layer == 'bottom');
+	layer = layers[layer];
+	var asc = tiles[id].ascii;
+	var color = tiles[id].color;
+
+	var ax = (x * twidth);
+	var ay = (y * twidth);
+
+	var dx = ax + 6;
+	var dy = ay + 18;
+
+	layer.font = '24px monospace';
+	if (isBottom) {
+		layer.fillStyle = color;
+		layer.fillRect(ax, ay, twidth, twidth);
+		layer.fillStyle = '#fff';
+		layer.fillText(asc, dx, dy);
+	}
+	if (!isBottom) {
+		layer.fillStyle = color;
+		layer.fillText(asc, dx, dy);
+	}
+}
+function isCharaAuto(chara) {
+	if (chara.status[0]) return 'sleep'; //Character is comatose. Unable to move.
+	if (chara.status[14]) return 'sleep'; //Character is sleeping.
+}
+function drawEntityMap() {
+	var lay = layers.entities;
+	lay.clearRect(0,0,canvaswidth,canvasheight);
+	for (var ne in nearEntities) {
+		var chara = nearEntities[ne];
+		drawCharacter(lay, chara);
+	}
+	drawCharacter(lay, player);
+	if (player.action) drawCharacter(lay, {'x': player.action.x, 'y': player.action.y, 'type': 'cursor'});
+}
+function blink() {
+	return Math.floor(Date.now() / entityMapUpdate) % 2;
+}
+function drawCharacter(layer, chara) {
+	var colors = {
+		'player': '#00f',
+		'monster': '#f00',
+		'animal': '#0f0',
+		'cursor': 'rgba(0,0,0,0.8)'
+	}
+	var blinkcolors = {
+		'player': 'rgba(0,0,255,0.5)',
+		'monster': 'rgba(255,0,0,0.5)',
+		'animal': 'rgba(0,255,0,0.5)',
+		'cursor': 'rgba(0,0,0,0.2)',
+	}
+	var ascii = {
+		'player': 'P',
+		'monster': 'm',
+		'animal': 'a',
+		'cursor': '*'
+	}
+	var ax = (chara.x - camera.x) * twidth;
+	var ay = (chara.y - camera.y) * twidth;
+
+	if (asciimode || !asciimode) { //TODO placeholder for non-ascii mode character rendering
+		layer.font = '24px monospace';
+		layer.fillStyle = colors[chara.type];
+		if (blink()) layer.fillStyle = blinkcolors[chara.type];
+		layer.fillText(ascii[chara.type], ax+(twidth/3), ay+(twidth*1));
+	}
+
+	tilebar(layer, ax, ay, chara.hp, getMaxStat(chara, 'hp'));
+}
+function drawSpriteMap(redraw, ascii) {
+	ascii = asciimode;
 	var map = everyworld.map;
 	var walls = everyworld.walls;
 
-	for (var l in layers) {
-		layers[l].clearRect(0, 0, 640, 480);
+	if (redraw) for (var l in layers) {
+		layers[l].clearRect(0, 0, 624, 432);
 	}
-	for (var y = camera.y-range.y; y < camera.y+range.y; y++) {
-		for (var x = camera.x-range.x; x < camera.x+range.x; x++) {
+	layers.overlay.clearRect(0,0,624,432)
+	for (var y = camera.y; y < camera.y+range.y; y++) {
+		for (var x = camera.x; x < camera.x+range.x; x++) {
 
-			var absx = x - camera.x + Math.floor(range.x / 2);
-			var absy = y - camera.y + Math.floor(range.y / 2);
+			var absx = x - camera.x;
+			var absy = y - camera.y;
 
-			var id = (map[y] && map[y][x] != undefined) ? map[y][x] : 57;
-			drawSprite('bottom', id, absx, absy);
+			if (redraw) {
+				var id = (map[y] && map[y][x] != undefined) ? map[y][x] : 57;
+				if (!ascii) drawSprite('bottom', id, absx, absy);
+				if (ascii) drawASCIITile('bottom', id, absx, absy);
 
-			var id = (walls[y] && walls[y][x]) ? walls[y][x] : 57;
-			drawSprite('wall', id, absx, (absy-1));
+				var id = (walls[y] && walls[y][x]) ? walls[y][x] : 57;
+				if (!ascii) drawSprite('wall', id, absx, (absy-1));
+				if (ascii) drawASCIITile('wall', id, absx, absy);
+			}
 		}
 	}
+	drawLightning();
+	drawMinimap();
+	if (redraw) timeTintCanvas();
 }
 function getOre(type) {
 	var ores = [
@@ -394,21 +714,64 @@ function getOre(type) {
 		if (r <= sum) return arr[o];
 	}
 }
-function newMap(height, width) {
+function shuffle(array) {
+    let counter = array.length;
+
+    // While there are elements in the array
+    while (counter > 0) {
+        // Pick a random index
+        let index = Math.floor(Math.random() * counter);
+
+        // Decrease counter by 1
+        counter--;
+
+        // And swap the last element with it
+        let temp = array[counter];
+        array[counter] = array[index];
+        array[index] = temp;
+    }
+
+    return array;
+}
+function getMapChunk(x, y) {
+	var sw = Math.floor(x/Math.floor(mapw/3));
+	var sh = Math.floor(y/Math.floor(maph/3));
+	return {'x': sw, 'y': sh};
+}
+function getMapSector(x, y) {
+	var sw = Math.floor(x/range.x);
+	var sh = Math.floor(y/range.y);
+	return {'x': sw, 'y': sh};
+}
+function newMap(width, height) {
 	var noise = new SimplexNoise();
+	var noise2 = new SimplexNoise();
 	var map = [];
 	var walls = [];
 	var heightMap = [];
-	var temperatureMap = [];
+	var temperatureMap = shuffle([0,1,2]);
+	var humidityMap = shuffle([0,1,2]);
+
+	biomeMap = [];
+	for (var y in temperatureMap) {
+		biomeMap[y] = [];
+		for (var x in humidityMap) {
+			biomeMap[y][x] = getBiome(temperatureMap[y], humidityMap[x]).temperature;
+		}
+	}
+
 	for (var h = 0; h < height; h++) {
 		var li = [];
-		var tli = [];
 
 		var mp = [];
 		var wp = [];
 		for (var w = 0; w < width; w++) {
 			var rw = parseInt(w) * (terrainGenerator.noise);
 			var rh = parseInt(h) * (terrainGenerator.noise);
+
+			var mul = 0.01;
+
+			var nt = noise.noise(parseInt(w) * mul, parseInt(h) * mul);
 
 			var n1 = noise.noise(rw, rh);
 			var n2 = noise.noise(rw * 2, rh * 2) / 2;
@@ -419,11 +782,17 @@ function newMap(height, width) {
 			if (n < -1) n = -1;
 			if (n > 0.99) n = 0.99;
 			li.push(n);
-			var temp = noise.noise(rw/4, rh/4);
 
-			tli.push(temp);
+			var biom = biomeHere(w, h, 1);
 
-			var biom = getBiome(temp).biome;
+			/*
+			var max = terrainGenerator.biomes.length - 1;
+			var temp = Math.floor((nt + 1) * max);
+			if (temp > max) temp = max;
+			if (temp < 0) temp = 0;
+			var biomid = temp;
+			biom = terrainGenerator.biomes[biomid];
+			*/
 
 			mp.push(tileByHeight(biom, n));
 			wp.push(tileByHeight(biom, n, 'wall'));
@@ -433,10 +802,9 @@ function newMap(height, width) {
 
 
 		heightMap.push(li);
-		temperatureMap.push(tli);
 	}
 
-	return {'height': heightMap, 'map': map, 'walls': walls, 'temperature': temperatureMap}
+	return {'height': heightMap, 'map': map, 'walls': walls, 'biomeMap': biomeMap}
 }
 function tileByHeight(biom, height, wallmode) {
 	height++;
@@ -451,160 +819,917 @@ function tileByHeight(biom, height, wallmode) {
 		if (!tile) {
 			var feat = tiles[ftile].features;
 			if (feat) feat = read(feat);
-			if (feat && rand(1,10) == 1) tile = feat;
+			var fchance = tiles[ftile].fchance || 10;
+			if (feat && rand(1,fchance) == 1) tile = feat;
 		}
 	}
 	return tile;
 }
 function Task(what, where, input, output) {
-	
+
+}
+function snap(num, max) {
+	return Math.floor(num / max) * max;
 }
 function newWorld() {
-	var ww = 50;
-	var hh = 50;
+	var ww = mapw;
+	var hh = maph;
 	var map = newMap(ww, hh);
 	if (!everyworld) everyworld = {};
+	everyworld.config = {};
 	everyworld.height = map.height;
 	everyworld.map = map.map;
 	everyworld.walls = map.walls;
-	everyworld.temperature = map.temperature;
+	everyworld.biomeMap = map.biomeMap;
 	everyworld.tech = [true];
 	everyworld.meta = [];
+	everyworld.characters = [new Character('player')];
+	everyworld.sectors = {
+		'x': (ww/range.x),
+		'y': (hh/range.y),
+		'lastSpawn': [],
+	}
+	for (var sy = 0; sy < everyworld.sectors.y; sy++) {
+		everyworld.sectors.lastSpawn[sy] = [];
+	}
+	player = everyworld.characters[0];
 
+	ci_name.value = player.name;
+	ci_family.value = player.family;
+
+	everyworld.minute = 59;
+	everyworld.hour = parseInt(wi_hour.value) - 1;
+	timePass();
+
+}
+function itemInfo(id) {
+	var ii = '';
+	if (id == undefined) {
+		lb_info.style.display = 'none';
+		return;
+	}
+	lb_info.style.display = 'inline-block';
+
+	var item = items[id];
+	ii += '<b style="font-size: 13px" class="boldy">'+item.name+'</b><br>';
+	ii += item.desc;
+
+	lb_info.innerHTML = ii;
+}
+function drawItem(id, item) {
+	var it = items[id];
+	var bpos = (-(it.tpos[0]*twidth))+'px '+(-(it.tpos[1]*twidth))+'px';
+	var img = '<div class="icon" onclick="useItem('+id+')" onmouseover="itemInfo('+id+')" onmouseleave="itemInfo()" style="padding: 8px; background-position: '+bpos+'; position: relative"><left style="position: absolute; bottom: 0px">'+item.length+'</left></div>';
+
+	return img;
+}
+function placeItem(id) {
+	var place = items[id].place;
+	//Get coordinates of player pointer
+	var ax = player.action.x;
+	var ay = player.action.y;
+	var wf = whatsFront(ax, ay);
+	if (wf.where == 'wall') return false; //Can't place anything if there is something in the wall layer.
+	if (wf.where == 'floor') {
+		var fid = wf.id; //Get ID of item on floor
+		var ftile = tiles[fid]; //Get tile object of item on floor
+		if (ftile.isHole) {
+			//If it is a hole, use the place.floor method
+			if (place.floor == undefined) return false; //The item does not have a place.floor.
+			changeTile(ax, ay, place.floor, true); //Change tile there to the one specified by this item.
+			return true;
+
+		}
+		else {
+			if (place.wall == undefined) return false;
+			changeTile(ax, ay, place.wall);
+			return true;
+		}
+	}
+	return false;
+}
+function useItem(id) {
+	var itemz = player.inventory[id];
+	var amt = itemz.length;
+	var consume = false;
+	if (amt > 0) {
+		var item = items[id];
+		if (item.consumable) consume = true;
+		if (item.food) {
+			for (var d in dynstats) {
+				var stat = dynstats[d];
+				heal(player, stat, item[stat]);
+			}
+			updateStat(stat);
+		}
+		if (item.place) {
+			if (placeItem(id)) consume = true;
+		}
+		if (consume) addItem(player, id, true);
+	}
+
+}
+function menuWindow(what) {
+	var mw = '<border onclick="changeMenuSize()">'+what.toUpperCase()+'</border>';
+	if (what == 'inventory') {
+		for (var i in player.inventory) {
+			if (player.inventory[i].length > 0) mw += drawItem(i, player.inventory[i]);
+		}
+	}
+
+	em_menu.innerHTML = mw;
+	currentMenu = what;
+}
+function changeMenuSize() {
+	bigmenu = !bigmenu;
+	if (!bigmenu) {
+		em_menu.style.top = '432px';
+		em_menu.style.height = '144px';
+	}
+	if (bigmenu) {
+		em_menu.style.top = '0px';
+		em_menu.style.height = '575px';
+	}
+}
+function preLoadWorld() {
+	layer_bottom.style.display = 'inline-block';
+	layer_wall.style.display = 'inline-block';
+	layer_overlay.style.display = 'inline-block';
+	layer_entities.style.display = 'inline-block';
+
+	lb_menu.style.display = 'inline-block';
+	minimap.style.display = 'inline-block';
 
 	loadWorld();
-	var bs = bestSpawn(camera.x, camera.y);
-	for (var x = 0; x < 10; x++) spawnHuman(bs.x, bs.y);
-	addZone(0, {'x': bs.x-1, 'y': bs.y-1}, {'x': bs.x+2, 'y': bs.y+2});
 
-	ticker();
+	var bs = bestSpawn(camera.x, camera.y);
+	pointer.x = bs.x;
+	pointer.y = bs.y;
+	player.x = bs.x;
+	player.y = bs.y;
+	fixCamera(pointer);
+
+	drawSpriteMap(1, asciimode);
+	setInterval(drawEntityMap, entityMapUpdate);
+	setInterval(autoPlayer, 100);
+	drawStats();
+	everyworld.ready = true;
 }
 function cleanTile(x, y) {
 
-}
-function tickTile(x, y, abs) {
-	var absx = camera.x - Math.floor(range.x / 2) + x;
-	var absy = camera.y - Math.floor(range.y / 2) + y;
-
-	if (abs) {
-		absx = x;
-		absy = y;
-	}
-
-	var floor = whatsHere(everyworld.map, absx, absy);
-	var wall = whatsHere(everyworld.walls, absx, absy);
-	var meta = changeMeta(absx, absy, 'get');
-
-	var iswater = (tiles[floor].set == 'water')
-
-	if (iswater) {
-		var fish = meta.fish;
-		if (!fish) fish = 0;
-		if (rand(1,100) == 1) changeMeta(absx, absy, 'fish', fish+1);
-	}
-
-	//Zoned changes
-	if (meta.zone != undefined) {
-
-	}
-	
-
-	//Spreading tiles
-	var rside = rand(0,3);
-	var dir = directions[rside];
-	var rx = x+dir.x;
-	var ry = y+dir.y;
-
-	var tx = absx+dir.x;
-	var ty = absy+dir.y;
-
-	var therefloor = whatsHere(everyworld.map, tx, ty);
-	var therewall = whatsHere(everyworld.walls, tx, ty);
-	var theremeta = changeMeta(tx, ty, 'get');
-	if (rx > 0 && ry > 0 && rx < range.x && ry < range.y && rand(0,1) && !theremeta.progress) {
-		var therewater = (tiles[therefloor].set == 'water');
-
-		if (meta.fish > 0 && therewater) {
-			var hf = meta.fish || 0;
-			var tf = theremeta.fish || 0;
-			changeMeta(absx, absy, 'fish', hf-1);
-			changeMeta(tx, ty, 'fish', tf+1);
-		}
-
-		if (floor == '9' && therewater) {
-			everyworld.map[ty][tx] = 9;
-		}
-		if (iswater && therefloor == '9') {
-			everyworld.map[ty][tx] = 0;
-		}
-		if (floor == '9' && meta.fish > 0) {
-			meta.fish--;
-		}
-
-		setTimeout(function() {
-			tickTile(rx, ry, abs);
-		}, 100);
-	}
-	if (abs) return;
-
-	updateEWMap(x, y);
-	updateShadow(x, y);
 }
 function Zone(type, startx, starty, endx, endy) {
 	this.type = type;
 	this.start = {'x': startx, 'y': starty};
 	this.end = {'x': endx, 'y': endy};
 }
-function timePass() {
+function timePass(turns) {
+	turns = turns || 1;
+	var lastime = whatTimeIsIt();
 	if (everyworld.minute == undefined) everyworld.minute = 0;
 	if (everyworld.hour == undefined) everyworld.hour = 6;
+	if (everyworld.day == undefined) everyworld.day = 1;
 
-	everyworld.minute += 1;
+	everyworld.minute += turns;
 	if (everyworld.minute >= 60) {
 		everyworld.minute = 0;
 		everyworld.hour++;
 		if (everyworld.hour >= 24) {
 			everyworld.hour = 0;
+			everyworld.day++;
 		}
 	}
 
-	updateShadows();
+	stat_clock.innerHTML = pad(everyworld.hour,2)+':'+pad(everyworld.minute,2)+' d'+everyworld.day;
+	var colors = {
+		'day':   'rgb(96, 160, 255)',
+		'dusk':  'rgb(192, 144, 96)',
+		'night': 'rgb(0, 32, 64)',
+		'dawn':  'rgb(192, 224, 255)'
+	}
+	var time = whatTimeIsIt();
+	stat_clock.style.color = (time == 'night') ? '#fff' : '#000';
+	stat_clock.style.backgroundColor = colors[time];
+	if (lastime != time) {
+		drawSpriteMap(1, asciimode);
+		timeTintCanvas();
+	}
 }
-function updateCamera() {
-	positionAll();
-	drawEWMap();
-	updateShadows();
+function whatTimeIsIt() {
+	if (everyworld.hour >= 8 && everyworld.hour < 18) return 'day';
+	if (everyworld.hour >= 18 && everyworld.hour < 20) return 'dusk';
+	if (everyworld.hour >= 20 || everyworld.hour < 6) return 'night';
+	if (everyworld.hour >= 6 && everyworld.hour < 8) return 'dawn';
 }
-function moveCamera(direction) {
-	var d = directions[direction];
+function thunder() {
+	setTimeout(function() {timeTintCanvas(5)}, 60);
+	setTimeout(function() {timeTintCanvas(5)}, 120);
+	setTimeout(function() {timeTintCanvas(5)}, 180);
+	setTimeout(function() {drawSpriteMap(1)}, 240);
+}
+function drugMode(force) {
+	timeTintCanvas(0, force);
+	setInterval(function() {
+		timeTintCanvas(0, force);
+	}, 100);
+}
+function timeTintCanvas(thunder, drugs) {
+	var overlays = {
+		'day':   [1,1,1],
+		'dusk':  [1.75,0.8,0.5],
+		'night': [0,0.5,0.5],
+		'dawn':  [0.,1.2,1.2],
+	};
 
-	camera.x += d.x;
-	camera.y += d.y;
+	var time = whatTimeIsIt();
+	if (time == 'day') return;
+
+	var over = overlays[time];
+	if (thunder) over = [thunder,thunder,thunder];
+	if (drugs) over = overlays.day;
+	for (var c in layers) {
+		var ctx = layers[c];
+		var imageData = ctx.getImageData(0,0,canvaswidth,canvasheight);
+		var data = imageData.data;
+
+		var w = imageData.width;
+		var h = imageData.height;
+
+		for (var i = 0; i < data.length; i += 4) {
+			var r = (data[i] + (data[i]   * over[0]))/2;
+			if (r > 255) r = 255;
+			if (r < 0) r = 0;
+			var g = (data[i+1] + (data[i+1]   * over[1]))/2;
+			if (g > 255) g = 255;
+			if (g < 0) g = 0;
+			var b = (data[i+2] + (data[i+2]   * over[2]))/2;
+			if (b > 255) b = 255;
+			if (b < 0) b = 0;
+
+			data[i] = r;
+			data[i+1] = g;
+			data[i+2] = b;
+
+			if (drugs) {
+				if (drugs == 1 && rand(1,10) == 1) {
+					data[i] = data[i+4];
+					data[i+1] = data[i+5];
+					data[i+2] = data[i+6];
+					data[i+3] = data[i+7];
+				}
+				if (drugs == 2 && rand(1,10) == 1) {
+					data[i] += rand(-32, 32);
+					data[i+1] += rand(-32, 32);
+					data[i+2] += rand(-32, 32);
+				}
+				if (drugs == 3 && rand(1,10) == 1) {
+					data[i] = red(r, g, b);
+					data[i+1] = red(r, g, b);
+					data[i+2] = red(r, g, b);
+				}
+				if (drugs == 4 && rand(0,1)) {
+					data[i] = data[i+4];
+					data[i+1] = data[i+5+5];
+					data[i+2] = data[i+6+6+6];
+					data[i+3] = data[i+7+7+7+7];
+				}
+				if (drugs == 5 && rand(1,10) == 1) {
+					if (rand(0,1)) data[i] = data[i+4];
+					if (rand(0,1)) data[i+1] = data[i+5];
+					if (rand(0,1)) data[i+2] = data[i+6];
+				}
+			}
+
+			for (var dt = 0; dt < 3; dt++) {
+				if (data[i+dt] < 0) data[i+dt] = 0;
+				if (data[i+dt] > 255) data[i+dt] = 255;
+			}
+		}
+		ctx.putImageData(imageData,0,0);
+	}
+}
+function drawLightning() {
+	var ctx = layers.overlay;
+	ctx.clearRect(0,0,canvaswidth,canvasheight);
+
+	for (var y = camera.y; y < camera.y+range.y; y++) {
+		for (var x = camera.x; x < camera.x+range.x; x++) {
+			var absx = x - camera.x;
+			var absy = y - camera.y;
+
+			var px = absx*twidth;
+			var py = absy*twidth;
+			var meta = changeMeta(x, y, 'get');
+			if (meta.hp && meta.hp != 100) {
+				tilebar(ctx, px, py, meta.hp, 100);
+			}
+			if (meta.items && meta.items.length > 0) {
+				for (var i in meta.items) {
+					var item = items[meta.items[i]];
+					drawIcon('overlay', item.tpos, absx, absy);
+				}
+			}
+		}
+	}
+}
+function tilebar(ctx, x, y, min, max) {
+	var p = Math.ceil((min/max) * twidth);
+	var mp = twidth-p;
+
+	ctx.fillStyle = '#0f0';
+	ctx.fillRect(x, y, p, 3);
+	ctx.fillStyle = '#f00';
+	ctx.fillRect(x+p, y, mp, 3);
+}
+function isVisible(x, y) {
+	if (x >= camera.x && x < (camera.x + range.x)) {
+		if (y >= camera.y && y < (camera.y + range.y)) return true;
+	}
+}
+function fixCamera(coords) {
+	camera.x = snap(coords.x, range.x);
+	camera.y = snap(coords.y, range.y);
+
+	fixEntities();
+}
+function fixEntities() {
+	nearEntities = [];
 
 	for (var c in everyworld.characters) {
 		var chara = everyworld.characters[c];
-		if (chara.x > camera.x - range.x && chara.x < camera.x + range.x &&
-			chara.y > camera.y - range.y && chara.y < camera.y + range.y) {
-			var i = tickList.indexOf(c);
-			if (i < 0) tickList.push(c);
-		}
-		//chara.lastTick = 0;
+		if (chara == player) continue;
+		if (isVisible(chara.x, chara.y)) nearEntities.push(chara);
 	}
-	updateCamera();
-
-	drawSpriteMap();
 }
-function spawnHuman(x, y) {
-	if (!everyworld.totalpop) everyworld.totalpop = 0;
-	var id = 'H'+everyworld.totalpop;
-	everyworld.totalpop++;
-	var p = new Person(id, 'human');
-	p.x = x;
-	p.y = y;
-	p.job = getRandomJob();
-	p.hobby = getRandomJob();
-	if (!everyworld.characters) everyworld.characters = [];
-	everyworld.characters.push(p);
+function autoPlayer() {
+	var auto = isCharaAuto(player);
+	if (auto) {
+		if (!player.auto) player.auto = 1;
+		tickCharacter(player, player.auto);
+		newTurn(player.auto);
+		player.auto += rand(0,1);
+	}
+	if (!auto) {
+		player.auto = 0;
+	}
+}
+function sleep() {
+	if (player.energy >= 100) return;
+	inflictStatus(player, 14);
+}
+function moveCharacter(chara, direction) {
+	if (direction != undefined) {
+		var d = directions[direction];
+		var there = stepable(pointer.x + d.x, pointer.y + d.y);
+
+		var at = stepable(pointer.x+d.x, pointer.y+d.y, true);
+
+		var move = true;
+
+		if (chara == player) {
+			var move = false;
+			if (player.action && player.action.x == player.x+d.x && player.action.y == player.y+d.y) move = true;
+		}
+
+		if (at) {
+			var enem = everyworld.characters[at];
+			basicAttack(chara, enem);
+		}
+
+		if (there && move) {
+			if (chara == player) {
+				pointer.x += d.x;
+				pointer.y += d.y;
+			}
+			if (!move) return;
+			chara.x += d.x;
+			chara.y += d.y;
+
+			fatigue(chara, 1);
+		}
+
+		if (chara == player) {
+			player.action = {'x': player.x+d.x, 'y': player.y+d.y};
+			if (!move) return;
+		}
+	}
+
+	var whf = whatsHere(everyworld.map, chara.x, chara.y);
+	var st = tiles[whf].status;
+	if (st) inflictStatus(chara, st);
+
+	var meta = changeMeta(chara.x, chara.y, 'get');
+	if (meta.items) {
+		for (var i in meta.items) {
+			addItem(chara, meta.items[i]);
+		}
+		changeMeta(chara.x, chara.y, 'items', []);
+	}
+	tickCharacter(chara);
+}
+function moveCamera(direction) {
+	if (!everyworld || !everyworld.ready || isCharaAuto(player)) return;
+
+	moveCharacter(player, direction);
+
+	if (pointer.x < camera.x || pointer.x >= camera.x+range.x || pointer.y < camera.y || pointer.y >= camera.y+range.y) {
+		fixCamera(pointer);
+
+		drawSpriteMap(1, asciimode);
+	}
+
+	drawLightning();
+	drawMinimap();
+
+	newTurn();
+}
+function addItem(chara, id, del) {
+	if (chara.inventory[id] == undefined) chara.inventory[id] = [];
+	if (!del) chara.inventory[id].push({});
+	if (del) chara.inventory[id].splice(0,1);
+
+	if (currentMenu == 'inventory') menuWindow('inventory');
+}
+function bar(min, max, colormin, colormax) {
+	var p = (min < max) ? (min/max) : 1;
+	var color = colormin;
+	if (colormax) {
+		var m = colormax - colormin;
+		color = colormin + (m * p);
+	}
+	var color = 'hsl('+color+', 100%, 40%)';
+	return '<dynbarh><left class="boldy">'+Math.floor(min)+'</left><dynbar style="background-color: '+color+'; width: '+(p*100)+'%"></dynbar><right class="boldy">'+Math.floor(max)+'</right></dynbarh>';
+}
+function expForNextLevel(level) {
+	return (level) * 10;
+}
+function getMaxStat(chara, stat) {
+	var mod = 1;
+	var fixstats = ['endurance', 'strength', 'dexterity', 'agility', 'intelligence', 'wisdom', 'luck', 'charisma'];
+	var percentstats = ['hunger', 'energy', 'battery'];
+
+	if (chara.status) {
+		if (chara.status[7] && stat == 'endurance') mod *= 0.75;
+		if (chara.status[8]) {
+			if (stat == 'dexterity') mod *= 0.75;
+			if (stat == 'agility') mod *= 0.75;
+		}
+		if (chara.status[9]) {
+			if (stat == 'agility') mod *= 0.5;
+			if (stat == 'strength') mod *= 0.5;
+		}
+	}
+
+	if (fixstats.indexOf(stat) >= 0) {
+		if (chara.status[5]) mod *= 0.5;
+		if (chara.status[13]) mod *= 1.5;
+	}
+	if (percentstats.indexOf(stat) >= 0) return 100;
+	if (stat == 'hp') return Math.ceil(((chara.endurance*2) + chara.strength + chara.hpx) * mod);
+	if (stat == 'mp') return Math.ceil(((chara.intelligence*2) + chara.wisdom + chara.mpx) * mod);
+	return Math.ceil(chara[stat] * mod);
+}
+function heal(chara, stat, amt) {
+	if (!amt) amt = 0;
+	//Hungry: HP regeneration halved.
+	if (stat == 'hp' && chara.status[4] && amt > 0) amt *= 0.5;
+	//Starving: HP regeneration halted.
+	if (stat == 'hp' && chara.status[6] && amt > 0) amt = 0;
+	//Cold: Energy damage increased.
+	if (stat == 'energy' && chara.status[9] && amt < 0) amt *= 1.5;
+	//Hot: Hunger damage increased.
+	if (stat == 'hunger' && chara.status[11] && amt < 0) amt *= 1.5;
+	//Happy: Stat regeneration increased.
+	if (chara.status[3] && amt > 0) amt *= 1.5;
+	//Sad: Stat regeneration decreased.
+	if (chara.status[2] && amt > 0) amt *= 0.5;
+	//Comatose: No stat regeneration (unless energy)
+	if (chara.status[0] && stat != 'energy' && amt > 0) amt = 0;
+	if (stat != 'energy' && stat != 'hunger') amt = Math.ceil(amt);
+	chara[stat] += amt;
+
+	var max = getMaxStat(chara, stat);
+	if (chara[stat] < 0) chara[stat] = 0;
+	if (chara[stat] >= max) chara[stat] = max;
+
+	updateStat(stat);
+}
+function getSleepRecoveryAmt(chara) {
+	var lv = (chara.level >= 3499) ? 3499 : chara.level;
+	return 20 / Math.log10(3500/lv) / 60;
+}
+function tickTile(x, y, wall) {
+	if (!wall) var wh = whatsHere(everyworld.map, x, y);
+	if (wall) var wh = whatsHere(everyworld.walls, x, y);
+	if (!wh) return;
+	var ftile = tiles[wh];
+	if (ftile.spreads) {
+		var rdir = read(directions);
+		var there = {'x': x+rdir.x, 'y': y+rdir.y};
+		var wt = whatsHere(everyworld.map, there.x, there.y);
+		for (var s in ftile.spreads) {
+			if (wt == ftile.spreads[s]) {
+				changeTile(there.x, there.y, wh, !wall);
+			}
+		}
+	}
+	if (ftile.flower) {
+		var rdir = read(directions);
+		var there = {'x': x+rdir.x, 'y': y+rdir.y};
+		var wt = whatsHere(everyworld.walls, there.x, there.y);
+		var fthere = tiles[wt];
+		
+		if (fthere && fthere.flower) {
+			toLog('flower found!');
+			var childs = [wh, wt];
+			if (wh != wt) {
+				toLog('flower breed!');
+				for (var b in ftile.breeds) childs.push(ftile.breeds[b]);
+				for (var b in fthere.breeds) childs.push(fthere.breeds[b]);
+			}
+			var child = read(childs);
+			var rdir = read(directions);
+			var there = {'x': x+rdir.x, 'y': y+rdir.y};
+			var wt = whatsHere(everyworld.walls, there.x, there.y);
+			toLog('spawning '+tiles[child].sprite+' at x:'+there.x+' y:'+there.y);
+			if (wt == undefined) changeTile(there.x, there.y, child);
+		}
+	}
+}
+function tickCharacter(chara, turns) {
+	turns = turns || 1
+	chara.turns += turns;
+
+	//Battery draw
+	if (chara.turns % 10 == 0) heal(chara, 'battery', -1);
+
+	//Tick statuses
+	var value = 0;
+	for (var s in chara.status) {
+		if (chara.status[s] > 0) {
+			var effect = statuses[s].effect;
+			var statuz = statuses[s];
+			var mod = 0;
+			if (effect.set == 'increase') mod = effect.strength * turns;
+			if (effect.set == 'decrease') mod = -(effect.strength * turns);
+			chara.status[s] -= turns;
+			var stop = statuses[s].stop;
+			if (stop && chara[stop] >= getMaxStat(chara, stop)) chara.status[s] = 0;
+			if (chara.status[s] <= 0) {
+				chara.status[s] = 0;
+				if (s == 0) reHeal(chara);
+			}
+			if (statuz.sleep) heal(chara, 'energy', (getSleepRecoveryAmt(chara) * turns));
+
+			var v = statuses[s].value;
+			value += v;
+			if (mod != 0) heal(chara, effect.target, mod);
+		}
+	}
+
+	//Status inflict
+	if (chara.hunger >= 80) inflictStatus(chara, 1);
+	if (chara.hunger <= 25) inflictStatus(chara, 4);
+	if (chara.hunger <= 0) inflictStatus(chara, 6);
+	if (chara.mp <= 0) inflictStatus(chara, 2);
+	var maxmp = getMaxStat(chara, 'mp') * 0.8;
+	if (chara.mp >= maxmp) inflictStatus(chara, 3);
+	if (chara.energy <= 0) inflictStatus(chara, 5);
+	if (chara.energy >= 80) inflictStatus(chara, 13);
+
+	if (chara.hp <= 0) inflictStatus(chara, 0);
+
+	//Natural HP regeneration
+	var nfreq = (chara.status[1]) ? 1 : 4;
+	var hamt = (chara.status[4]) ? 0 : 1;
+	if (chara.turns % nfreq == 0) heal(chara, 'hp', hamt);
+
+	//Natural MP regeneration
+	if (chara.turns % 2 == 0) heal(chara, 'mp', value*turns);
+
+	drawStats();
+}
+function useTile() {
+
+}
+function fatigue(chara, type) {
+	//type 1 = moving, type 2 = acting
+	//moving doubles energy draw, acting doubles hunger draw
+	//energy draw is reduced by high endurance, hunger draw is reduced by high strength
+	var hmul = (type == 1) ? 1 : 2;
+	var hamt = (0.03 + (1/chara.strength)) * hmul;
+	var emul = (type == 1) ? 2 : 1;
+	var eamt = (0.03 + (1/chara.endurance)) * emul;
+
+	//Hunger draw
+	heal(chara, 'hunger', -hamt);
+	//Energy draw
+	heal(chara, 'energy', -eamt);
+}
+function mineTile(floor) {
+	var act = player.action || {'x': player.x, 'y': player.y};
+	var front = whatsFront(act.x, act.y);
+	var tile = tiles[front.id];
+	if (tile.resistance == undefined || !tile.resistance) return;
+	if ((front.where == 'floor' && !floor) || (front.where == 'wall' && floor)) return;
+
+	var meta = front.meta;
+	if (meta.hp == undefined) meta.hp = 100;
+	var force = miningForce(player, front.id);
+	meta.hp -= force;
+	fatigue(player, 2);
+	if (meta.hp <= 0) {
+		var drops = tile.mine || [[]];
+		for (var d in drops) {
+			var drop = drops[d];
+			var did = drop[0];
+			var dchance = drop[1];
+
+			if (rand(1,dchance) == 1) {
+				dropItem(act.x, act.y, did);
+			}
+		}
+		if (front.where == 'wall') {
+			changeTile(act.x, act.y);
+		}
+		if (front.where == 'floor' && tile.hole != undefined) {
+			changeTile(act.x, act.y, tile.hole, 1);
+		}
+		meta.hp = 0;
+		if (front.where == 'wall') meta.hp = undefined;
+	}
+
+	tickCharacter(player);
+	newTurn();
+	drawLightning();
+}
+function changeTile(x, y, newTile, floor) {
+	newTile = (newTile != undefined) ? newTile : undefined;
+	if (!floor) everyworld.walls[y][x] = newTile;
+	if (floor) everyworld.map[y][x] = newTile;
+	drawSpriteMap(1);
+}
+function dropItem(x, y, id) {
+	var meta = changeMeta(x, y, 'get');
+	if (meta.items == undefined) changeMeta(x, y, 'items', []);
+	meta = changeMeta(x, y, 'get');
+	meta.items.push(id);
+}
+function miningForce(chara, tile) {
+	var attack = getMaxStat(chara, 'strength');
+	var defense = tiles[tile].resistance || 1;
+	var d = rand(attack, 2*attack) - defense;
+	if (d < 1) d = 1;
+	return d;
+}
+function whatsFront(x, y) {
+	var whf = whatsHere(everyworld.map, x, y);
+	var whw = whatsHere(everyworld.walls, x, y);
+	var meta = changeMeta(x, y, 'get');
+	if (meta.hp == undefined) changeMeta(x, y, 'hp', 100);
+	meta = changeMeta(x, y, 'get');
+
+	if (whw) return {'id': whw, 'where': 'wall', 'meta': meta};
+	return {'id': whf, 'where': 'floor', 'meta': meta};
+}
+function inflictStatus(chara, id) {
+	var neg = statuses[id].negates;
+	var type = statuses[id].type;
+	var val = statuses[id].value;
+	var duration = statuses[id].duration;
+	var take = true;
+
+	if (type == 'physical' && val < 0 && chara.endurance > duration && rand(0,1)) take = false;
+	if (type == 'mental' && val < 0 && chara.wisdom > duration && rand(0,1)) take = false;
+
+	if (id == 0) {
+		take = true;
+		duration = (getMaxStat(chara, 'hp') + getMaxStat(chara, 'mp')) * chara.level;
+		if (chara.status[0]) take = false;
+	}
+
+	if (take) chara.status[id] = duration;
+	if ((id == 8 && chara.status[7]) || (id == 7 && chara.status[8])) inflictStatus(chara, 9);
+	if (chara.status[neg]) chara.status[neg] = 0;
+};
+function spawnMonsters() {
+	var dir = read(directions);
+	var spawn = {
+		'x': player.x + (dir.x * range.x),
+		'y': player.y + (dir.y * range.y)
+	}
+	if (isVisible(spawn.x, spawn.y)) return;
+
+	var step = stepable(spawn.x, spawn.y);
+	if (!step) return;
+
+	var ms = getMapSector(spawn.x, spawn.y);
+	var ls = getLastSpawn(ms.x, ms.y);
+	if (ls == everyworld.hour) return;
+	everyworld.sectors.lastSpawn[ms.y][ms.x] = everyworld.hour;
+
+	var level = player.level;
+	while (rand(0,1)) level--;
+	if (level < 1) level = 1;
+
+	spawnEntity(spawn.x, spawn.y, level, 'monster');
+}
+function spawnEntity(x, y, level, type) {
+	var c = new Character(type, level);
+	c.x = x;
+	c.y = y;
+	reSpread(c, 8);
+	everyworld.characters.push(c);
+}
+function getLastSpawn(sectorx, sectory) {
+	if (everyworld == undefined || everyworld.sectors == undefined || everyworld.sectors.lastSpawn == undefined || everyworld.sectors.lastSpawn[sectory] == undefined) return 'void';
+	if (!everyworld.sectors.lastSpawn[sectory][sectorx]) everyworld.sectors.lastSpawn[sectory][sectorx] = 0;
+	return everyworld.sectors.lastSpawn[sectory][sectorx];
+}
+function newTurn(turns) {
+	timePass(turns);
+
+	if (whatTimeIsIt() == 'night') spawnMonsters();
+
+	for (var n in nearEntities) {
+		var ent = nearEntities[n];
+		if (!isCharaAuto(ent)) aiMove(ent);
+		tickCharacter(ent);
+	}
+
+	for (var x = 0; x < turns; x++) tickRandomTile();
+}
+function tickRandomTile() {
+	var rx = rand(camera.x, camera.x+range.x);
+	var ry = rand(camera.y, camera.y+range.y);
+	tickTile(rx, ry);
+	tickTile(rx, ry, 1);
+}
+function aiMove(chara) {
+	if (chara == player) return;
+	if (chara.lastTick == everyworld.minute) return;
+	chara.lastTick = everyworld.minute;
+
+	//Move character
+	if (chara.target == undefined) {
+		//If character has no target, the nearest unit that is not from its type is selected
+		var tgt = getNearestTarget(chara);
+		if (tgt) chara.target = tgt;
+	}
+	//Check if there is still a target
+	if (chara.target) {
+		var target = everyworld.characters[chara.target.id];
+		//Target available, check if unit can attack it.
+		if (canAttack(chara, target, 1)) {
+			//Target is inside range!
+			return;
+		}
+		else {
+			//Target out of range, getting closer to target...
+			var bm = bestMove(chara, target);
+			moveCharacter(chara, bm);
+
+			return;
+		}
+	}
+	if (!chara.target) {
+		//No target available, roam randomly
+		moveCharacter(chara, rand(0,7));
+
+		return;
+	}
+}
+function basicAttack(from, to) {
+	var ca = canAttack(from, to, 1);
+	if (!ca) return;
+	var dmg = damageFormula(from, to, 'basic');
+
+	heal(to, 'hp', -dmg);
+
+	if (to.hp <= 0) {
+		heal(to, 'strength', -(dmg/2));
+		from.xp += to.level;
+		if (to != player) {
+			var ix = everyworld.characters.indexOf(to);
+			everyworld.characters.splice(ix, 1);
+			fixEntities();
+		}
+	}
+}
+function damageFormula(from, to, type) {
+	type = type || 'basic';
+	var attack = {
+		'basic': 'strength',
+		'ranged': 'dexterity',
+		'magic': 'intelligence',
+	}
+	var defense = {
+		'basic': 'endurance',
+		'ranged': 'endurance',
+		'magic': 'wisdom',
+	}
+
+	var atk = attack[type];
+	atk = getMaxStat(from, atk);
+	var def = defense[type];
+	def = getMaxStat(to, def);
+
+	var damage = rand(atk, 2*atk) - def;
+	if (damage < 1) damage = 1;
+
+	return damage;
+}
+function bestMove(from, to) {
+	var moves = [];
+	for (var dd in directions) {
+		var dirr = directions[dd];
+		var targ = {'x': from.x+dirr.x, 'y': from.y+dirr.y};
+		if (!stepable(targ.x, targ.y)) continue;
+		moves.push({'direction': dd, 'dist': sdistance(targ, to)});
+	}
+	moves.sort(function(a, b) {
+		return a.dist - b.dist;
+	})
+	if (moves.length <= 0) return rand(0,7);
+	return moves[0].direction;
+}
+function getNearestTarget(from) {
+	var targets = [];
+	for (var c in everyworld.characters) {
+		var char = everyworld.characters[c];
+		if (char.type != from.type) targets.push({'id': c, 'dist': sdistance(char, from)});
+	}
+	targets.sort(function(a, b) {
+		return a.dist - b.dist;
+	});
+	return targets[0];
+}
+function canAttack(from, to, range) {
+	var dist = sdistance(from, to);
+	if (range >= dist) return true;
+}
+function Character(type, level) {
+	this.id = randomID();
+
+	this.type = type;
+
+	this.x = 0;
+	this.y = 0;
+
+	this.turns = 0;
+
+	this.inventory = [];
+
+	this.facing = rand(0,3);
+
+	this.level = level || 1;
+	this.xp = 0;
+	this.statPoints = (this.level * 3 + 32 + 5);
+
+	//Stats: Stats are divided into Physical, Mental, and Social.
+	//Physical stats
+	this.strength = 1
+	this.endurance = 1
+	this.dexterity = 1
+	this.agility = 1
+	//Mental stats
+	this.intelligence = 1
+	this.wisdom = 1
+	//Social stats
+	this.charisma = 1
+	this.luck = 1
+
+	this.hunger = 100;
+	this.energy = 100;
+	this.battery = 100;
+
+	this.hpx = rand(this.level, this.level*6);
+	this.hp = getMaxStat(this, 'hp');
+	this.mpx = rand(this.level, this.level*6);
+	this.mp = getMaxStat(this, 'mp');
+
+	this.status = [];
+
+	this.money = (type == 'player') ? 0 : round(300*Math.random());
+
+	this.gender = rand(0,1);
+
+	randomName(this, this.gender);
+}
+function getRandomName() {
+	randomName(player, player.gender);
+	ci_name.value = player.name;
+	ci_family.value = player.family;
+
+	characterValues();
+}
+function randomName(chara, gender) {
+	var name = '';
+	if (gender == 1) name = getFemaleName();
+	if (gender == 0) name = getMaleName();
+	var name = name.split(' ');
+	chara.name = name[0];
+	chara.family = name[1];
 }
 function isEnabled(tech) {
 	var have = 0;
@@ -622,27 +1747,42 @@ function getRandomJob() {
 	return read(available);
 }
 function bestSpawn(x, y) {
-	startx = x;
-	starty = y;
-	while (!stepable(startx, starty)) {
-		startx += red(-1, 0, 1);
-		starty += red(-1, 0, 1);
-	}
-	return {'x': startx, 'y': starty}
+	var rp = getRandomPosition(1);
+	return {'x': rp.x, 'y': rp.y}
 }
-function stepable(x, y) {
-	if (everyworld.walls && everyworld.walls[y] && everyworld.walls[y][x]) {
-		if (tiles[everyworld.walls[y][x]].block) return false;
+function isAreaClean(x, y) {
+	for (var xx = x-1; xx < x+1; xx++) {
+		for (var yy = y-1; yy < y+1; yy++) if (!stepable(xx, yy)) return false;
 	}
-	if (everyworld.map && everyworld.map[y] && everyworld.map[y][x]) {
-		if (tiles[everyworld.map[y][x]].block) return false;
-	}
-	if (everyworld.map == undefined || everyworld.map[y] == undefined || everyworld.map[y][x] == undefined) return false;
 	return true;
 }
-function work(id) {
-	var chara = everyworld.characters[id];
-	var job = jobs[chara.job];
+function stepable(x, y, what) {
+	if (everyworld.walls && everyworld.walls[y] && everyworld.walls[y][x]) {
+		if (tiles[everyworld.walls[y][x]].block) {
+			if (what) return;
+			return false;
+		}
+	}
+	if (everyworld.map && everyworld.map[y] && everyworld.map[y][x]) {
+		if (tiles[everyworld.map[y][x]].block) {
+			if (what) return;
+			return false;
+		}
+	}
+	if (everyworld.map == undefined || everyworld.map[y] == undefined || everyworld.map[y][x] == undefined) {
+		if (what) return;
+		return false;
+	}
+
+	for (var c in everyworld.characters) {
+		var chara = everyworld.characters[c];
+		if (x == chara.x && y == chara.y) {
+			if (what) return c;
+			return false;
+		}
+	}
+	if (what) return;
+	return true;
 }
 function incRandom(start = 0, v) {
 	while (rand(0,1)) start += v;
@@ -686,38 +1826,91 @@ function addRoads(dir) {
 
 	addZone(5, zone.start, zone.end);
 }
-function tickCharacter(id) {
-	var chara = everyworld.characters[id];
-	var cdoc = doc('chara_'+chara.id);
-	if (!cdoc) {
-		var d = document.createElement('chara');
-		d.className = 'guy_layer';
-		d.id = 'chara_'+chara.id;
-		d.style.background = 'url(img_td/someguy.png)';
-		d.style.zIndex = chara.y+2;
-		d.title = chara.name+' '+chara.family+' ('+jobs[chara.job].name+'/'+jobs[chara.hobby].name+')';
-		d.onclick = function() {
-			order(chara.id);
-		}
-		layer_entities.appendChild(d);
+function spread(number, weight) {
+	var values = [];
+	var maxweight = 0;
+	var highest = {'index': 0, 'value': 0}
+	for (var w in weight) {
+		var we = weight[w];
+		maxweight += we;
+		if (we > highest.value) highest = {'index': w, 'value': we};
 	}
-	work(id);
-	if (chara.objective && chara.objective.length > 0) {
-		gps(chara, chara.objective[0]);
-		chara.objective.splice(0, 1);
+	for (var w in weight) {
+		var val = Math.floor((number / maxweight) * weight[w]);
+		values[w] = val;
 	}
-
-	positionCharacter(chara);
+	var total = 0;
+	for (var v in values) total += values[v];
+	if (total < number) values[highest.index] += (number - total);
+	return values;
 }
-function gps(from, to) {
-	//0 top, 1 right, 2 bottom, 3 left
-	var dir = 0;
-	if (from.y > to.y) dir = 0;
-	if (from.y < to.y) dir = 2;
-	if (from.x > to.x) dir = 3;
-	if (from.x < to.x) dir = 1;
+function reSpread(player, role) {
+	var v = 0;
+	var weight = [];
+	var role = roles[role];
+	for (var s in fixstats) {
+		var stat = fixstats[s];
+		weight[s] = 1;
+		if (role.primary == stat) weight[s] = 4;
+		if (role.secondary == stat) weight[s] = 3;
+		for (var a in role.average) {
+			if (role.average[a] == stat) weight[s] = 2;
+		}
+		if (role.primary == 'random') weight[s] = Math.random();
+		var num = player[stat] - 1;
+		player[stat] = 1;
+		v += num;
+	}
 
-	moveCharacter(from, dir);
+	v += player.statPoints;
+	var values = spread(v, weight);
+	var sp = 0;
+
+	for (var s in fixstats) {
+		if (role.primary != 'manual') player[fixstats[s]] += values[s];
+		if (role.primary == 'manual') sp += values[s];
+	}
+	player.statPoints = sp;
+
+	reHeal(player);
+}
+function reHeal(chara) {
+	chara.hp = getMaxStat(chara, 'hp');
+	chara.mp = getMaxStat(chara, 'mp');
+}
+function characterValues() {
+	if (ci_name.value) player.name = ci_name.value;
+	if (ci_family.value) player.family = ci_family.value;
+
+	if (ci_male.checked) player.gender = 0;
+	if (ci_female.checked) player.gender = 1;
+
+	if (ci_role.selectedIndex != undefined) reSpread(player, ci_role.selectedIndex);
+
+	drawStats();
+}
+function randomizeCharacter() {
+	ci_role.selectedIndex = rand(0, roles.length - 1);
+	var g = rand(0,1);
+	ci_male.checked = (g == 0) ? true : false;
+	ci_female.checked = !ci_male.checked;
+	player.gender = g;
+	getRandomName();
+	characterValues();
+}
+function worldValues() {
+	mapw = range.x*3*parseInt(wi_mapw.value);
+	maph = range.y*3*parseInt(wi_maph.value);
+
+	terrainGenerator.noise = parseFloat(wi_noise.value);
+	wo_noise.value = terrainGenerator.noise;
+
+	wo_hour.value = pad(wi_hour.value,2)+':00';
+
+	asciimode = ascii.checked;
+
+	wo_mapw.value = mapw;
+	wo_maph.value = maph;
 }
 function pathFind(from, to) {
 	var t = {'x': to.x, 'y': to.y, 'value': 0};
@@ -772,7 +1965,7 @@ function pathFind(from, to) {
 
 			for (var q in pathy) {
 				var qu = pathy[q];
-				if (qu.x == point.x && qu.y == point.y && qu.value < lowest.value) lowest = {'value': qu.value, 'x': point.x, 'y': point.y} 
+				if (qu.x == point.x && qu.y == point.y && qu.value < lowest.value) lowest = {'value': qu.value, 'x': point.x, 'y': point.y}
 			}
 		}
 		path.push(lowest);
@@ -785,234 +1978,30 @@ function pathFind(from, to) {
 
 	return {'pathy': pathy, 'path': path};
 }
-function order(id) {
-	selectedChar = id;
-}
-function positionCharacter(chara) {
-	cdoc = doc('chara_'+chara.id);
-	var absx = chara.x - camera.x + Math.floor(range.x / 2);
-	var absy = chara.y - camera.y + Math.floor(range.y / 2);
+function getRandomPosition(soft) {
+	do {
+		var rx = rand(1, everyworld.map[0].length) - 1;
+		var ry = rand(1, everyworld.map.length) - 1;
+		if (!soft) break;
+		if (soft && biomeHere(rx, ry, 1).name != 'city' && isAreaClean(rx, ry)) break;
+	}	while (true)
 
-	if (!cdoc) return;
-
-	var top = cdoc.style.top;
-	var left = cdoc.style.left;
-	var ntop = ((absy - 2) * theight)+'px';
-	var nleft = (absx * twidth)+'px';
-
-	cdoc.style.backgroundColor = 'transparent';
-	if (selectedChar == chara.id) cdoc.style.backgroundColor = 'rgba(0, 255, 0, 0.5)';
-	cdoc.style.top = ntop;
-	cdoc.style.left = nleft;
-	cdoc.style.zIndex = chara.y+2;
-	cdoc.style.backgroundPosition = getBackgroundPosition(chara, 0, chara.walking);
-}
-function moveCharacter(chara, direction) {
-	var dir = direction;
-	chara.facing = dir;
-	chara.walking = true;
-	var direction = directions[direction];
-	var there = {'x': chara.x + direction.x, 'y': chara.y + direction.y};
-	if (stepable(there.x, there.y)) {
-		chara.x += direction.x;
-		chara.y += direction.y;
-	}
-	setTimeout(function() {
-		chara.walking = false;
-		positionCharacter(chara);
-	}, 100);
-	if (selectedChar == chara.id) {
-		camera.x = chara.x;
-		camera.y = chara.y;
-		updateCamera();
-	}
-}
-function positionAll() {
-	for (var c in everyworld.characters) positionCharacter(everyworld.characters[c]);
-}
-function ticker() {
-	var now = Date.now();
-	var willTick = tickList;
-	for (var x = 0; x < 3; x++) willTick.push(rand(1, everyworld.characters.length) - 1);
-	for (var h in willTick) {
-		var chara = everyworld.characters[tickList[h]];
-		if (!chara) continue;
-		if (!chara.lastTick) chara.lastTick = 0;
-		var d = now - chara.lastTick;
-		if (d < 250) continue;
-		chara.lastTick = now;
-
-		tickCharacter(tickList[h]);
-	}
-
-	var rx = rand(1, range.x) - 1;
-	var ry = rand(1, range.y) - 1;
-	tickTile(rx, ry);
-
-	var r = getRandomPosition();
-	tickTile(r.x, r.y, 1);
-
-	requestAnimationFrame(ticker);
-}
-function getRandomPosition() {
-	var rx = rand(1, everyworld.map[0].length) - 1;
-	var ry = rand(1, everyworld.map.length) - 1;
 	return {'x': rx, 'y': ry};
-}
-function createEWMap() {
-	for (var w = 0; w < range.x; w++) {
-		for (var h = 0; h < range.y; h++) {
-			var docert = document.createElement('tile');
-			docert.id = 'tile_'+w+'_'+h;
-			docert.style.left = (w * twidth)+'px';
-			docert.style.top = (h * theight)+'px';
-
-			var docerw = document.createElement('wall');
-			docerw.id = 'wall_'+w+'_'+h;
-			docerw.style.left = (w * twidth)+'px';
-			docerw.style.top = ((h-1) * theight)+'px';
-
-			var docers = document.createElement('shadow');
-			docers.id = 'shadow_'+w+'_'+h;
-			docers.style.left = ((w) * twidth)+'px';
-			docers.style.top = ((h+1) * theight)+'px';
-
-			var docero = document.createElement('tile');
-			docero.id = 'overlay_'+w+'_'+h;
-			docero.className = 'boldy overlay';
-			docero.style.left = (w * twidth)+'px';
-			docero.style.top = ((h-1) * theight)+'px';
-			docero.style.fontSize = '8px';
-
-			doc('layer_bottom').appendChild(docert);
-			doc('layer_wall').appendChild(docerw);
-			doc('layer_shadow').appendChild(docers);
-			doc('layer_overlay').appendChild(docero);
-		}
-	}
-}
-function updateShadow(x, y) {
-	var hour = everyworld.hour;
-
-	var absx = camera.x - Math.floor(range.x / 2) + x;
-	var absy = camera.y - Math.floor(range.y / 2) + y;
-
-	//Overlay
-	var docero = doc('overlay_'+x+'_'+y);
-	docero.style.opacity = 0;
-	docero.style.display = 'none';
-	if (everyworld.weather == 'rain' && y % 2 == 0) {
-		docero.style.opacity = 1;
-		docero.style.display = 'inline-block';
-		docero.className = 'tile overlay tile_rain';
-	}
-	if (everyworld.weather == 'thunder' && y % 2 == 0) {
-		docero.style.opacity = 1;
-		docero.style.display = 'inline-block';
-		docero.className = 'tile overlay tile_thunder';
-	}
-	if (everyworld.weather == 'snow' && y % 2 == 0) {
-		docero.style.opacity = 1;
-		docero.style.display = 'inline-block';
-		docero.className = 'tile overlay tile_snowy';
-	}
-
-	if (everyworld.meta[absy] && everyworld.meta[absy][absx]) {
-		docero.innerHTML = '';
-		docero.className = 'tile overlay';
-		docero.style.width = twidth+'px';
-		docero.style.height = twidth+'px';
-
-		docero.style.backgroundImage = 'none';
-		docero.style.backgroundColor = 'transparent';
-		docero.style.opacity = 0.2;
-		docero.style.display = 'block';
-		var meta = everyworld.meta[absy][absx];
-		if (meta.bed != undefined) docero.innerHTML += 'bed ';
-		if (meta.value != undefined) docero.innerHTML += Math.floor(meta.value)+' ';
-		if (meta.science != undefined) docero.innerHTML += 'SO ';
-		if (meta.warehouse != undefined) docero.innerHTML += 'ware ';
-		if (meta.progress != undefined) docero.innerHTML += (meta.progress * 100)+'% ';
-		if (meta.fish) docero.innerHTML += meta.fish+'f ';
-		if (meta.zone != undefined) {
-			var zones = ['#80f', '#f80', '#08f', '#f00', '#0f0', '#000'];
-			docero.style.backgroundColor = zones[meta.zone];
-		}
-	}
-
-	var docers = doc('shadow_'+x+'_'+y);
-	var wh = whatsHere(everyworld.walls, absx, absy);
-	docers.style.display = (wh == undefined) ? 'none' : 'inline-block';
-	if (wh == undefined) return;
-
-	wh = tiles[wh].sprite;
-	var whs = 'tile shadow '+wh;
-	if (docers && docers.className && docers.className != whs) docers.className = whs;
-
-	var skew = (hour - 12) * 5;
-	var addwidth = Math.tan(skew*Math.PI/180) * theight;
-
-	var dst = 'scaleY(-1) skewX('+skew+'deg)';
-	if (docers.style.transform != dst) docers.style.transform = dst;
-
-	var dsl = ((x * twidth)-addwidth)+'px';
-	if (docers.style.left != dsl) docers.style.left = dsl;
-}
-function action(x, y) {
-	var absx = camera.x - Math.floor(range.x / 2) + x;
-	var absy = camera.y - Math.floor(range.y / 2) + y;
-
-	if (selectedChar) {
-		var chara;
-		for (var c in everyworld.characters) {
-			var ch = everyworld.characters[c];
-			if (ch.id == selectedChar) {
-				chara = ch;
-				break;
-			}
-		}
-		chara.objective = pathFind(chara, {'x': absx, 'y': absy}).path;
-	}
 }
 function aliasToSprite(alias) {
 	if (!tiles[alias]) return 'void';
 	return tiles[alias].sprite;
 }
-function updateEWMap(x, y) {
-	var absx = camera.x - Math.floor(range.x / 2) + x;
-	var absy = camera.y - Math.floor(range.y / 2) + y;
-
-	var docert = doc('tile_'+x+'_'+y);
-	var wh = whatsHere(everyworld.map, absx, absy);
-	docert.style.zIndex = 0;
-	wh = aliasToSprite(wh);
-	var cn = 'tile '+wh;
-	if (docert.className != cn) docert.className = cn;
-
-	docert.title = 'tile x:'+absx+' y:'+absy+' z:'+docert.style.zIndex;
-	docert.onclick = function() {
-		action(x, y);
-	}
-	
-	var docerw = doc('wall_'+x+'_'+y);
-	docerw.style.zIndex = absy+2;
-	var wh = whatsHere(everyworld.walls, absx, absy);
-	wh = aliasToSprite(wh);
-	var cn = 'tile '+wh;
-	if (docerw.className != cn) docerw.className = cn;
-
-	var docero = doc('overlay_'+x+'_'+y);
-	docero.style.zIndex = absy+3;
-	docero.style.opacity = 0;
+function biomeHere(x, y, obj) {
+	var chunk = getMapChunk(x, y);
+	var biom = biomeMap[chunk.y][chunk.x];
+	if (obj) biom = terrainGenerator.biomes[biom];
+	return biom;
 }
-function getBiome(temperature) {
-	temperature++;
+function getBiome(temperature, humidity) {
+	var n = (temperature*3+humidity) || 0;
 
-	if (!temperature) temperature = 0;
-
-	var weatherByTemperature = Math.floor(temperature / (2 / terrainGenerator.biomes.length));
-
-	return {'temperature': weatherByTemperature, 'biome': terrainGenerator.biomes[weatherByTemperature]}
+	return {'temperature': n, 'biome': terrainGenerator.biomes[n]}
 }
 function whatsHere(array, x, y) {
 	if (array == undefined) return;
@@ -1020,22 +2009,8 @@ function whatsHere(array, x, y) {
 	if (array[y][x] == undefined) return;
 	return array[y][x];
 }
-function updateShadows() {
-	for (var w = 0; w < range.x; w++) {
-		for (var h = 0; h < range.y; h++) {
-			updateShadow(w, h);
-		}
-	}
-}
 function displayResearch() {
-	
-}
-function drawEWMap() {
-	for (var w = 0; w < range.x; w++) {
-		for (var h = 0; h < range.y; h++) {
-			updateEWMap(w, h);
-		}
-	}
+
 }
 function randomExplore() {
 	for (var c in everyworld.characters) {
@@ -1108,23 +2083,31 @@ function getCityCenter() {
 	}
 }
 function loadWorld() {
-	addToLog('Loading world...');
+	toLog('Loading world...');
 	game_menu.style.display = 'none';
 	game_game.style.display = 'block';
 	if (!everyworld.characters) everyworld.characters = [];
-
-	createEWMap();
-	drawEWMap();
-	setInterval(timePass, 1000);
 }
 
 $('body').on('keypress', function(evt) {
     var key = String.fromCharCode(evt.charCode).toLowerCase();
 
-    if (key == 'w') moveCamera(0);
-    if (key == 'a') moveCamera(3);
-    if (key == 'd') moveCamera(1);
-    if (key == 's') moveCamera(2);
+    if (key == 'w' || key == '8') moveCamera(0);
+    if (key == 'a' || key == '4') moveCamera(3);
+    if (key == 'd' || key == '6') moveCamera(1);
+    if (key == 's' || key == '2') moveCamera(2);
+
+    if (key == 'e' || key == '9') moveCamera(4);
+    if (key == 'c' || key == '3') moveCamera(5);
+    if (key == 'z' || key == '1') moveCamera(6);
+    if (key == 'q' || key == '7') moveCamera(7);
+
+    if (key == 'x') sleep();
+
+    if (key == 'u') useTile();
+    if (key == 'j') mineTile(true);
+    if (key == 'm') mineTile();
+
     if (key == 'r') displayResearch();
 });
 

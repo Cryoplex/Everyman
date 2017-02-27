@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, 
+	<meta name="viewport" content="width=device-width,
 	user-scalable=no, initial-scale=1, maximum-scale=1, user-scalable=0" />
 	<!--<link rel="icon" href="../../favicon.ico">-->
 
@@ -13,21 +13,109 @@
 </head>
 
 <body>
-	<div id="game_menu">
-		<logo><img src="logo.png"></logo>
+	<div id="game_menu" style="z-index: 99999;">
 		<menu id="start">
+			<p class="center">Everyworld</p>
 			<div class="menutton" id="contbutton">Continue</div>
-			<div class="menutton" id="newbutton" onclick="newWorld()">New World</div>
+			<div class="menutton" id="newbutton" onclick="start.style.display = 'none'; world_options.style.display = 'inline-block'; worldValues()">New World</div>
+		</menu>
+
+		<menu id="world_options" style="display:none; z-index: 99999">
+			<p class="center">World Options</p>
+			<form oninput="worldValues()">
+				Map width (<output id="wo_mapw"></output>)<input id="wi_mapw" type="range" min="1" max="10" value="1" step="1">
+				Map height (<output id="wo_maph"></output>)<input id="wi_maph" type="range" min="1" max="10" value="1" step="1">
+				Map randomness (<output id="wo_noise"></output>)<input id="wi_noise" type="range" min="0" max="0.2" value="0.03" step="0.005">
+				Starting day hour (<output id="wo_hour"></output>)<input id="wi_hour" type="range" min="0" max="23" value="6" step="1">
+				<input type="checkbox" id="ascii"> Enable ASCII mode<br>
+				<div class="menutton" onclick="worldValues(); newWorld(); characterValues(); world_options.style.display = 'none'; character_options.style.display = 'inline-block';">Create World</div>
+			</form>
+		</menu>
+
+		<menu id="character_options" style="display:none; z-index: 99999">
+			<p class="center">Character Creation</p>
+			<form oninput="characterValues()">
+				<div class="menutton" onclick="randomizeCharacter()">Randomize</div>
+				First Name <input id="ci_name" type="text">
+				Family Name <input id="ci_family" type="text"><input type="button" onclick="getRandomName()" value="(!)"><br>
+				<input type="radio" id="ci_male" name="gender"> Male <input type="radio" id="ci_female" name="gender"> Female<br>
+				<br>
+				Choose the <abbr title="This only affects the initial stat spread. As your level advances, you may assign stat points to any stat to fit complex playstyles.">playstyle</abbr> you want<br>
+				<select id="ci_role">
+					<option>Warrior (Melee Damage)</option>
+					<option>Knight (Defense)</option>
+					<option>Shooter (Ranged Damage)</option>
+					<option>Thief (Stealth)</option>
+					<option>Wizard (Magic Damage)</option>
+					<option>Sorcerer (Status Manipulation)</option>
+					<option>Trainer (Familiar Command)</option>
+					<option>Gambler (Luck)</option>
+					<option>* Random *</option>
+					<option>* Spend points manually *</option>
+				</select>
+
+				<div class="menutton" onclick="characterValues(); preLoadWorld()">Create Character</div>
+			</form>
 		</menu>
 	</div>
 
-	<div id="game_game" style="display: none; width: 960px; height: 600px; display: inline-block; overflow: hidden;">
-		<canvas id="layer_bottom" width="640" height="480"></canvas>
-		<canvas id="layer_wall" width="640" height="480"></canvas>
-		<canvas id="layer_shadow" width="640" height="480"></canvas>
-		<canvas id="layer_overlay" width="640" height="480"></canvas>
-		<canvas id="layer_items" width="640" height="480"></canvas>
-		<canvas id="layer_entities" width="640" height="480"></canvas>
+	<div id="game_game" style="display: none; display: inline-block; overflow: hidden;">
+		<div class="leftbar">
+			<div class="lb_minimap">
+				<canvas id="minimap" width="144" height="144"
+				style="display: none; position: absolute"
+				onclick="changeMinimapZoom()"></canvas>
+			</div>
+			<div class="lb_stats" id="lb_stats" style="width: 144px; height: 288px;" onmouseover="displayStatus()" onmouseleave="displayStatus(1)">
+				<table class="statTable" id="statable" style="width: 95%; font-size: 13px; margin: 2px; opacity:0">
+					<tr><td colspan="4" id="stat_clock" style="text-align: center; font-size: 15px"></td></tr>
+					<tr><td colspan="4" id="stat_name"></td></tr>
+					<tr><td colspan="4" style="text-align: right;" id="stat_money">0 $</td></tr>
+					<tr><td>Lv</td><td id="stat_level">0</td><td>STP</td><td id="stat_stp">0</td></tr>
+					<tr><td colspan="4" id="stat_exp"></td></tr>
+					<tr style="font-size: 8px">
+					<td id="inc_stat_str" onclick="increaseStat('strength')">STR</td><td id="stat_str">0</td>
+					<td id="inc_stat_end" onclick="increaseStat('endurance')">END</td><td id="stat_end">0</td></tr>
+					<tr style="font-size: 8px">
+					<td id="inc_stat_dex" onclick="increaseStat('dexterity')">DEX</td><td id="stat_dex">0</td>
+					<td id="inc_stat_agi" onclick="increaseStat('agility')">AGI</td><td id="stat_agi">0</td></tr>
+					<tr style="font-size: 8px">
+					<td id="inc_stat_int" onclick="increaseStat('intelligence')">INT</td><td id="stat_int">0</td>
+					<td id="inc_stat_wis" onclick="increaseStat('wisdom')">WIS</td><td id="stat_wis">0</td></tr>
+					<tr style="font-size: 8px">
+					<td id="inc_stat_cha" onclick="increaseStat('charisma')">CHA</td><td id="stat_cha">0</td>
+					<td id="inc_stat_luc" onclick="increaseStat('luck')">LUC</td><td id="stat_luc">0</td></tr>
+
+					<tr><td>HP</td><td colspan="3" id="stat_hp"></td></tr>
+					<tr><td>MP</td><td colspan="3" id="stat_mp"></td></tr>
+					<tr><td>HUN</td><td colspan="3" id="stat_hun"></td></tr>
+					<tr><td>ENE</td><td colspan="3" id="stat_ene"></td></tr>
+					<tr><td>BAT</td><td colspan="3" id="stat_bat"></td></tr>
+				</table>
+			</div>
+			<div id="lb_status" style="width: 288px; height: 288px; display: none"></div>
+			<div class="lb_menu" id="lb_menu" style="display: none">
+				<table style="width: 100%; text-align: center;" class="lb_menu_options">
+				<tr><td onclick="menuWindow('status')">Status</td></tr>
+				<tr><td onclick="menuWindow('quests')">Quests</td></tr>
+				<tr><td onclick="menuWindow('skills')">Skills</td></tr>
+				<tr><td onclick="menuWindow('crafting')">Crafting</td></tr>
+				<tr><td onclick="menuWindow('research')">Research</td></tr>
+				<tr><td onclick="menuWindow('inventory')">Inventory</td></tr>
+				</table>
+			</div>
+			<div id="lb_info" style="position: absolute; font-size: 11px; top: 432px; left: 0px; width: 144px; height: 144px; background-color: rgb(200,200,200); color: rgba(0,0,0,0.8); display: none; padding: 3px"></div>
+		</div>
+		<canvas id="layer_bottom" width="624" height="432"></canvas>
+		<canvas id="layer_wall" width="624" height="432"></canvas>
+		<canvas id="layer_shadow" width="624" height="432"></canvas>
+		<canvas id="layer_overlay" width="624" height="432"></canvas>
+		<canvas id="layer_items" width="624" height="432"></canvas>
+		<canvas id="layer_entities" width="624" height="432"></canvas>
+
+		<div class="menubar" id="em_menu">
+
+		</div>
 
 		<!--
 		<layer id="layer_bottom"></layer>
@@ -38,10 +126,6 @@
 		<layer id="layer_items"></layer>
 		<layer id="layer_entities"></layer>
 		-->
-
-		<div style="position: fixed; right: 0px; bottom: 0px">
-			<div class="btn btn-default" onclick="randomExplore()">Explore</div>
-		</div>
 
 	</div>
 

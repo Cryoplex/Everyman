@@ -1,8 +1,7 @@
 function addToLog(text) {
-	lastlog.push(text);
-	if (lastlog.length > 10) lastlog.splice(0, 1);
+	debug_interns.innerHTML += text+'<br>';
 
-	debug_interns.innerHTML = lastlog.join('<br>');
+	debug_interns.scrollTop = debug_interns.scrollHeight;
 }
 function getTotalStats(guy) {
 	var stats = ['strength', 'endurance', 'agility', 'intelligence', 'frugality', 'luck', 'charisma', 'popularity', 'deal'];
@@ -59,6 +58,36 @@ function getBackgroundPosition(guy, start, walking) {
 
 	return start+'px '+directions[facing]+'px';
 }
+function getNPCValue(guy, numode) {
+	if (numode) guy = {'age': guy};
+	var youngMod = Math.pow(1.08, (8 - guy.age));
+
+	var base = 62000 * youngMod;
+
+	base += guy.age;
+	return base;
+}
+function showNPCStats(guy) {
+	var sns = 'Value: '+getNPCValue(guy)+'<br>';
+
+	if (typeof guy != 'object') return guy;
+
+	for (var e in guy) {
+		var param = guy[e];
+		if (typeof param == 'object' && e != 'element') {
+			sns += '<b>'+e+'</b><br>';
+			if (!par) continue;
+			var par = param[ee];
+			if (typeof par == 'number') par = round(par);
+			for (var ee in param) sns += '<ind><i>'+ee+'</i> '+par+'</ind><br>';
+			continue;
+		}
+		var par = guy[e];
+		if (typeof par == 'number') par = round(par);
+		sns += '<b>'+e+'</b> '+par+'<br>';
+	}
+	return sns;
+}
 function Person(id, type, isCar) {
 	this.id = id;
 
@@ -76,10 +105,10 @@ function Person(id, type, isCar) {
 
 	this.homes = [];
 
-	this.health = 100; //If it reaches 0, this person dies
-	this.hunger = 100; //If it reaches 0, drains hunger
-	this.energy = 100; //If it reaches 0, forces sleep and disables movement
-	this.hygiene = 100; //Reduced by dirty actions
+	this.health = 100;  //If it reaches 0, this person dies
+	this.hunger = 100;  //If it reaches 0, drains hunger
+	this.energy = 100;  //If it reaches 0, forces sleep and disables movement
+	this.hygiene = 100; //Reduced by dirty actions ( ͡° ͜ʖ ͡°)
 
 	this.healthx = 100;
 	this.hungerx = 100;
