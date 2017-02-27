@@ -1034,6 +1034,7 @@ function drugMode(force) {
 	}, 100);
 }
 function timeTintCanvas(thunder, drugs) {
+	return; //TODO Fix "this operation is insecure"
 	var overlays = {
 		'day':   [1,1,1],
 		'dusk':  [1.75,0.8,0.5],
