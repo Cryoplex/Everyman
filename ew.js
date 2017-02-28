@@ -7,10 +7,11 @@ var changelog = [
 'ax Tiles change in color at dawn, dusk, night',
 'af Added a bunch of stuff I don\'t want to write here. Food is edible, tiles are placeable and grass spreads',
 'ab bluh bluh bluh'
+'af Added meteorological events and such.',
 ];
 
 //Variable declarations
-var everyworld, player, currentMenu, sprites, icons, layers, mapw, maph;
+var everyworld, player, currentMenu, sprites, icons, layers, mapw, maph, weatherOverride;
 
 var asciimode = false;
 var bigmenu = false;
@@ -29,7 +30,25 @@ var theight = 24;
 var canvaswidth = 624;
 var canvasheight = 432;
 var entityMapUpdate = 250;
+var weatherUpdate = 100;
+var ticker = 0;
 var loadrange = 0;
+
+var ticker = 0;
+
+var clouds = {
+	'noise': new SimplexNoise(),
+	'position': {'x': 0, 'y': 0},
+	'getCloud': function(x, y, mul) {
+		var v = this.noise.noise((x+this.position.x)/mul, (y+this.position.y)/mul);
+		v = (v + 1) / 2;
+		return v;
+	},
+	'moveClouds': function(speed) {
+		this.position.x += (0.05*speed);
+		this.position.y += (0.01*speed)
+	}
+}
 
 //Config
 var directions = [
@@ -50,38 +69,47 @@ var terrainGenerator = {
 		{'name': 'ocean',
 		'tiles': [8,1,0,7,7,7,7,7,7,7],
 		'walls': [,,,,,,,,,],
+		'weather': [0,1,2,6], //Sunny, Cloudy, Rainy, Intense Sun
 		},
 		{'name': 'desert',
 		'tiles': [0,0,0,13,66,66,66,66,66,66],
 		'walls': [,,,,,,,,5,6],
+		'weather': [0,0,6,7], //Sunny (50%), Intense Sun, Sandstorm
 		},
 		{'name': 'plains',
 		'tiles': [0,0,0,77,77,77,77,77,3,4],
 		'walls': [,,,,,,,,5,6],
+		'weather': [0,1,2,3], //Sunny, Cloudy, Rainy, Thunderstorm
 		},
 		{'name': 'forest',
 		'tiles': [1,1,0,2,2,2,2,2,2,2],
 		'walls': [,,,,,,,,11,6],
+		'weather': [0,1,2,3], //Sunny, Cloudy, Rainy, Thunderstorm
 		},
 		{'name': 'jungle',
 		'tiles': [1,1,0,69,69,69,69,69,69,69],
 		'walls': [,,,,,,,,63,6],
+		'weather': [1,2,2,3], //Cloudy, Rainy (50%), Thunderstorm
 		},
 		{'name': 'volcano',
 		'tiles': [1,1,0,3,3,3,3,3,4,14],
 		'walls': [,,,,,,,,6,],
+		'weather': [9,9,9,9], //Ash (100%)
 		},
 		{'name': 'swamp',
 		'tiles': [73,73,73,72,72,72,72,72,72,72],
 		'walls': [,,,,,,,,64,6],
+		'weather': [8,8,8,8], //Fog (100%)
 		},
 		{'name': 'taiga',
 		'tiles': [9,9,9,10,10,10,10,10,10,10],
 		'walls': [,,,,,,,,12,6],
+		'weather': [0,1,4,5], //Sunny, Cloudy, Snow, Blizzard
 		},
 		{'name': 'tundra',
 		'tiles': [9,9,9,10,10,10,10,10,10,10],
 		'walls': [,,,,,,,,5,6],
+		'weather': [1,4,5,5], //Cloudy, Snow, Blizzard (50%)
 		}
 	]
 };
@@ -93,12 +121,12 @@ var tiles = {
 	"0":{"sprite":"tile_sea",'floor':'true',"block":false, 'set': 'water',
 	'tpos': [10,0], 'color': '#4EABD2', 'ascii': '~', 'status': 7, 'fills': true},
 	"1":{"sprite":"tile_deepsea",'floor':'true',"block":true, 'set': 'water', 'tpos': [24,0], 'color': '#3F8CAA', 'ascii': '~'},
-	"2":{"sprite":"tile_grass",'floor':'true',
+	"2":{"sprite":"tile_grass",'floor':'true', 'breedflowers': true,
 	"features":[19,20,21,22,23,24,25,59,61], 'tpos': [21,0], 'color': '#88CC00',
 	'ascii': '_', 'resistance': 10, 'mine': [[0,1], [16,10]], 'hole': 78,
 	'spreads': [3]},
 
-	"3":{"sprite":"tile_dirt",'floor':'true',"features":[19,21,25,26,27], 'tpos': [22,0], 'color': '#C89122', 'ascii': '_', 'resistance': 10, 'mine': [[0,1]], 'hole': 79},
+	"3":{"sprite":"tile_dirt",'floor':'true', 'breedflowers': true, "features":[19,21,25,26,27], 'tpos': [22,0], 'color': '#C89122', 'ascii': '_', 'resistance': 10, 'mine': [[0,1]], 'hole': 79},
 	"4":{"sprite":"tile_stonew",'floor':'true', 'tpos': [23,0], 'color': '#DCCEB2', 'ascii': '_', 'resistance': 100, 'mine': [[2,1]], 'hole': 80},
 	"5":{"sprite":"tile_grasspillar","block":true, 'set': 'dirt', 'tpos': [25,0], 'color': '#A0741C', 'ascii': '#', 'resistance': 10, 'mine': [[0,1]]},
 	"6":{"sprite":"tile_stonepillar","block":true, 'set': 'stone', 'tpos': [26,0], 'color': '#EDF3F6', 'ascii': '#', 'resistance': 100, 'mine': [[2,1], [2,3], [20,3]]},
@@ -112,7 +140,7 @@ var tiles = {
 
 	"11":{"sprite":"tile_pine","block":true, 'set': 'tree', 'tpos': [31,0], 'color': '#188C18', 'ascii': 'A', 'resistance': 30, 'mine': [[3,1], [3,3], [23,3]]},
 	"12":{"sprite":"tile_pines","block":true, 'set': 'tree', 'tpos': [32,0], 'color': '#C0D7E0', 'ascii': 'A', 'resistance': 30, 'mine': [[3,1], [3,3], [23,3]]},
-	"13":{"sprite":"tile_drygrass",'floor':'true',"features":[20,26,65],
+	"13":{"sprite":"tile_drygrass",'floor':'true','breedflowers': true,"features":[20,26,65],
 	'tpos': [33,0], 'color': '#CCAA00', 'ascii': '_', 'resistance': 10,
 	'mine': [[0,1], [16,20]], 'hole': 82, 'spreads': [3]},
 
@@ -170,24 +198,24 @@ var tiles = {
 	"63":{"sprite":"jungletree","block":true, 'tpos': [70,0], 'color': '#639623', 'ascii': 'T', 'resistance': 30, 'mine': [[3,1], [3,3], [23,3]]},
 	"64":{"sprite":"deadtree","block":true, 'tpos': [71,0], 'color': '#8C6516', 'ascii': 'Y', 'resistance': 20, 'mine': [[23,1], [3,3], [23,3]]},
 	"65":{"sprite":"palm","block":true, 'tpos': [72,0], 'color': '#B8DC00', 'ascii': '7', 'resistance': 30, 'mine': [[3,1], [3,3], [23,3]]},
-	"66":{"sprite":"tile_sand",'floor':'true',"features":[0,0,0,0,27,26,67,68], 'tpos': [27,0], 'color': '#E6D684', 'ascii': '_', 'status': 11, 'resistance': 5, 'mine': [[1,1]], 'hole': 81},
+	"66":{"sprite":"tile_sand",'floor':'true',"features":[0,0,0,0,27,26,67,68], 'tpos': [27,0], 'color': '#E6D684', 'ascii': '_', 'resistance': 5, 'mine': [[1,1]], 'hole': 81},
 	"67":{"sprite":"cactus","block":true, 'tpos': [73,0], 'spreads': [7, 66], 'color': '#97C82C', 'ascii': 'µ', 'resistance': 5, 'mine': [[7,1]]},
 	"68":{"sprite":"saffron", 'tpos': [74,0], 'color': '#AA80E5', 'ascii': 'w', 'resistance': -25, 'mine': [[15,1]]},
-	"69":{"sprite":"jungle_grass",'floor':'true',
+	"69":{"sprite":"jungle_grass",'breedflowers': true,'floor':'true',
 	'features':[11,19,20,22,23,24,60,61,62,63,70,71], 'fchance': 2, 'tpos': [75,0],
 	'color': '#5A781A', 'ascii': '_', 'resistance': 10, 'mine': [[0,1], [16,3]],
 	'hole': 83, 'spreads': [3]},
 
 	"70":{"sprite":"jungle_plant","block":true, 'tpos': [76,0], 'spreads': [69], 'color': '#34DC34', 'ascii': 'x', 'resistance': 5},
 	"71":{"sprite":"rafflesia","block":true, 'tpos': [77,0], 'color': '#DC0000', 'ascii': 'X', 'resistance': 10},
-	"72":{"sprite":"swamp_grass",'floor':'true', 'tpos': [78,0],
+	"72":{"sprite":"swamp_grass",'breedflowers': true,'floor':'true', 'tpos': [78,0],
 	'features': [64,60,59,27], 'color': '#6B6578', 'ascii': '_', 'resistance': 10,
 	'mine': [[0,1], [16,10]], 'hole': 84, 'spreads': [3]},
 	"73":{"sprite":"swamp_water",'floor':'true', 'tpos': [79,0], 'features': [64], 'color': '#50388C', 'ascii': '~', 'status': 12},
 	"74":{"sprite":"crater", 'block': true, 'tpos': [80,0], 'color': '#121314', 'ascii': '#'},
 	"75":{"sprite":"lavapillar", 'tpos': [81,0], 'color': '#FF2323', 'ascii': '#'},
 	"76":{"sprite":"UNUSED",'tpos': [0,0], 'color': '#faf', 'ascii': ''},
-	"77":{"sprite":"turf",'floor':'true', 'tpos': [82,0], 'features': [0, 62, 22, 23, 24],
+	"77":{"sprite":"turf",'floor':'true','breedflowers': true, 'tpos': [82,0], 'features': [0, 62, 22, 23, 24],
 	'color': '#AEFF00', 'ascii': '_', 'resistance': 10, 'mine': [[0,1], [16,10]],
 	'hole': 78, 'spreads': [3]},
 
@@ -219,13 +247,41 @@ var tiles = {
 	"89":{"sprite":"tile_f_cyanflower", 'tpos': [39,2], 'flower': true, 'breeds': [22, 89], 'color': '#22FFFF', 'ascii': '+', 'resistance': -25},
 	"90":{"sprite":"tile_f_dandelion", 'tpos': [40,2], 'flower': true, 'breeds': [23, 90], 'color': '#DCDC1A', 'ascii': '+', 'resistance': -25},
 	"91":{"sprite":"tile_f_hinaflower", 'tpos': [41,2], 'flower': true, 'breeds': [24, 91], 'color': '#DC1BDC', 'ascii': '+', 'resistance': -25},
+
+
 };
+var weatherTypes = {
+	/*
+	name - Self explanatory
+	status - Status that is inflicted when an unit uses a turn while this meteorological event is active
+	cloudMul - higher value makes clouds more dense and smooth, lower values makes more random clouds
+	cloudChance - 0 is no clouds, 0.5 is half clouds, 1 is full clouds
+	cloudAdd - Value that is added to make darker clouds
+	rain - Enables rain with some parameters
+	    frames - the transition between particles, if set below 1 adds more particles
+	    xmod - what distance does the line move from the starting point
+	    ymod - distance that the line moves vertically down the starting point
+	thunder - Enables thunders randomly
+	*/
+	'0': {'name': 'Sunny', 'status': 16, 'cloudSpeed': 1, 'cloudMul': 10, 'cloudAdd': 0,  'cloudChance': 0, 'cloudColor': [0,0,0]},
+	'1': {'name': 'Cloudy', 'status': 17, 'cloudSpeed': 1, 'cloudMul': 10, 'cloudAdd': 0, 'cloudChance': 0.5, 'cloudColor': [0,0,0]},
+	'2': {'name': 'Rain', 'status': 18, 'cloudSpeed': 1, 'cloudMul': 30, 'cloudAdd': 0.5, 'rain': {'frames': 1.5, 'xmod': 0.2, 'ymod': 0.8}, 'cloudChance': 0.5, 'cloudColor': [0,0,0]},
+	'3': {'name': 'Thunderstorm', 'status': 19, 'cloudSpeed': 1, 'cloudMul': 50, 'cloudAdd': 0.75, 'thunder': 100, 'rain': {'frames': 0.5, 'xmod': 0.5, 'ymod': 0.8}, 'cloudChance': 0.5, 'cloudColor': [0,0,0]},
+	'4': {'name': 'Snow', 'status': 20, 'cloudSpeed': 1, 'cloudMul': 10, 'cloudAdd': 0, 'rain': {'snow': true, 'frames': 5, 'xmod': 1, 'ymod': 2, 'color': [200,255,255]}, 'cloudChance': 0, 'cloudColor': [0,0,0]},
+	'5': {'name': 'Blizzard', 'status': 21, 'cloudSpeed': 10, 'cloudMul': 10, 'cloudAdd': 0.25, 'rain': {'snow': true, 'frames': 10, 'xmod': 30, 'ymod': 10, 'color': [200,255,255]}, 'cloudChance': 0.5, 'cloudColor': [128,255,255]},
+	'6': {'name': 'Intense Sun', 'status': 22, 'cloudSpeed': 10, 'cloudMul': 10, 'cloudAdd': 1, 'cloudChance': 0.2, 'cloudColor': [255,0,0]},
+	'7': {'name': 'Sandstorm', 'status': 23, 'cloudSpeed': 50, 'cloudMul': 20, 'cloudAdd': 0.5, 'cloudChance': 0.5, 'cloudColor': [128,64,0]},
+	'8': {'name': 'Fog', 'status': 24, 'cloudSpeed': 15, 'cloudMul': 50, 'cloudAdd': 0.25, 'cloudChance': 0.5, 'cloudColor': [255,200,255]},
+	'9': {'name': 'Ash', 'status': 25, 'cloudSpeed': 15, 'cloudMul': 50, 'cloudAdd': 0.8, 'cloudChance': 0.5, 'cloudColor': [64,64,64]},
+	'10': {'name': 'Volcanic Eruption', 'status': 26, 'cloudSpeed': 15, 'cloudMul': 50, 'cloudAdd': 0.5, 'cloudChance': 0.5, 'rain': {'frames': 0.2, 'xmod': 0.1, 'ymod': 0.2, 'color': [255, 128, 0]}, 'cloudColor': [255,0,0]},
+}
 var items = {
-	//Unimplemented
 	'0': {'name': 'Dirt', 'desc': 'Found anywhere, used to fill holes.', 'price': 0, 'stack': true, 'tpos': [0,0], 'place': {'floor': 3}},
 	'1': {'name': 'Sand', 'desc': 'Found in deserts and beaches, used to fill holes.', 'price': 0, 'stack': true, 'tpos': [1,0], 'place': {'floor': 66}},
 	'2': {'name': 'Rocks', 'desc': 'Obtained when mining stone.', 'price': 0, 'stack': true, 'tpos': [2,0], 'place': {'floor': 86, 'wall': 85}},
 	'3': {'name': 'Wood', 'desc': 'A common renewable resource.', 'price': 2, 'stack': true, 'tpos': [3,0], 'place': {'floor': 88, 'wall': 87}},
+
+	//Unimplemented / Useless
 	'4': {'name': 'Copper', 'desc': 'Common metal found sometimes inside stone.', 'price': 3, 'stack': false, 'tpos': [4,0]},
 	'5': {'name': 'Metal', 'desc': 'Found sometimes inside stone.', 'price': 5, 'stack': false, 'tpos': [5,0]},
 	'6': {'name': 'Gold', 'desc': 'Rare metal found sometimes inside stone.', 'price': 7, 'stack': false, 'tpos': [6,0]},
@@ -233,67 +289,22 @@ var items = {
 	'8': {'name': 'Tomato', 'desc': 'Edible fruit. Yes, fruit.', 'food': true, 'consumable': true, 'hunger': 15, 'price': 1, 'stack': false, 'tpos': [0,1]},
 	'9': {'name': 'Fish', 'desc': 'Obtained from fishing in water.', 'food': true, 'consumable': true, 'hunger': 30, 'status': [[15, 1]], 'price': 8, 'stack': false, 'tpos': [1,1]},
 	'10': {'name': 'Shrimp', 'desc': 'Obtained from fishing in deep water.', 'food': true, 'consumable': true, 'hunger': 24, 'status': [[15, 1]], 'price': 16, 'stack': false, 'tpos': [2,1]},
+	
 	'11': {'name': 'Berries', 'desc': 'Edible fruit that grows in bushes.', 'food': true, 'consumable': true, 'hunger': 6, 'price': 2, 'stack': false, 'tpos': [3,1]},
-	'12': {
-		'name': 'Carrot',
-		'desc': 'How dare you dismantling a helpless snowman to strip him of its carrot?!',
-		'food': true, 'consumable': true, 'hunger': 6, 'price': 3, 'stack': false, 'tpos': [4,1]
-	},
-	'13': {
-		'name': 'Mushroom',
-		'desc': 'I\'m pretty sure this one is poisonous.',
-	    'food': true, 'consumable': true, 'hunger': 6, 'price': 2, 'stack': false, 'tpos': [5,1], 'status': [[12, 1]]
-	},
-	'14': {
-		'name': 'Fern',
-		'desc': 'You can eat this if you have nothing more to eat.',
-		'food': true, 'consumable': true, 'hunger': 3, 'price': 0, 'stack': false, 'tpos': [6,1]
-	},
-	'15': {
-		'name': 'Saffron',
-		'desc': 'A spicy spice found in deserts. Makes food spicy with spicy spiciness.',
-		'food': true, 'condiment': true, 'hunger': 1, 'price': 8, 'stack': false, 'tpos': [7,1]
-	},
-	'16': {
-		'name': 'Seeds',
-		'desc': 'Woah! Seeds! Guess what kind of plant are them.',
-		'price': 0, 'stack': true, 'tpos': [0,2]
-	},
-	'17': {
-		'name': 'Conch',
-		'desc': 'You can hear the sea if you place this in your ear.',
-		'price': 3, 'stack': true, 'tpos': [1,2]
-	},
-	'18': {
-		'name': 'Seashell',
-		'desc': 'Not bourne again shell.',
-		'price': 3, 'stack': true, 'tpos': [2,2]
-	},
-	'19': {
-		'name': 'Seaweed',
-		'desc': 'Never ever smoke this, are you crazy?',
-		'price': 0, 'stack': true, 'tpos': [3,2]
-	},
-	'20': {
-		'name': 'Stone',
-		'desc': 'Useful for primitive tools, or as a throwing weapon maybe.',
-		'price': 0, 'stack': true, 'tpos': [4,2]
-	},
-	'21': {
-		'name': 'Skull',
-		'desc': 'Creepy.',
-		'price': 0, 'stack': true, 'tpos': [5,2]
-	},
-	'22': {
-		'name': 'Bone',
-		'desc': 'Handle for primitive tools and a weapon too.',
-		'price': 0, 'stack': true, 'tpos': [6,2]
-	},
-	'23': {
-		'name': 'Twig',
-		'desc': 'Wave this to feel like a magician. Nothing will happen tho.',
-		'price': 0, 'stack': true, 'tpos': [7,2]
-	},
+	'12': {'name': 'Carrot','desc': 'How dare you dismantling a helpless snowman to strip him of its carrot?!','food': true, 'consumable': true, 'hunger': 6, 'price': 3, 'stack': false, 'tpos': [4,1]},
+	'13': {'name': 'Mushroom','desc': 'I\'m pretty sure this one is poisonous.','food': true, 'consumable': true, 'hunger': 6, 'price': 2, 'stack': false, 'tpos': [5,1], 'status': [[12, 1]]},
+	'14': {'name': 'Fern','desc': 'You can eat this if you have nothing more to eat.','food': true, 'consumable': true, 'hunger': 3, 'price': 0, 'stack': false, 'tpos': [6,1]},
+	'15': {'name': 'Saffron','desc': 'A spicy spice found in deserts. Makes food spicy with spicy spiciness.','food': true, 'condiment': true, 'hunger': 1, 'price': 8, 'stack': false, 'tpos': [7,1]},
+	
+	//Unimplemented/ Useless
+	'16': {'name': 'Seeds','desc': 'Woah! Seeds! Guess what kind of plant are them.', 'price': 0, 'stack': true, 'tpos': [0,2]},
+	'17': {'name': 'Conch','desc': 'You can hear the sea if you place this in your ear.','price': 3, 'stack': true, 'tpos': [1,2]},
+	'18': {'name': 'Seashell','desc': 'Not bourne again shell.','price': 3, 'stack': true, 'tpos': [2,2]},
+	'19': {'name': 'Seaweed','desc': 'Never ever smoke this, are you crazy?','price': 0, 'stack': true, 'tpos': [3,2]},
+	'20': {'name': 'Stone','desc': 'Useful for primitive tools, or as a throwing weapon maybe.','price': 0, 'stack': true, 'tpos': [4,2]},
+	'21': {'name': 'Skull','desc': 'Creepy.','price': 0, 'stack': true, 'tpos': [5,2]},
+	'22': {'name': 'Bone','desc': 'Handle for primitive tools and a weapon too.','price': 0, 'stack': true, 'tpos': [6,2]},
+	'23': {'name': 'Twig','desc': 'Wave this to feel like a magician. Nothing will happen tho.','price': 0, 'stack': true, 'tpos': [7,2]},
 }
 var roles = [
 	{'name': 'Warrior', 'set': 'Physical', 'branch': 'Melee', 'primary': 'strength', 'secondary': 'endurance', 'average': ['dexterity', 'agility']},
@@ -392,6 +403,62 @@ var statuses = {
 	'type': 'physical', 'value': -1, 'duration': 15,
 	'effect': {'set': '', 'target': '', 'strength': 0}
 	},
+
+	'16':
+	{'name': 'Weather: Sunny', 'desc': 'Today is Sunny! Feels good man.',
+	'type': 'mental', 'value': 1, 'duration': 3,
+	'effect': {'set': '', 'target': '', 'strength': 0}
+	},
+	'17':
+	{'name': 'Weather: Cloudy', 'desc': 'Natural light is partially dim due to clouds.',
+	'type': 'mental', 'value': 0, 'duration': 3,
+	'effect': {'set': '', 'target': '', 'strength': 0}
+	},
+	'18':
+	{'name': 'Weather: Rain', 'desc': 'Increases plant growth rate and soaks you.',
+	'type': 'mental', 'value': 0, 'duration': 3, 'secondary': 7,
+	'effect': {'set': '', 'target': '', 'strength': 0}
+	},
+	'19':
+	{'name': 'Weather: Thunderstorm', 'desc': 'Lightning bolts strike places at random intervals.',
+	'type': 'mental', 'value': 0, 'duration': 3, 'secondary': 7,
+	'effect': {'set': '', 'target': '', 'strength': 0}
+	},
+	'20':
+	{'name': 'Weather: Snow', 'desc': 'Freezes water and covers grass in snow. Makes everything colder.',
+	'type': 'mental', 'value': 0, 'duration': 3, 'secondary': 9,
+	'effect': {'set': '', 'target': '', 'strength': 0}
+	},
+	'21':
+	{'name': 'Weather: Blizzard', 'desc': 'A more violent version of snow, makes everything even colder.',
+	'type': 'mental', 'value': 0, 'duration': 3, 'secondary': 9,
+	'effect': {'set': '', 'target': '', 'strength': 0}
+	},
+	'22':
+	{'name': 'Weather: Intense Sun', 'desc': 'So hot. Increases hunger.',
+	'type': 'mental', 'value': 0, 'duration': 3, 'secondary': 11,
+	'effect': {'set': '', 'target': '', 'strength': 0}
+	},
+	'23':
+	{'name': 'Weather: Sandstorm', 'desc': '0.5x Agility.',
+	'type': 'mental', 'value': 0, 'duration': 3,
+	'effect': {'set': '', 'target': '', 'strength': 0}
+	},
+	'24':
+	{'name': 'Weather: Fog', 'desc': '0.5x Dexterity.',
+	'type': 'mental', 'value': 0, 'duration': 3,
+	'effect': {'set': '', 'target': '', 'strength': 0}
+	},
+	'25':
+	{'name': 'Weather: Ash', 'desc': '0.5x Dexterity.',
+	'type': 'mental', 'value': 0, 'duration': 3,
+	'effect': {'set': '', 'target': '', 'strength': 0}
+	},
+	'26':
+	{'name': 'Weather: Volcanic Eruption', 'desc': 'High chances of becoming On Fire. Stay near water.',
+	'type': 'mental', 'value': 0, 'duration': 3, 'secondary': 10,
+	'effect': {'set': '', 'target': '', 'strength': 0}
+	},
 };
 function toLog(text) {
 	debug_interns.innerHTML += '['+Date.now().toString(36).toUpperCase()+']'+text+'<br>';
@@ -425,6 +492,7 @@ function init() {
 		'overlay': getc('layer_overlay'),
 		'items': getc('layer_items'),
 		'entities': getc('layer_entities'),
+		'weather': getc('layer_weather'),
 	}
 
 	toLog('Making floors/walls dictionary');
@@ -630,8 +698,9 @@ function drawEntityMap() {
 	drawCharacter(lay, player);
 	if (player.action) drawCharacter(lay, {'x': player.action.x, 'y': player.action.y, 'type': 'cursor'});
 }
-function blink() {
-	return Math.floor(Date.now() / entityMapUpdate) % 2;
+function blink(three) {
+	var bl = (three) ? 3 : 2;
+	return Math.floor(Date.now() / entityMapUpdate) % bl;
 }
 function drawCharacter(layer, chara) {
 	var colors = {
@@ -669,10 +738,11 @@ function drawSpriteMap(redraw, ascii) {
 	var map = everyworld.map;
 	var walls = everyworld.walls;
 
-	if (redraw) for (var l in layers) {
-		layers[l].clearRect(0, 0, 624, 432);
-	}
-	layers.overlay.clearRect(0,0,624,432)
+	//if (redraw) for (var l in layers) {
+		//layers[l].clearRect(0, 0, 624, 432);
+	//}
+	//layers.overlay.clearRect(0,0,624,432)
+	if (redraw) layers.wall.clearRect(0, 0, canvaswidth, canvasheight);
 	for (var y = camera.y; y < camera.y+range.y; y++) {
 		for (var x = camera.x; x < camera.x+range.x; x++) {
 
@@ -743,6 +813,23 @@ function getMapSector(x, y) {
 	var sw = Math.floor(x/range.x);
 	var sh = Math.floor(y/range.y);
 	return {'x': sw, 'y': sh};
+}
+function getWeatherIn(x, y) {
+
+}
+function getCurrentWeather() {
+	if (weatherOverride != undefined) return weatherTypes[weatherOverride];
+	var s = getCurrentSector();
+	var biome = terrainGenerator.biomes[s.biome];
+	var weather = s.weather;
+	var weatherID = biome.weather || [0,1,2,3];
+	var weatherValue = (weather.enabled * 2) + weather.alternate;
+	weatherID = weatherID[weatherValue];
+	return weatherTypes[weatherID];
+}
+function getCurrentSector() {
+	var s = getMapSector(player.x, player.y);
+	return everyworld.sectors[s.y][s.x];
 }
 function newMap(width, height) {
 	var noise = new SimplexNoise();
@@ -835,6 +922,7 @@ function snap(num, max) {
 function newWorld() {
 	var ww = mapw;
 	var hh = maph;
+	toLog('Generating map...');
 	var map = newMap(ww, hh);
 	if (!everyworld) everyworld = {};
 	everyworld.config = {};
@@ -844,22 +932,32 @@ function newWorld() {
 	everyworld.biomeMap = map.biomeMap;
 	everyworld.tech = [true];
 	everyworld.meta = [];
+	toLog('Creating placeholder player...');
 	everyworld.characters = [new Character('player')];
-	everyworld.sectors = {
-		'x': (ww/range.x),
-		'y': (hh/range.y),
-		'lastSpawn': [],
-	}
-	for (var sy = 0; sy < everyworld.sectors.y; sy++) {
-		everyworld.sectors.lastSpawn[sy] = [];
-	}
 	player = everyworld.characters[0];
+
+	toLog('Generating sector and biome map...');
+	var msx = (ww/range.x);
+	var msy = (hh/range.y);
+	everyworld.sectors = [];
+	for (var sy = 0; sy < msy; sy++) {
+		everyworld.sectors[sy] = [];
+		for (var sx = 0; sx < msx; sx++) {
+			var opos = {'x': sx*range.x, 'y': sy*range.y};
+			everyworld.sectors[sy][sx] = {
+				'biome': biomeHere(opos.x, opos.y),
+				'weather': new Weather(),
+				'lastSpawn': 0,
+			}
+		}
+	}
 
 	ci_name.value = player.name;
 	ci_family.value = player.family;
 
 	everyworld.minute = 59;
 	everyworld.hour = parseInt(wi_hour.value) - 1;
+	toLog('Time set to '+everyworld.hour+' hours '+everyworld.minute+' minutes.');
 	timePass();
 
 }
@@ -956,6 +1054,7 @@ function preLoadWorld() {
 	layer_bottom.style.display = 'inline-block';
 	layer_wall.style.display = 'inline-block';
 	layer_overlay.style.display = 'inline-block';
+	layer_weather.style.display = 'inline-block';
 	layer_entities.style.display = 'inline-block';
 
 	lb_menu.style.display = 'inline-block';
@@ -972,6 +1071,7 @@ function preLoadWorld() {
 
 	drawSpriteMap(1, asciimode);
 	setInterval(drawEntityMap, entityMapUpdate);
+	setInterval(weatherCanvas, weatherUpdate);
 	setInterval(autoPlayer, 100);
 	drawStats();
 	everyworld.ready = true;
@@ -1109,6 +1209,86 @@ function timeTintCanvas(thunder, drugs) {
 		}
 		ctx.putImageData(imageData,0,0);
 	}
+}
+function weatherCanvas() {
+	var ctx = layers.weather;
+	ctx.clearRect(0,0,canvaswidth,canvasheight);
+
+	var weather = getCurrentWeather();
+	ticker += 0.4;
+
+	for (var y = camera.y; y < camera.y+range.y; y++) {
+		for (var x = camera.x; x < camera.x+range.x; x++) {
+			var absx = x - camera.x;
+			var absy = y - camera.y;
+
+			var px = absx*twidth;
+			var py = absy*twidth;
+
+			//Rain
+			if (weather.rain) {
+				ctx.beginPath();
+				var frames = weather.rain.frames;
+				var ad = ticker % frames;
+				var adx = ticker % (frames / weather.rain.xmod);
+				var ady = ticker % (frames / weather.rain.ymod);
+				var color = weather.rain.color || [0,128,128];
+				ctx.strokeStyle = 'rgba('+color[0]+', '+color[1]+', '+color[2]+', 0.8)';
+				var w = twidth/frames;
+				var ww = w * 1.5;
+				ctx.lineWidth = 1;
+				if (weather.rain.snow) {
+					var color = weather.rain.color || [255,255,255];
+					ctx.fillStyle = 'rgb('+color[0]+', '+color[1]+', '+color[2]+')';
+					ctx.fillRect(px+(adx*w*weather.rain.xmod), py+(ady*w*weather.rain.ymod), 4, 4);
+				}
+				else {
+					ctx.moveTo(px+(adx*w*weather.rain.xmod), py+(ady*w*weather.rain.ymod));
+					ctx.lineTo(px+((adx+1)*w*weather.rain.xmod), py+((ady+1)*w*weather.rain.ymod));
+					ctx.stroke();
+				}
+			}
+
+			//Clouds
+			var mul = weather.cloudMul;
+			var cloud = clouds.getCloud(x, y, mul) + weather.cloudAdd;
+			cloud = round(cloud * weather.cloudChance);
+			if (cloud > 1) cloud = 1;
+			var col = weather.cloudColor;
+			ctx.fillStyle = 'rgba('+col[0]+', '+col[1]+', '+col[2]+', '+cloud+')';
+			ctx.fillRect(px, py, twidth, twidth);
+		}
+	}
+	//Thunder
+	if (!everyworld.thunder || everyworld.thunder < 0) everyworld.thunder = rand(0,weather.thunder || 0);
+	everyworld.thunder--;
+	if (weather.thunder > 0 && everyworld.thunder == 4) {
+		var sx = rand(0, canvaswidth);
+		var sy = rand(0, (canvasheight/2));
+		ctx.beginPath();
+		ctx.moveTo(sx, sy);
+		var segm = rand(5,20);
+		ctx.lineWidth = 6;
+		ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
+
+		var ex = sx + rand(-30, 30);
+		var ey = sy + 30;
+		ctx.lineTo(ex, ey);
+		while (segm > 0) {
+			segm--;
+			ex += rand(-30, 30);
+			ey += rand(24,64);
+			ctx.lineTo(ex, ey);
+		}
+		ctx.stroke();
+	}
+	if (weather.thunder > 0 && everyworld.thunder < 5) {
+		var p = round(everyworld.thunder / 6);
+		ctx.fillStyle = 'rgba(255, 255, 255, '+p+')';
+		ctx.fillRect(0,0,canvaswidth,canvasheight);
+	}
+
+	clouds.moveClouds(weather.cloudSpeed);
 }
 function drawLightning() {
 	var ctx = layers.overlay;
@@ -1280,6 +1460,10 @@ function getMaxStat(chara, stat) {
 			if (stat == 'agility') mod *= 0.5;
 			if (stat == 'strength') mod *= 0.5;
 		}
+		if (chara.status[23] && stat == 'agility') mod *= 0.5;
+		if (stat == 'dexterity') {
+			if (chara.status[24] || chara.status[25]) mod *= 0.5;
+		}
 	}
 
 	if (fixstats.indexOf(stat) >= 0) {
@@ -1331,7 +1515,9 @@ function tickTile(x, y, wall) {
 		var wt = whatsHere(everyworld.map, there.x, there.y);
 		for (var s in ftile.spreads) {
 			if (wt == ftile.spreads[s]) {
-				changeTile(there.x, there.y, wh, !wall);
+				var canSpread = true;
+				if (wall && whatsHere(everyworld.walls, there.x, there.y)) canSpread = false;
+				if (canSpread) changeTile(there.x, there.y, wh, !wall);
 			}
 		}
 	}
@@ -1342,10 +1528,8 @@ function tickTile(x, y, wall) {
 		var fthere = tiles[wt];
 		
 		if (fthere && fthere.flower) {
-			toLog('flower found!');
 			var childs = [wh, wt];
 			if (wh != wt) {
-				toLog('flower breed!');
 				for (var b in ftile.breeds) childs.push(ftile.breeds[b]);
 				for (var b in fthere.breeds) childs.push(fthere.breeds[b]);
 			}
@@ -1353,8 +1537,11 @@ function tickTile(x, y, wall) {
 			var rdir = read(directions);
 			var there = {'x': x+rdir.x, 'y': y+rdir.y};
 			var wt = whatsHere(everyworld.walls, there.x, there.y);
-			toLog('spawning '+tiles[child].sprite+' at x:'+there.x+' y:'+there.y);
-			if (wt == undefined) changeTile(there.x, there.y, child);
+			if (wt == undefined) {
+				var wt = whatsHere(everyworld.map, there.x, there.y);
+				var ft = tiles[wt];
+				if (ft.breedflowers) changeTile(there.x, there.y, child);
+			}
 		}
 	}
 }
@@ -1398,8 +1585,11 @@ function tickCharacter(chara, turns) {
 	if (chara.mp >= maxmp) inflictStatus(chara, 3);
 	if (chara.energy <= 0) inflictStatus(chara, 5);
 	if (chara.energy >= 80) inflictStatus(chara, 13);
-
 	if (chara.hp <= 0) inflictStatus(chara, 0);
+
+	//Weather status
+	var w = getCurrentWeather();
+	inflictStatus(chara, w.status);
 
 	//Natural HP regeneration
 	var nfreq = (chara.status[1]) ? 1 : 4;
@@ -1480,7 +1670,7 @@ function dropItem(x, y, id) {
 function miningForce(chara, tile) {
 	var attack = getMaxStat(chara, 'strength');
 	var defense = tiles[tile].resistance || 1;
-	var d = rand(attack, 2*attack) - defense;
+	var d = rand(2*attack, 4*attack) - defense;
 	if (d < 1) d = 1;
 	return d;
 }
@@ -1498,6 +1688,7 @@ function inflictStatus(chara, id) {
 	var neg = statuses[id].negates;
 	var type = statuses[id].type;
 	var val = statuses[id].value;
+	var secondary = statuses[id].secondary;
 	var duration = statuses[id].duration;
 	var take = true;
 
@@ -1509,6 +1700,7 @@ function inflictStatus(chara, id) {
 		duration = (getMaxStat(chara, 'hp') + getMaxStat(chara, 'mp')) * chara.level;
 		if (chara.status[0]) take = false;
 	}
+	if (secondary && rand(1,10) == 1) inflictStatus(chara, secondary);
 
 	if (take) chara.status[id] = duration;
 	if ((id == 8 && chara.status[7]) || (id == 7 && chara.status[8])) inflictStatus(chara, 9);
@@ -1528,7 +1720,7 @@ function spawnMonsters() {
 	var ms = getMapSector(spawn.x, spawn.y);
 	var ls = getLastSpawn(ms.x, ms.y);
 	if (ls == everyworld.hour) return;
-	everyworld.sectors.lastSpawn[ms.y][ms.x] = everyworld.hour;
+	everyworld.sectors[ms.y][ms.x].lastSpawn = everyworld.hour;
 
 	var level = player.level;
 	while (rand(0,1)) level--;
@@ -1544,11 +1736,12 @@ function spawnEntity(x, y, level, type) {
 	everyworld.characters.push(c);
 }
 function getLastSpawn(sectorx, sectory) {
-	if (everyworld == undefined || everyworld.sectors == undefined || everyworld.sectors.lastSpawn == undefined || everyworld.sectors.lastSpawn[sectory] == undefined) return 'void';
-	if (!everyworld.sectors.lastSpawn[sectory][sectorx]) everyworld.sectors.lastSpawn[sectory][sectorx] = 0;
-	return everyworld.sectors.lastSpawn[sectory][sectorx];
+	if (everyworld == undefined || everyworld.sectors == undefined || everyworld.sectors[sectory] == undefined || everyworld.sectors[sectory][sectorx] == undefined) return 'void';
+	if (!everyworld.sectors[sectory][sectorx].lastSpawn) everyworld.sectors[sectory][sectorx].lastSpawn = 0;
+	return everyworld.sectors[sectory][sectorx].lastSpawn;
 }
 function newTurn(turns) {
+	turns = turns || 1;
 	timePass(turns);
 
 	if (whatTimeIsIt() == 'night') spawnMonsters();
@@ -1560,10 +1753,23 @@ function newTurn(turns) {
 	}
 
 	for (var x = 0; x < turns; x++) tickRandomTile();
+
+	tickWeather(turns);
+}
+function tickWeather(turns) {
+	var sector = getCurrentSector();
+	sector.weather.ticks -= turns;
+	if (sector.weather.ticks <= 0) sector.weather = new Weather();
+}
+function Weather() {
+	this.enabled = rand(0,1);
+	this.alternate = rand(0,1);
+	this.ticks = rand(1, 1440);
 }
 function tickRandomTile() {
-	var rx = rand(camera.x, camera.x+range.x);
-	var ry = rand(camera.y, camera.y+range.y);
+	var rpos = getRandomPosition();
+	var rx = rpos.x;
+	var ry = rpos.y;
 	tickTile(rx, ry);
 	tickTile(rx, ry, 1);
 }
@@ -1909,6 +2115,10 @@ function worldValues() {
 
 	wo_hour.value = pad(wi_hour.value,2)+':00';
 
+	var wo = parseInt(wi_weather.selectedIndex) - 1;
+	if (wo >= 0) weatherOverride = wo;
+	toLog('Weather override to '+wo);
+
 	asciimode = ascii.checked;
 
 	wo_mapw.value = mapw;
@@ -2090,8 +2300,12 @@ function loadWorld() {
 	game_game.style.display = 'block';
 	if (!everyworld.characters) everyworld.characters = [];
 }
+function saveGame() {
+
+}
 
 $('body').on('keypress', function(evt) {
+	//TODO edit keybindings
     var key = String.fromCharCode(evt.charCode).toLowerCase();
 
     if (key == 'w' || key == '8') moveCamera(0);
