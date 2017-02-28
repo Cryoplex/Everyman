@@ -519,8 +519,8 @@ function closer(arr, value) {
 }
 function Spritesheet(type, positions){
 	var img = new Image();
-	img.src = 'img_td/tiles.png';
-	if (type == 'icons') img.src = 'img_td/icons.png';
+	img.src = 'img/tiles.png';
+	if (type == 'icons') img.src = 'img/icons.png';
 
 	this.img = img;
 	this.width = twidth

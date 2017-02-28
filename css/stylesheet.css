@@ -326,7 +326,7 @@ outline {
 	position: absolute;
 	image-rendering: pixelated;
 
-	background: url(img_td/tiles.png);
+	background: url(img/tiles.png);
 }
 .icon {
 	width: 24px;
@@ -335,7 +335,7 @@ outline {
 	margin: 3px;
 	image-rendering: pixelated;
 
-	background: url(img_td/icons.png);
+	background: url(img/icons.png);
 
 	border: 1px solid rgba(0,0,0,0.5);
 	box-shadow: 0 1px 1px rgba(0,0,0,0.5);
@@ -367,7 +367,7 @@ wall {
 	display: inline-block;
 }
 .tiles {
-	background: url(img_td/tiles.png);
+	background: url(img/tiles.png);
 }
 
 .t_road_walk { background-position: -24px 0px; }
@@ -484,7 +484,7 @@ layer {
 	background-image: url(img/stone.png);
 }
 .tile_hidden {
-	background-image: url(img_td/bigtiles.png);
+	background-image: url(img/bigtiles.png);
 	opacity: 0.5;
 }
 #battle_blocker {
@@ -510,67 +510,67 @@ layer {
 	z-index: 99999;
 }
 .tile_door {
-	background-image: url(img_td/bigtiles.png);
+	background-image: url(img/bigtiles.png);
 	background-position: -24px 0px;
 }
 .tile_fridge {
-	background-image: url(img_td/bigtiles.png);
+	background-image: url(img/bigtiles.png);
 	background-position: -48px 0px;
 }
 .tile_cabinet {
-	background-image: url(img_td/bigtiles.png);
+	background-image: url(img/bigtiles.png);
 	background-position: -72px 0px;
 }
 .tile_cooker {
-	background-image: url(img_td/bigtiles.png);
+	background-image: url(img/bigtiles.png);
 	background-position: -96px 0px;
 }
 .tile_sink {
-	background-image: url(img_td/bigtiles.png);
+	background-image: url(img/bigtiles.png);
 	background-position: -120px 0px;
 }
 .tile_toilet {
-	background-image: url(img_td/bigtiles.png);
+	background-image: url(img/bigtiles.png);
 	background-position: -144px 0px;
 }
 .tile_sink2 {
-	background-image: url(img_td/bigtiles.png);
+	background-image: url(img/bigtiles.png);
 	background-position: -168px 0px;
 }
 .tile_closet {
-	background-image: url(img_td/bigtiles.png);
+	background-image: url(img/bigtiles.png);
 	background-position: -192px 0px;
 }
 .tile_table {
-	background-image: url(img_td/bigtiles.png);
+	background-image: url(img/bigtiles.png);
 	background-position: -216px 0px;
 }
 .tile_bed1 {
-	background-image: url(img_td/bigtiles.png);
+	background-image: url(img/bigtiles.png);
 	background-position: -240px 0px;
 }
 .tile_bed2 {
-	background-image: url(img_td/bigtiles.png);
+	background-image: url(img/bigtiles.png);
 	background-position: -264px 0px;
 }
 .tile_woodwall {
-	background-image: url(img_td/bigtiles.png);
+	background-image: url(img/bigtiles.png);
 	background-position: -288px 0px;
 }
 .tile_fence_ns {
-	background-image: url(img_td/bigtiles.png);
+	background-image: url(img/bigtiles.png);
 	background-position: -312px 0px;
 }
 .tile_fence_ew {
-	background-image: url(img_td/bigtiles.png);
+	background-image: url(img/bigtiles.png);
 	background-position: -336px 0px;
 }
 .tile_fence_door {
-	background-image: url(img_td/bigtiles.png);
+	background-image: url(img/bigtiles.png);
 	background-position: -360px 0px;
 }
 .tile_work_door {
-	background-image: url(img_td/bigtiles.png);
+	background-image: url(img/bigtiles.png);
 	background-position: -384px 0px;
 }
 .get {
@@ -580,11 +580,11 @@ layer {
 	background-color: rgba(128, 128, 128, 0.8);
 }
 .tile_outerwall {
-	background-image: url(img_td/bigtiles.png);
+	background-image: url(img/bigtiles.png);
 	background-position: -510px 0px;
 }
 .tile_bin {
-	background-image: url(img_td/bigtiles.png);
+	background-image: url(img/bigtiles.png);
 	background-position: -540px 0px;
 }
 citychunk {
@@ -621,106 +621,106 @@ citychunk {
 	background-position: -540px 0px;
 }
 .tile_belt {
-	background-image: url(img_td/bigtiles.png);
+	background-image: url(img/bigtiles.png);
 	background-position: -570px 0px;
 }
 .tile_belt_machinel {
-	background-image: url(img_td/bigtiles.png);
+	background-image: url(img/bigtiles.png);
 	background-position: -600px 0px;
 }
 .tile_belt_machiner {
-	background-image: url(img_td/bigtiles.png);
+	background-image: url(img/bigtiles.png);
 	background-position: -630px 0px;
 }
 .tile_crystalwall {
-	background-image: url(img_td/bigtiles.png);
+	background-image: url(img/bigtiles.png);
 	background-position: -660px 0px;
 }
 .tile_cfence {
-	background-image: url(img_td/bigtiles.png);
+	background-image: url(img/bigtiles.png);
 	background-position: -690px 0px;
 }
 .tile_metal_post {
-	background-image: url(img_td/bigtiles.png);
+	background-image: url(img/bigtiles.png);
 	background-position: -720px 0px;
 }
 .tile_metal_frame {
-	background-image: url(img_td/bigtiles.png);
+	background-image: url(img/bigtiles.png);
 	background-position: -750px 0px;
 }
 .tile_shop_desk {
-	background-image: url(img_td/bigtiles.png);
+	background-image: url(img/bigtiles.png);
 	background-position: -780px 0px;
 }
 .tile_shop_desk_machine {
-	background-image: url(img_td/bigtiles.png);
+	background-image: url(img/bigtiles.png);
 	background-position: -810px 0px;
 }
 .tile_shop_fridge {
-	background-image: url(img_td/bigtiles.png);
+	background-image: url(img/bigtiles.png);
 	background-position: -840px 0px;
 }
 .tile_shop_counter {
-	background-image: url(img_td/bigtiles.png);
+	background-image: url(img/bigtiles.png);
 	background-position: -870px 0px;
 }
 .tile_shop_shelf {
-	background-image: url(img_td/bigtiles.png);
+	background-image: url(img/bigtiles.png);
 	background-position: -900px 0px;
 }
 .tile_shop_work_door {
-	background-image: url(img_td/bigtiles.png);
+	background-image: url(img/bigtiles.png);
 	background-position: -930px 0px;
 }
 .tile_shop_vendor {
-	background-image: url(img_td/bigtiles.png);
+	background-image: url(img/bigtiles.png);
 	background-position: -960px 0px;
 }
 .tile_hospital_wall {
-	background-image: url(img_td/bigtiles.png);
+	background-image: url(img/bigtiles.png);
 	background-position: -990px 0px;
 }
 .tile_hospital_desk {
-	background-image: url(img_td/bigtiles.png);
+	background-image: url(img/bigtiles.png);
 	background-position: -1020px 0px;
 }
 .tile_hospital_blood {
-	background-image: url(img_td/bigtiles.png);
+	background-image: url(img/bigtiles.png);
 	background-position: -1050px 0px;
 }
 .tile_hospital_healthmeter {
-	background-image: url(img_td/bigtiles.png);
+	background-image: url(img/bigtiles.png);
 	background-position: -1080px 0px;
 }
 
 
 .tile_proto {
-	background-image: url(img_td/proto.png);
+	background-image: url(img/proto.png);
 	width: 24px;
 	height: 48px;
 }
 .tile_agro {
-	background-image: url(img_td/agro.png);
+	background-image: url(img/agro.png);
 	width: 24px;
 	height: 48px;
 }
 .tile_b_res {
-	background-image: url(img_td/b_res.png);
+	background-image: url(img/b_res.png);
 	width: 24px;
 	height: 48px;
 }
 .tile_b_sec {
-	background-image: url(img_td/b_sec.png);
+	background-image: url(img/b_sec.png);
 	width: 24px;
 	height: 48px;
 }
 .tile_b_slum {
-	background-image: url(img_td/b_slum.png);
+	background-image: url(img/b_slum.png);
 	width: 24px;
 	height: 48px;
 }
 .tile_b_thi {
-	background-image: url(img_td/b_thi.png);
+	background-image: url(img/b_thi.png);
 	width: 24px;
 	height: 48px;
 }
@@ -1435,7 +1435,7 @@ meter {
 	animation: rain 3s infinite steps(32);
 }
 .item_matter {
-	background-image: url(./img_td/matter.png);
+	background-image: url(./img/matter.png);
 	width: 24px;
 	height: 24px;
 	animation: 6s matter infinite steps(1);

@@ -710,7 +710,7 @@ function drawGuy(guy) {
 
 
 	//var g = '<div class="guy_layer" id="npcpic_'+guy.id+'" style="background: url(img/npc/npc_'+gend+'_'+guy.variation+'.png) '+getBackgroundPosition(guy, 0, guy.walking)+'">';
-	var g = '<div class="guy_layer" id="npcpic_'+guy.id+'" style="background: url(img_td/someguy.png) '+getBackgroundPosition(guy, 32, guy.walking)+'">';
+	var g = '<div class="guy_layer" id="npcpic_'+guy.id+'" style="background: url(img/someguy.png) '+getBackgroundPosition(guy, 32, guy.walking)+'">';
 
 	g += '</div>';
 	return g;
