@@ -6,8 +6,8 @@ var changelog = [
 'ax Tiles now drop items upon being destroyed.',
 'ax Tiles change in color at dawn, dusk, night',
 'af Added a bunch of stuff I don\'t want to write here. Food is edible, tiles are placeable and grass spreads',
-'ab bluh bluh bluh'
-'af Added meteorological events and such.',
+'ab bluh bluh bluh',
+'af Added meteorological events and such.', 'ax hello',
 ];
 
 //Variable declarations
@@ -461,7 +461,8 @@ var statuses = {
 	},
 };
 function toLog(text) {
-	debug_interns.innerHTML += '['+Date.now().toString(36).toUpperCase()+']'+text+'<br>';
+	var d = new Date();
+	debug_interns.innerHTML += '<span style="font-size: 8px; opacity: 0.5">'+pad(d.getSeconds(),2)+'.'+pad(d.getMilliseconds(),3)+'</span> '+text+'<br>';
 
 	debug_interns.scrollTop = debug_interns.scrollHeight;
 }
@@ -2299,6 +2300,16 @@ function loadWorld() {
 	game_menu.style.display = 'none';
 	game_game.style.display = 'block';
 	if (!everyworld.characters) everyworld.characters = [];
+
+	toLog('<b class="illegal">Controls</b>');
+	toLog('<b>WASD / 8426</b> Movement');
+	toLog('<b>QEZC / 7913</b> Diagonal Movement');
+	toLog('<b>X</b> Sleep');
+	toLog('<b>M</b> Mine/Chop/Destroy');
+	toLog('<b>J</b> Dig');
+	toLog('<b>Status</b> Hover your stat bar (left) to show status conditions.');
+	toLog('<b>Stat Increase</b> Click on your stat name <span class="boldy">when shown like this</span> to increase that stat (Costs 1 Stat Point/STP)');
+	toLog('<b>Inventory</b> Click food items to eat them. Click building materials to place them, to replace the ground tile, dig a hole then use the item.');
 }
 function saveGame() {
 
