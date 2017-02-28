@@ -348,6 +348,9 @@ outline {
 	background-color: rgba(255,255,255,0.5);
 	border: 1px solid black;
 }
+.selected {
+	background-color: rgb(200,255,200);
+}
 wall {
 }
 .tile_empty {

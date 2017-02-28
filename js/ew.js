@@ -8,6 +8,7 @@ var changelog = [
 'af Added a bunch of stuff I don\'t want to write here. Food is edible, tiles are placeable and grass spreads',
 'ab bluh bluh bluh',
 'af Added meteorological events and such.', 'ax hello',
+'af Added crafting and stuff',
 ];
 
 //Variable declarations
@@ -155,7 +156,7 @@ var tiles = {
 	"20":{"sprite":"tile_bush","block":true, 'tpos': [43,0], 'color': '#66AA00', 'ascii': 'o', 'resistance': 1, 'mine': [[11,2], [11,4], [16,1], [16,4]]},
 	"21":{"sprite":"tile_pebbles", 'tpos': [44,0], 'color': '#658C8C', 'ascii': '.', 'resistance': -50, 'mine': [[20,1]]},
 	"22":{"sprite":"tile_f_bluflower", 'tpos': [39,0], 'flower': true, 'breeds': [22, 89], 'color': '#1D1DDC', 'ascii': '+', 'resistance': -25},
-	"23":{"sprite":"tile_f_cottonflower", 'tpos': [40,0], 'flower': true, 'breeds': [23, 90], 'color': '#FFFFFF', 'ascii': '+', 'resistance': -25},
+	"23":{"sprite":"tile_f_cottonflower", 'tpos': [40,0], 'flower': true, 'breeds': [23, 90], 'color': '#FFFFFF', 'ascii': '+', 'resistance': -25, 'mine': [[24,1],[24,2]]},
 	"24":{"sprite":"tile_f_fireflower", 'tpos': [41,0], 'flower': true, 'breeds': [24, 91], 'color': '#DC1B1B', 'ascii': '+', 'resistance': -25},
 	"25":{"sprite":"tile_dryleaves", 'tpos': [45,0], 'color': '#C8792A', 'ascii': '=', 'resistance': -100},
 	"26":{"sprite":"tile_deadbush","block":true, 'tpos': [46,0], 'color': '#E68B2F', 'ascii': 'o', 'resistance': -25, 'mine': [[16,4]]},
@@ -247,8 +248,6 @@ var tiles = {
 	"89":{"sprite":"tile_f_cyanflower", 'tpos': [39,2], 'flower': true, 'breeds': [22, 89], 'color': '#22FFFF', 'ascii': '+', 'resistance': -25},
 	"90":{"sprite":"tile_f_dandelion", 'tpos': [40,2], 'flower': true, 'breeds': [23, 90], 'color': '#DCDC1A', 'ascii': '+', 'resistance': -25},
 	"91":{"sprite":"tile_f_hinaflower", 'tpos': [41,2], 'flower': true, 'breeds': [24, 91], 'color': '#DC1BDC', 'ascii': '+', 'resistance': -25},
-
-
 };
 var weatherTypes = {
 	/*
@@ -285,7 +284,7 @@ var items = {
 	'4': {'name': 'Copper', 'desc': 'Common metal found sometimes inside stone.', 'price': 3, 'stack': false, 'tpos': [4,0]},
 	'5': {'name': 'Metal', 'desc': 'Found sometimes inside stone.', 'price': 5, 'stack': false, 'tpos': [5,0]},
 	'6': {'name': 'Gold', 'desc': 'Rare metal found sometimes inside stone.', 'price': 7, 'stack': false, 'tpos': [6,0]},
-	'7': {'name': 'Cactus', 'desc': 'Spiky and pricky and itchy and stuff. Be careful touching this.', 'price': 1, 'stack': false, 'tpos': [7,0]},
+	'7': {'name': 'Cactus', 'desc': 'Spiky and pricky and itchy and stuff. Be careful touching this.', 'price': 1, 'hunger': 6, 'hp': -1, 'stack': false, 'tpos': [7,0]},
 	'8': {'name': 'Tomato', 'desc': 'Edible fruit. Yes, fruit.', 'food': true, 'consumable': true, 'hunger': 15, 'price': 1, 'stack': false, 'tpos': [0,1]},
 	'9': {'name': 'Fish', 'desc': 'Obtained from fishing in water.', 'food': true, 'consumable': true, 'hunger': 30, 'status': [[15, 1]], 'price': 8, 'stack': false, 'tpos': [1,1]},
 	'10': {'name': 'Shrimp', 'desc': 'Obtained from fishing in deep water.', 'food': true, 'consumable': true, 'hunger': 24, 'status': [[15, 1]], 'price': 16, 'stack': false, 'tpos': [2,1]},
@@ -305,6 +304,35 @@ var items = {
 	'21': {'name': 'Skull','desc': 'Creepy.','price': 0, 'stack': true, 'tpos': [5,2]},
 	'22': {'name': 'Bone','desc': 'Handle for primitive tools and a weapon too.','price': 0, 'stack': true, 'tpos': [6,2]},
 	'23': {'name': 'Twig','desc': 'Wave this to feel like a magician. Nothing will happen tho.','price': 0, 'stack': true, 'tpos': [7,2]},
+
+	'24': {'name': 'Cotton','desc': 'No racist jokes this time. I promise.','price': 5, 'tpos': [8,2]},
+
+	'25': {'name': 'String','desc': 'You can do everystring with it!','price': 6, 'tpos': [0,3]},
+	'26': {'name': 'Stick','desc': 'So basically you just removed a leaf from a twig.','price': 0, 'tpos': [1,3]},
+	'27': {'name': 'Fishing Rod','desc': 'You will fish so many fishes that it will become annoying!','price': 15, 'tpos': [0,4]},
+	'28': {'name': 'Seashell Necklace','desc': '','price': 9, 'tpos': [1,4]},
+
+	'29': {'name': 'Wood Plate','desc': '','price': 1, 'tpos': [2,3]},
+	'30': {'name': 'Stone Axe','desc': '','price': 10, 'tpos': [2,4]},
+	'31': {'name': 'Stone Pickaxe','desc': '','price': 10, 'tpos': [3,4]},
+	'32': {'name': 'Wood Sword','desc': '','price': 4, 'tpos': [4,4]},
+	'33': {'name': 'Wood Shield','desc': '','price': 5, 'tpos': [5,4]},
+	'34': {'name': 'Wire Mesh','desc': '','price': 20, 'tpos': [6,4]},
+	'35': {'name': 'Cotton Shirt','desc': '','price': 50, 'tpos': [0,5]},
+}
+var crafting = {
+	'0': {'inputFilter': {}, 'input': [17, 18, 25], 'output': [28], 'outputModifiers': {}},
+	'1': {'inputFilter': {'food': true}, 'input': [15, 'f'], 'output': ['f'], 'outputModifiers': {'hunger': 5}},
+	'2': {'inputFilter': {}, 'input': [23], 'output': [26], 'outputModifiers': {}},
+	'3': {'inputFilter': {}, 'input': [26, 25], 'output': [27], 'outputModifiers': {}},
+	'4': {'inputFilter': {}, 'input': [24], 'output': [25], 'outputModifiers': {}},
+	'5': {'inputFilter': {}, 'input': [3], 'output': [29], 'outputModifiers': {}},
+	'6': {'inputFilter': {}, 'input': [26, 25, 20], 'output': [30], 'outputModifiers': {}},
+	'7': {'inputFilter': {}, 'input': [26, 25, 20], 'output': [31], 'outputModifiers': {}},
+	'8': {'inputFilter': {}, 'input': [26, 29], 'output': [32], 'outputModifiers': {}},
+	'9': {'inputFilter': {}, 'input': [29], 'output': [33], 'outputModifiers': {}},
+	'10': {'inputFilter': {}, 'input': [25,25,25], 'output': [34], 'outputModifiers': {}},
+	'11': {'inputFilter': {}, 'input': [34,34], 'output': [35], 'outputModifiers': {}},
 }
 var roles = [
 	{'name': 'Warrior', 'set': 'Physical', 'branch': 'Melee', 'primary': 'strength', 'secondary': 'endurance', 'average': ['dexterity', 'agility']},
@@ -1029,11 +1057,67 @@ function useItem(id) {
 	}
 
 }
+function canCraft(recipeID) {
+	var recipe = crafting[recipeID];
+	var input = recipe.input;
+	var match = 0;
+	console.log('input items', input);
+	for (var i in input) {
+		var ii = input[i];
+		var has = hasItem(player, ii);
+		console.log('id to check', ii, 'inventory', has);
+		if (has > 0) match++
+	}
+	if (match >= input.length) return true;
+}
+function hasItem(chara, id) {
+	if (!chara) return 0;
+	if (!chara.inventory) return 0;
+	if (!chara.inventory[id]) return 0;
+	return chara.inventory[id].length;
+}
+function craftRecipe(id) {
+	var recipe = crafting[id];
+	var input = recipe.input;
+	var output = recipe.output;
+
+	var cc = canCraft(id);
+	if (!cc) return;
+
+	console.log('cc? ', cc);
+
+	for (var i in input) {
+		addItem(player, input[i], true);
+	}
+	for (var o in output) {
+		addItem(player, output[o]);
+	}
+
+	menuWindow('crafting');
+}
+function drawCraftRecipe(id) {
+	var recipe = crafting[id];
+	var cc = canCraft(id);
+
+	var it = recipe.output[0];
+	it = items[it] || {'tpos': [0,0], 'name': 'This is an error, call your nearest Snowman for assistance.'};
+	var bpos = (-(it.tpos[0]*twidth))+'px '+(-(it.tpos[1]*twidth))+'px';
+	var clas = (cc) ? '' : 'unavailable';
+
+	var img = '<div onclick="craftRecipe('+id+')" class="menutton '+clas+'" style="height: auto; padding: 1px; margin: 1px; float: left; width: auto; font-size: 10px"><div class="icon" style="padding: 8px; background-position: '+bpos+'; position: relative"></div> '+it.name+'</div>'
+
+	return img;
+}
 function menuWindow(what) {
 	var mw = '<border onclick="changeMenuSize()">'+what.toUpperCase()+'</border>';
 	if (what == 'inventory') {
 		for (var i in player.inventory) {
 			if (player.inventory[i].length > 0) mw += drawItem(i, player.inventory[i]);
+		}
+	}
+	if (what == 'crafting') {
+		for (var c in crafting) {
+			mw += drawCraftRecipe(c);
 		}
 	}
 
@@ -1432,6 +1516,7 @@ function addItem(chara, id, del) {
 	if (del) chara.inventory[id].splice(0,1);
 
 	if (currentMenu == 'inventory') menuWindow('inventory');
+	if (currentMenu == 'crafting') menuWindow('crafting');
 }
 function bar(min, max, colormin, colormax) {
 	var p = (min < max) ? (min/max) : 1;
